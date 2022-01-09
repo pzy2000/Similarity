@@ -21,9 +21,10 @@ from __future__ import print_function
 import collections
 import csv
 import os
-import similarity.bert_src.modeling as modeling
-import optimization_finetuning as optimization
-import similarity.bert_src.tokenization as tokenization
+import similarity.bert_src.modeling
+# import optimization_finetuning as optimization
+import similarity.bert_src.optimization
+import similarity.bert_src.tokenization
 import tensorflow as tf
 # from loss import bi_tempered_logistic_loss
 
@@ -288,7 +289,7 @@ def convert_single_example(ex_index, example, label_list, max_seq_length,
     tf.logging.info("*** Example ***")
     tf.logging.info("guid: %s" % (example.guid))
     tf.logging.info("tokens: %s" % " ".join(
-        [tokenization.printable_text(x) for x in tokens]))
+        [similarity.bert_src.tokenization.printable_text(x) for x in tokens]))
     tf.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
     tf.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
     tf.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
@@ -401,7 +402,7 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
 def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
                  labels, num_labels, use_one_hot_embeddings):
   """Creates a classification model."""
-  model = modeling.BertModel(
+  model = similarity.bert_src.modeling.BertModel(
       config=bert_config,
       is_training=is_training,
       input_ids=input_ids,
@@ -495,7 +496,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
     scaffold_fn = None
     if init_checkpoint:
       (assignment_map, initialized_variable_names
-      ) = modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
+      ) = similarity.bert_src.modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
       if use_tpu:
 
         def tpu_scaffold():
@@ -517,7 +518,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
     output_spec = None
     if mode == tf.estimator.ModeKeys.TRAIN:
 
-      train_op = optimization.create_optimizer(
+      train_op = similarity.bert_src.optimization.create_optimizer(
           total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
 
       output_spec = tf.contrib.tpu.TPUEstimatorSpec(
@@ -643,9 +644,9 @@ class LCQMCPairClassificationProcessor(DataProcessor): # TODO NEED CHANGE2
         continue
       guid = "%s-%s" % (set_type, i)
       try:
-          label = tokenization.convert_to_unicode(line[2])
-          text_a = tokenization.convert_to_unicode(line[0])
-          text_b = tokenization.convert_to_unicode(line[1])
+          label = similarity.bert_src.tokenization.convert_to_unicode(line[2])
+          text_a = similarity.bert_src.tokenization.convert_to_unicode(line[0])
+          text_b = similarity.bert_src.tokenization.convert_to_unicode(line[1])
           examples.append(
               InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
       except Exception:
@@ -688,9 +689,9 @@ class SentencePairClassificationProcessor(DataProcessor):
         continue
       guid = "%s-%s" % (set_type, i)
       try:
-          label = tokenization.convert_to_unicode(line[0])
-          text_a = tokenization.convert_to_unicode(line[1])
-          text_b = tokenization.convert_to_unicode(line[2])
+          label = similarity.bert_src.tokenization.convert_to_unicode(line[0])
+          text_a = similarity.bert_src.tokenization.convert_to_unicode(line[1])
+          text_b = similarity.bert_src.tokenization.convert_to_unicode(line[2])
           examples.append(
               InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
       except Exception:
@@ -725,14 +726,14 @@ def main(_):
 
   }
 
-  tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
+  similarity.bert_src.tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
                                                 FLAGS.init_checkpoint)
 
   if not FLAGS.do_train and not FLAGS.do_eval and not FLAGS.do_predict:
     raise ValueError(
         "At least one of `do_train`, `do_eval` or `do_predict' must be True.")
 
-  bert_config = modeling.BertConfig.from_json_file(FLAGS.bert_config_file)
+  bert_config = similarity.bert_src.modeling.BertConfig.from_json_file(FLAGS.bert_config_file)
 
   if FLAGS.max_seq_length > bert_config.max_position_embeddings:
     raise ValueError(
@@ -751,7 +752,7 @@ def main(_):
 
   label_list = processor.get_labels()
 
-  tokenizer = tokenization.FullTokenizer(
+  tokenizer = similarity.bert_src.tokenization.FullTokenizer(
       vocab_file=FLAGS.vocab_file, do_lower_case=FLAGS.do_lower_case)
 
   tpu_cluster_resolver = None

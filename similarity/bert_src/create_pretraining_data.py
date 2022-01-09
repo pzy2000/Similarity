@@ -20,7 +20,7 @@ from __future__ import print_function
 
 import collections
 import random
-import similarity.bert_src.tokenization as tokenization
+import similarity.bert_src.tokenization
 import tensorflow as tf
 import jieba
 import re
@@ -82,13 +82,13 @@ class TrainingInstance(object):
   def __str__(self):
     s = ""
     s += "tokens: %s\n" % (" ".join(
-        [tokenization.printable_text(x) for x in self.tokens]))
+        [similarity.bert_src.tokenization.printable_text(x) for x in self.tokens]))
     s += "segment_ids: %s\n" % (" ".join([str(x) for x in self.segment_ids]))
     s += "is_random_next: %s\n" % self.is_random_next
     s += "masked_lm_positions: %s\n" % (" ".join(
         [str(x) for x in self.masked_lm_positions]))
     s += "masked_lm_labels: %s\n" % (" ".join(
-        [tokenization.printable_text(x) for x in self.masked_lm_labels]))
+        [similarity.bert_src.tokenization.printable_text(x) for x in self.masked_lm_labels]))
     s += "\n"
     return s
 
@@ -151,7 +151,7 @@ def write_instance_to_example_files(instances, tokenizer, max_seq_length,
     if inst_index < 20:
       tf.logging.info("*** Example ***")
       tf.logging.info("tokens: %s" % " ".join(
-          [tokenization.printable_text(x) for x in instance.tokens]))
+          [similarity.bert_src.tokenization.printable_text(x) for x in instance.tokens]))
 
       for feature_name in features.keys():
         feature = features[feature_name]
@@ -196,7 +196,7 @@ def create_training_instances(input_files, tokenizer, max_seq_length,
       while True:
         strings=reader.readline()
         strings=strings.replace("   "," ").replace("  "," ") # 如果有两个或三个空格，替换为一个空格
-        line = tokenization.convert_to_unicode(strings)
+        line = similarity.bert_src.tokenization.convert_to_unicode(strings)
         if not line:
           break
         line = line.strip()
@@ -675,7 +675,7 @@ def truncate_seq_pair(tokens_a, tokens_b, max_num_tokens, rng):
 def main(_):
   tf.logging.set_verbosity(tf.logging.INFO)
 
-  tokenizer = tokenization.FullTokenizer(
+  tokenizer = similarity.bert_src.tokenization.FullTokenizer(
       vocab_file=FLAGS.vocab_file, do_lower_case=FLAGS.do_lower_case)
 
   input_files = []
