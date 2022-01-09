@@ -26,7 +26,7 @@ import re
 import numpy as np
 import six
 import tensorflow as tf
-import bert_utils
+import similarity.bert_src.bert_utils
 
 class BertConfig(object):
   """Configuration for `BertModel`."""

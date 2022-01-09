@@ -20,7 +20,7 @@ from __future__ import print_function
 
 import collections
 import random
-import tokenization
+import similarity.bert_src.tokenization as tokenization
 import tensorflow as tf
 import jieba
 import re

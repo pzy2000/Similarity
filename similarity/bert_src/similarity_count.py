@@ -2,11 +2,11 @@ import collections
 from queue import Queue
 from threading import Thread
 import tensorflow as tf
-import args
-import optimization
-import tokenization
-import modeling
-from run_classifier import InputFeatures, InputExample, DataProcessor, create_model, convert_examples_to_features
+import similarity.bert_src.args
+import similarity.bert_src.optimization
+import similarity.bert_src.tokenization
+import similarity.bert_src.modeling
+from similarity.bert_src.run_classifier import InputFeatures, InputExample, DataProcessor, create_model, convert_examples_to_features
 import pandas as pd
 import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
@@ -20,8 +20,8 @@ class SimProcessor(DataProcessor):
         train_data = []
         for index, train in enumerate(train_df.values):
             guid = 'train-%d' % index
-            text_a = tokenization.convert_to_unicode(str(train[0]))
-            text_b = tokenization.convert_to_unicode(str(train[1]))
+            text_a = similarity.bert_src.tokenization.convert_to_unicode(str(train[0]))
+            text_b = similarity.bert_src.tokenization.convert_to_unicode(str(train[1]))
             label = str(train[2])
             train_data.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return train_data
@@ -32,8 +32,8 @@ class SimProcessor(DataProcessor):
         dev_data = []
         for index, dev in enumerate(dev_df.values):
             guid = 'test-%d' % index
-            text_a = tokenization.convert_to_unicode(str(dev[0]))
-            text_b = tokenization.convert_to_unicode(str(dev[1]))
+            text_a = similarity.bert_src.tokenization.convert_to_unicode(str(dev[0]))
+            text_b = similarity.bert_src.tokenization.convert_to_unicode(str(dev[1]))
             label = str(dev[2])
             dev_data.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return dev_data
@@ -44,8 +44,8 @@ class SimProcessor(DataProcessor):
         test_data = []
         for index, test in enumerate(test_df.values):
             guid = 'test-%d' % index
-            text_a = tokenization.convert_to_unicode(str(test[0]))
-            text_b = tokenization.convert_to_unicode(str(test[1]))
+            text_a = similarity.bert_src.tokenization.convert_to_unicode(str(test[0]))
+            text_b = similarity.bert_src.tokenization.convert_to_unicode(str(test[1]))
             label = str(test[2])
             test_data.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return test_data
@@ -53,8 +53,8 @@ class SimProcessor(DataProcessor):
     def get_sentence_examples(self, questions):
         for index, data in enumerate(questions):
             guid = 'test-%d' % index
-            text_a = tokenization.convert_to_unicode(str(data[0]))
-            text_b = tokenization.convert_to_unicode(str(data[1]))
+            text_a = similarity.bert_src.tokenization.convert_to_unicode(str(data[0]))
+            text_b = similarity.bert_src.tokenization.convert_to_unicode(str(data[1]))
             label = str(0)
             yield InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label)
 
@@ -64,11 +64,11 @@ class SimProcessor(DataProcessor):
 
 class BertSim():
 
-    def __init__(self, batch_size=args.batch_size):
+    def __init__(self, batch_size=similarity.bert_src.args.batch_size):
 
         self.mode = None
-        self.max_seq_len = args.max_seq_len
-        self.tokenizer = tokenization.FullTokenizer(vocab_file=args.vocab_file, do_lower_case=True)
+        self.max_seq_len = similarity.bert_src.args.max_seq_len
+        self.tokenizer = similarity.bert_src.tokenization.FullTokenizer(vocab_file=similarity.bert_src.args.vocab_file, do_lower_case=True)
         self.batch_size = batch_size
         self.estimator = None
         self.processor = SimProcessor()    # 加载训练、测试数据class
@@ -87,7 +87,7 @@ class BertSim():
     def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
                      labels, num_labels, use_one_hot_embeddings):
         """Creates a classification model."""
-        model = modeling.BertModel(
+        model = similarity.bert_src.modeling.BertModel(
             config=bert_config,
             is_training=is_training,
             input_ids=input_ids,
@@ -154,7 +154,7 @@ class BertSim():
             initialized_variable_names = {}
 
             if init_checkpoint:
-                (assignment_map, initialized_variable_names) = modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
+                (assignment_map, initialized_variable_names) = similarity.bert_src.modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
                 # tf.compat.v1.train.init_from_checkpoint(init_checkpoint, assignment_map)
                 tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
 
@@ -169,7 +169,7 @@ class BertSim():
 
             if mode == tf.estimator.ModeKeys.TRAIN:
 
-                train_op = optimization.create_optimizer(
+                train_op = similarity.bert_src.optimization.create_optimizer(
                     total_loss, learning_rate, num_train_steps, num_warmup_steps, False)
 
                 output_spec = EstimatorSpec(
@@ -206,22 +206,22 @@ class BertSim():
         from tensorflow.python.estimator.estimator import Estimator
         from tensorflow.python.estimator.run_config import RunConfig
 
-        bert_config = modeling.BertConfig.from_json_file(args.config_name)
+        bert_config = similarity.bert_src.modeling.BertConfig.from_json_file(similarity.bert_src.args.config_name)
         label_list = self.processor.get_labels()
-        train_examples = self.processor.get_train_examples(args.data_dir)
-        num_train_steps = int(len(train_examples) / self.batch_size * args.num_train_epochs)
+        train_examples = self.processor.get_train_examples(similarity.bert_src.args.data_dir)
+        num_train_steps = int(len(train_examples) / self.batch_size * similarity.bert_src.args.num_train_epochs)
         num_warmup_steps = int(num_train_steps * 0.1)
 
         if self.mode == tf.estimator.ModeKeys.TRAIN:
-            init_checkpoint = args.init_checkpoint
+            init_checkpoint = similarity.bert_src.args.init_checkpoint
         else:
-            init_checkpoint = args.output_dir   # 预测模式下加载
+            init_checkpoint = similarity.bert_src.args.output_dir   # 预测模式下加载
 
         model_fn = self.model_fn_builder(
             bert_config=bert_config,
             num_labels=len(label_list),
             init_checkpoint=init_checkpoint,
-            learning_rate=args.learning_rate,
+            learning_rate=similarity.bert_src.args.learning_rate,
             num_train_steps=num_train_steps,
             num_warmup_steps=num_warmup_steps,
             use_one_hot_embeddings=False)
@@ -229,10 +229,10 @@ class BertSim():
         # config = tf.compat.v1.ConfigProto()
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
-        config.gpu_options.per_process_gpu_memory_fraction = args.gpu_memory_fraction
+        config.gpu_options.per_process_gpu_memory_fraction = similarity.bert_src.args.gpu_memory_fraction
         config.log_device_placement = False
 
-        return Estimator(model_fn=model_fn, config=RunConfig(session_config=config), model_dir=args.output_dir,
+        return Estimator(model_fn=model_fn, config=RunConfig(session_config=config), model_dir=similarity.bert_src.args.output_dir,
                          params={'batch_size': self.batch_size})
 
     def predict_from_queue(self):
@@ -340,7 +340,7 @@ class BertSim():
                 tf.logging.info("*** Example ***")
                 tf.logging.info("guid: %s" % (example.guid))
                 tf.logging.info("tokens: %s" % " ".join(
-                    [tokenization.printable_text(x) for x in tokens]))
+                    [similarity.bert_src.tokenization.printable_text(x) for x in tokens]))
                 tf.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
                 tf.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
                 tf.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
@@ -358,7 +358,7 @@ class BertSim():
         while True:
             predict_examples = self.processor.get_sentence_examples(self.input_queue.get())
             features = list(self.convert_examples_to_features(predict_examples, self.processor.get_labels(),
-                                                              args.max_seq_len, self.tokenizer))
+                                                              similarity.bert_src.args.max_seq_len, self.tokenizer))
             yield {
                 'input_ids': [f.input_ids for f in features],
                 'input_mask': [f.input_mask for f in features],
@@ -467,7 +467,7 @@ class BertSim():
             tf.logging.info("*** Example ***")
             tf.logging.info("guid: %s" % (example.guid))
             tf.logging.info("tokens: %s" % " ".join(
-                [tokenization.printable_text(x) for x in tokens]))
+                [similarity.bert_src.tokenization.printable_text(x) for x in tokens]))
             tf.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
             tf.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
             tf.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
@@ -555,25 +555,25 @@ class BertSim():
         if self.mode is None:
             raise ValueError("Please set the 'mode' parameter")
 
-        bert_config = modeling.BertConfig.from_json_file(args.config_name)
+        bert_config = similarity.bert_src.modeling.BertConfig.from_json_file(similarity.bert_src.args.config_name)
 
-        if args.max_seq_len > bert_config.max_position_embeddings:
+        if similarity.bert_src.args.max_seq_len > bert_config.max_position_embeddings:
             raise ValueError(
                 "Cannot use sequence length %d because the BERT model "
                 "was only trained up to sequence length %d" %
-                (args.max_seq_len, bert_config.max_position_embeddings))
+                (similarity.bert_src.args.max_seq_len, bert_config.max_position_embeddings))
 
-        tf.gfile.MakeDirs(args.output_dir)
+        tf.gfile.MakeDirs(similarity.bert_src.args.output_dir)
 
         label_list = self.processor.get_labels()
 
-        train_examples = self.processor.get_train_examples(args.data_dir)
-        num_train_steps = int(len(train_examples) / args.batch_size * args.num_train_epochs)
+        train_examples = self.processor.get_train_examples(similarity.bert_src.args.data_dir)
+        num_train_steps = int(len(train_examples) / similarity.bert_src.args.batch_size * similarity.bert_src.args.num_train_epochs)
 
         estimator = self.get_estimator()
 
-        train_file = os.path.join(args.output_dir, "train.tf_record")
-        self.file_based_convert_examples_to_features(train_examples, label_list, args.max_seq_len, self.tokenizer,
+        train_file = os.path.join(similarity.bert_src.args.output_dir, "train.tf_record")
+        self.file_based_convert_examples_to_features(train_examples, label_list, similarity.bert_src.args.max_seq_len, self.tokenizer,
                                                      train_file)
         # tf.compat.v1.logging.info("***** Running training *****")
         # tf.compat.v1.logging.info("  Num examples = %d", len(train_examples))
@@ -581,9 +581,9 @@ class BertSim():
         # tf.compat.v1.logging.info("  Num steps = %d", num_train_steps)
         tf.logging.info("***** Running training *****")
         tf.logging.info("  Num examples = %d", len(train_examples))
-        tf.logging.info("  Batch size = %d", args.batch_size)
+        tf.logging.info("  Batch size = %d", similarity.bert_src.args.batch_size)
         tf.logging.info("  Num steps = %d", num_train_steps)
-        train_input_fn = self.file_based_input_fn_builder(input_file=train_file, seq_length=args.max_seq_len,
+        train_input_fn = self.file_based_input_fn_builder(input_file=train_file, seq_length=similarity.bert_src.args.max_seq_len,
                                                           is_training=True,
                                                           drop_remainder=True)
 
@@ -599,11 +599,11 @@ class BertSim():
     def eval(self):
         if self.mode is None:
             raise ValueError("Please set the 'mode' parameter")
-        eval_examples = self.processor.get_dev_examples(args.data_dir)
-        eval_file = os.path.join(args.output_dir, "eval.tf_record")
+        eval_examples = self.processor.get_dev_examples(similarity.bert_src.args.data_dir)
+        eval_file = os.path.join(similarity.bert_src.args.output_dir, "eval.tf_record")
         label_list = self.processor.get_labels()
         self.file_based_convert_examples_to_features(
-            eval_examples, label_list, args.max_seq_len, self.tokenizer, eval_file)
+            eval_examples, label_list, similarity.bert_src.args.max_seq_len, self.tokenizer, eval_file)
 
         # tf.compat.v1.logging.info("***** Running evaluation *****")
         # tf.compat.v1.logging.info("  Num examples = %d", len(eval_examples))
@@ -614,14 +614,14 @@ class BertSim():
 
         eval_input_fn = self.file_based_input_fn_builder(
             input_file=eval_file,
-            seq_length=args.max_seq_len,
+            seq_length=similarity.bert_src.args.max_seq_len,
             is_training=False,
             drop_remainder=False)
 
         estimator = self.get_estimator()
         result = estimator.evaluate(input_fn=eval_input_fn, steps=None)
 
-        output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
+        output_eval_file = os.path.join(similarity.bert_src.args.output_dir, "eval_results.txt")
         with tf.gfile.GFile(output_eval_file, "w") as writer:
             # tf.compat.v1.logging.info("***** Eval results *****")
             tf.logging.info("***** Eval results *****")
@@ -657,7 +657,7 @@ def input_fn_builder(bertSim,sentences):
     def generate_from_input():
         processor = bertSim.processor
         predict_examples = processor.get_sentence_examples(sentences)
-        features = convert_examples_to_features(predict_examples, processor.get_labels(), args.max_seq_len,
+        features = convert_examples_to_features(predict_examples, processor.get_labels(), similarity.bert_src.args.max_seq_len,
                                                 bertSim.tokenizer)
         yield {
             'input_ids': [f.input_ids for f in features],
@@ -671,12 +671,12 @@ def input_fn_builder(bertSim,sentences):
 
 if __name__ == '__main__':
     sim = BertSim()
-    if args.do_train:
+    if similarity.bert_src.args.do_train:
         sim.set_mode(tf.estimator.ModeKeys.TRAIN)
         sim.train()
         sim.set_mode(tf.estimator.ModeKeys.EVAL)
         sim.eval()
-    if args.do_predict:
+    if similarity.bert_src.args.do_predict:
         sim.set_mode(tf.estimator.ModeKeys.PREDICT)
         sentence1 = '身份证号'
         sentence2 = '身份证id'

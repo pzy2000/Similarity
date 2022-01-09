@@ -4,6 +4,8 @@ import os
 import gensim
 import numpy as np
 import xlrd
+import tensorflow as tf
+from similarity.bert_src.similarity_count import BertSim
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from ltp import LTP
@@ -167,4 +169,9 @@ def sim_common_str(test_data, metadata):
     """
     # similarity = 0
     similarity = SequenceMatcher(None, test_data, metadata).ratio()
+
+    sim = BertSim()
+    sim.set_mode(tf.estimator.ModeKeys.PREDICT)
+    bert_score = sim.predict(test_data, metadata)[0][1]
+
     return similarity
