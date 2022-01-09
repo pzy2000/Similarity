@@ -29,6 +29,7 @@ args_vocab_file = os.path.join(file_path, 'albert_tiny_489k/vocab.txt')
 #数据目录
 args_data_dir = os.path.join(file_path, 'data/')
 
+
 args_num_train_epochs = 10
 args_batch_size = 128
 args_learning_rate = 0.00005
@@ -50,7 +51,81 @@ args_init_checkpoint = os.path.join(file_path, 'albert_tiny_489k/albert_model.ck
 args_do_train = False
 
 args_do_predict = True
+# 配置模型参数
+@csrf_exempt
+@api_view(http_method_names=['post'])  # 只允许post
+@permission_classes((permissions.AllowAny,))
+def config_model(request):
+    global args_num_train_epochs
+    global args_batch_size
+    # gpu使用率
+    global args_learning_rate
+    global args_gpu_memory_fraction
+    global args_max_seq_len
+    parameter = request.data
+    args_num_train_epochs = parameter['num_train_epochs']
+    args_batch_size = parameter['batch_size']
+    args_learning_rate = parameter['learning_rate']
+    args_max_seq_len = parameter['max_seq_len']
+    return HttpResponse("模型配置成功！")
 
+
+# 获取模型参数
+@csrf_exempt
+@api_view(http_method_names=['get'])  # 只允许get
+@permission_classes((permissions.AllowAny,))
+def get_model_config(request):
+    return Response({'num_train_epochs': args_num_train_epochs, 'batch_size': args_batch_size, 'learning_rate': args_learning_rate,
+
+                     'gpu_memory_fraction': args_gpu_memory_fraction," args_max_seq_len" :  args_max_seq_len})
+
+
+# 新增语料库,进行预训练
+@csrf_exempt
+@api_view(http_method_names=['post'])  # 只允许post
+@permission_classes((permissions.AllowAny,))
+def add_corpus(request):
+    # 上传一个语料库文件.txt
+    import subprocess
+    process = subprocess.Popen("bash ./bert_src/create_pretrain_data.sh", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    return HttpResponse("预训练完毕！")
+
+# 训练模型
+@csrf_exempt
+@api_view(http_method_names=['post'])  # 只允许post
+@permission_classes((permissions.AllowAny,))
+def train_model(request):
+    """
+        需要train.tsv(训练集)，dev.tsv(验证集)，test.tsv(测试集)三个数据放入data下面
+        训练数据格式：
+        sent1,sent2,label
+
+
+    """
+    global args_do_train
+    sim = BertSim()
+    args_do_train = True
+    sim.set_mode(tf.estimator.ModeKeys.TRAIN)
+    sim.train()
+    sim.set_mode(tf.estimator.ModeKeys.EVAL)
+    sim.eval()
+    args_do_train = False
+    return HttpResponse("模型训练完毕！")
+
+# 追加训练模型
+@csrf_exempt
+@api_view(http_method_names=['post'])  # 只允许post
+@permission_classes((permissions.AllowAny,))
+def train_model(request):
+    global args_do_train
+    sim = BertSim()
+    args_do_train = True
+    sim.set_mode(tf.estimator.ModeKeys.TRAIN)
+    sim.train()
+    sim.set_mode(tf.estimator.ModeKeys.EVAL)
+    sim.eval()
+    args_do_train = False
+    return HttpResponse("模型训练完毕！")
 class SimProcessor(DataProcessor):
     def get_train_examples(self, data_dir):
         if args_do_train!=True:
