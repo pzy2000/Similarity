@@ -3,7 +3,8 @@ import tensorflow as tf
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
-file_path = os.path.dirname(__file__)
+file_path = os.path.dirname(os.path.dirname(__file__))
+# print(file_path)
 
 
 #模型目录
@@ -14,9 +15,11 @@ config_name = os.path.join(file_path, 'albert_tiny_489k/albert_config_tiny.json'
 #ckpt文件名称
 ckpt_name = os.path.join(model_dir, 'albert_model.ckpt')
 #输出文件目录
-output_dir = os.path.join(file_path, 'result/')
+# output_dir = os.path.join(file_path, 'result/')
+output_dir = os.path.join(file_path, 'model/')
 #vocab文件目录
 vocab_file = os.path.join(file_path, 'albert_tiny_489k/vocab.txt')
+# print(vocab_file)
 #数据目录
 data_dir = os.path.join(file_path, 'data/')
 

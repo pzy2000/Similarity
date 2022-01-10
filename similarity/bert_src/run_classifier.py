@@ -23,7 +23,7 @@ import csv
 import os
 import similarity.bert_src.modeling
 import similarity.bert_src.optimization_finetuning as optimization
-import similarity.bert_src.optimization
+# import similarity.bert_src.optimization
 import similarity.bert_src.tokenization
 import tensorflow as tf
 # from loss import bi_tempered_logistic_loss
