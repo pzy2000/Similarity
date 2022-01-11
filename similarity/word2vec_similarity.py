@@ -33,9 +33,9 @@ process = 0
 def get_state(request):
     if process == 0:
         return HttpResponse("词模型未初始化！")
-    if process == catalogue_data_number - 1:
+    if process > 0.99:
         return HttpResponse("词模型初始化完成！")
-    return HttpResponse(process / catalogue_data_number)
+    return HttpResponse(process)
 
 
 @csrf_exempt
@@ -49,13 +49,15 @@ def init_model_vector(request):
     process = 0
     # 重新加载模型
     model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
+    process = 0.5
     # 重新缓存向量
     catalogue_data = []
     catalogue_data_vector = []
     prepare_catalogue_data(path=catalogue_data_path)
+    process = 0.75
     catalogue_data_number = len(catalogue_data)
     for i in range(len(catalogue_data)):
-        process = i
+        process = 0.75 + i / (catalogue_data_number * 4)
         data = catalogue_data[i]
         item = data.split(' ')
         segment2_1 = jieba.lcut(item[2], cut_all=True, HMM=True)

@@ -49,17 +49,16 @@ def get_model_config(request):
 
 # 新增语料库
 @csrf_exempt
-@api_view(http_method_names=['post'])  # 只允许post
-@permission_classes((permissions.AllowAny,))
 def add_corpus(request):
     # 上传一个语料库文件.txt
-    myFile = request.FILES.get("corpus")
-    f = open(more_sentences_path, 'wb')
-    for files in myFile.chunks():
-        f.write(files)
-    f.close()
-    return HttpResponse("上传文件成功！")
-
+    if request.method == 'POST':
+        myFile = request.FILES.get("corpus")
+        f = open(more_sentences_path, 'wb')
+        for files in myFile.chunks():
+            f.write(files)
+        f.close()
+        return HttpResponse("上传文件成功！")
+    return HttpResponse("请使用POST请求上传文件")
 
 # 训练模型
 @csrf_exempt
