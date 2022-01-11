@@ -3,20 +3,17 @@ import multiprocessing
 import os
 
 import gensim
+import jieba
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from gensim.models.word2vec import Word2Vec, LineSentence
-from ltp import LTP
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
-
-
 window = 5
 min_count = 1
 dim = 128
-ltp = LTP()
 
 origin_corpus_path = os.getcwd() + '/similarity/corpus/gov.txt'
 seg_corpus_path = os.getcwd() + '/similarity/corpus/corpus.txt'
@@ -71,7 +68,7 @@ def train_model(request):
     count = 0
     while line:
         if line != '\n' and line != '':
-            segment, _ = ltp.seg([line])
+            segment = jieba.lcut(line, cut_all=True, HMM=True)
             print(count)
             count += 1
             for s in segment:
@@ -102,7 +99,7 @@ def retrain_model(request):
     count = 0
     while line:
         if line != '\n' and line != '':
-            segment, _ = ltp.seg([line])
+            segment = jieba.lcut(line, cut_all=True, HMM=True)
             print(count)
             count += 1
             for s in segment:

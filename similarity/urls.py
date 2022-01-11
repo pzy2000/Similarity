@@ -13,6 +13,6 @@ urlpatterns = [
     path('train_model/', vector_model.train_model, name='train_model'),
     path('retrain_model/', vector_model.retrain_model, name='retrain_model'),
     path('get_model_config/', vector_model.get_model_config, name='get_model_config'),
-    path('config_model/', vector_model.config_model, name='config_model')
+    path('config_model/', vector_model.config_model, name='config_model'),
 
 ]
