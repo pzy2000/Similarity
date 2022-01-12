@@ -22,4 +22,8 @@ urlpatterns = [
     path('get_bert_model_config/', bert_model.get_model_config, name='get_bert_model_config'),
     path('config_bert_model/', bert_model.config_model, name='config_bert_model'),
     path('add_bert_data/', bert_model.add_model_data, name='add_bert_data'),
+    path('train_bert_model/', bert_model.train_model, name='train_model'),
+    path('retrain_bert_model/', bert_model.train_re_model, name='retrain_model'),
+    path('pretrain_bert_model/', bert_model.do_pretrain, name='pretrain_model'),
+
 ]

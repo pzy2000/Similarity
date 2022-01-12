@@ -59,6 +59,9 @@ args_do_predict = True
 process_status = None
 process_train = None
 process_re_train = None
+do_pretrain = False
+do_train = False
+do_retrain = False
 # 配置模型参数
 @csrf_exempt
 @api_view(http_method_names=['post'])  # 只允许post
@@ -144,12 +147,15 @@ def add_corpus(request):
 def do_pretrain(request):
     # 上传一个语料库文件.txt
     import subprocess
+
     process = subprocess.Popen("bash ./bert_src/create_pretrain_data.sh", cwd=file_path, shell=True,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    global do_pretrain
+    do_pretrain = True
     global process_status
     process_status = process
 
-    return HttpResponse({"code": 200, "msg": "开始预训练", "data": ""})
+    return HttpResponse({"code": 200, "msg": "开始预训练！", "data": ""})
 
 #获取预训练状态
 @csrf_exempt
@@ -158,9 +164,13 @@ def do_pretrain(request):
 def get_pretrain_state(request):
     global process_status
     process_status_now = process_status.poll()
+    global do_pretrain
+    if do_pretrain == False:
+        return HttpResponse({"code": 200, "msg": "没有预训练", "data": ""})
     if process_status_now == None:
         return HttpResponse({"code": 200, "msg": "正在预训练", "data": ""})
     else:
+        do_pretrain = True
         return HttpResponse({"code": 200, "msg": "完成预训练", "data": ""})
 
 # 训练模型
@@ -175,18 +185,22 @@ def train_model(request):
     """
     p = multiprocessing.Process(target=train_bert)
     p.start()
+    global do_train
     global process_train
     process_train = p
+    do_train = True
 
 # 追加训练模型
 @csrf_exempt
 @api_view(http_method_names=['post'])  # 只允许post
 @permission_classes((permissions.AllowAny,))
-def train_add_model(request):
+def train_re_model(request):
     p = multiprocessing.Process(target=train_bert)
     p.start()
-    global process_add_train
-    process_add_train = p
+    global process_re_train
+    global do_retrain
+    process_re_train = p
+    do_retrain = True
 
 #获取训练状态
 @csrf_exempt
@@ -194,11 +208,15 @@ def train_add_model(request):
 @permission_classes((permissions.AllowAny,))
 def get_train_state(request):
     global process_train
+    global do_train
+    if do_train == False:
+        return HttpResponse({"code": 200, "msg": "没有训练!", "data": ""})
     process_train_now = process_train.is_alive()
     if process_train_now == True:
-        return HttpResponse({"code": 200, "msg": "正在追加训练", "data": ""})
+        return HttpResponse({"code": 200, "msg": "正在训练!", "data": ""})
     else:
-        return HttpResponse({"code": 200, "msg": "完成追加训练", "data": ""})
+        do_train = False
+        return HttpResponse({"code": 200, "msg": "完成训练!", "data": ""})
 
 #获取追加训练状态
 @csrf_exempt
@@ -206,11 +224,15 @@ def get_train_state(request):
 @permission_classes((permissions.AllowAny,))
 def get_retrain_state(request):
     global process_re_train
+    global do_retrain
+    if do_retrain == False:
+        return HttpResponse({"code": 200, "msg": "没有追加训练!", "data": ""})
     process_re_train_now = process_re_train.is_alive()
     if process_re_train_now == True:
-        return HttpResponse({"code": 200, "msg": "正在追加训练", "data": ""})
+        return HttpResponse({"code": 200, "msg": "正在追加训练!", "data": ""})
     else:
-        return HttpResponse({"code": 200, "msg": "完成追加训练", "data": ""})
+        do_retrain = False
+        return HttpResponse({"code": 200, "msg": "完成追加训练!", "data": ""})
 
 def train_bert():
     sim = BertSim()
