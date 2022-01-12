@@ -36,7 +36,7 @@ def config_model(request):
     window = parameter['window']
     dim = parameter['dim']
     min_count = parameter['min_count']
-    return HttpResponse({"code": 200, "msg": "修改成功！", "data": ""})
+    return Response({"code": 200, "msg": "修改成功！", "data": ""})
 
 
 # 获取模型参数
@@ -57,8 +57,8 @@ def add_corpus(request):
         for files in myFile.chunks():
             f.write(files)
         f.close()
-        return HttpResponse({"code": 200, "msg": "上传文件成功！", "data": ""})
-    return HttpResponse({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
+        return Response({"code": 200, "msg": "上传文件成功！", "data": ""})
+    return Response({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
 
 # 训练模型
 @csrf_exempt
@@ -87,7 +87,7 @@ def train_model(request):
                          workers=multiprocessing.cpu_count())
     tmp_model.save(model_dir + "word2vec.model")
     tmp_model.wv.save_word2vec_format(model_dir + "word2vec.vector", binary=True)
-    return HttpResponse({"code": 200, "msg": "模型训练完成！", "data": ""})
+    return Response({"code": 200, "msg": "模型训练完成！", "data": ""})
 
 
 # 追加训练模型
@@ -116,7 +116,7 @@ def retrain_model(request):
     tmp_model.train(more_sentences, total_examples=tmp_model.corpus_count, epochs=tmp_model.epochs)
     tmp_model.save(model_dir + "word2vec.model")
     tmp_model.wv.save_word2vec_format(model_dir + "word2vec.vector", binary=True)
-    return HttpResponse({"code": 200, "msg": "模型追加训练完成！", "data": ""})
+    return Response({"code": 200, "msg": "模型追加训练完成！", "data": ""})
 
 
 # 判断是否为中文

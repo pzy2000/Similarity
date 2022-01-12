@@ -3,6 +3,7 @@ import os
 import threading
 
 import gensim
+import threadpool
 import jieba
 import numpy as np
 import tensorflow as tf
@@ -25,6 +26,7 @@ catalogue_data = []
 catalogue_data_vector = []
 bert_data = {}
 process = 0
+pool = threadpool.ThreadPool(10)
 
 
 @csrf_exempt
@@ -35,7 +37,7 @@ def get_state(request):
         return HttpResponse({"code": 200, "msg": "模型和向量未初始化！", "data": ""})
     if process > 0.99:
         return HttpResponse({"code": 200, "msg": "模型和向量初始化完成！", "data": ""})
-    return HttpResponse({"code": 200, "msg": "模型和向量初始化中！", "data": process})
+    return Response({"code": 200, "msg": "模型和向量初始化中！", "data": process})
 
 
 @csrf_exempt
@@ -63,7 +65,7 @@ def init_model_vector(request):
         segment2_1 = jieba.lcut(item[2], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         catalogue_data_vector.append(s2)
-    return HttpResponse({"code": 200, "msg": "词模型初始化完成；词向量缓存完成！", "data": ""})
+    return Response({"code": 200, "msg": "词模型初始化完成；词向量缓存完成！", "data": ""})
 
 
 @csrf_exempt
@@ -88,9 +90,11 @@ def multiple_match(request):
             res.append(tmp)
             continue
         # BERT缓存中不存在, 后台线程缓存
-        # save_data(demand_data=data, k=k)
         th = threading.Thread(target=save_data, args=(data, k))
         th.start()
+
+        # requests = threadpool.makeRequests(save_data, (data, k))
+        # [pool.putRequest(req) for req in requests]
 
         # 缓存清理FIFO
         if len(bert_data.keys()) >= 10000:
