@@ -100,11 +100,13 @@ def add_model_data(request):
             writer = csv.writer(f)
             for i in result:
                 writer.writerow(i)
-        myFile = request.FILES.get("data")
-        f = open(more_sentences_path, 'wb')
-        for files in myFile.chunks():
-            f.write(files)
-        f.close()
+        df = pd.read_csv(os.path.join(file_path, 'data/data.csv'), encoding='utf-8')
+        # df.drop_duplicates(keep='first', inplace=True)  # 去重，只保留第一次出现的样本
+        df = df.sample(frac=1.0)  # 全部打乱
+        cut_idx = int(round(0.1 * df.shape[0]))
+        df_test, df_train = df.iloc[:cut_idx], df.iloc[cut_idx:]
+        df_test.to_csv(os.path.join(file_path, 'data/test.csv'), index=False)
+        df_train.to_csv(os.path.join(file_path, 'data/train.csv'), index=False)
         return HttpResponse({"code": 200, "msg": "上传文件成功！", "data": ""})
     return HttpResponse({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
 
@@ -167,11 +169,11 @@ def get_pretrain_state(request):
 @permission_classes((permissions.AllowAny,))
 def train_model(request):
     """
-        需要train.tsv(训练集)，dev.tsv(验证集)，test.tsv(测试集)三个数据放入data下面
+        需要train.tsv(训练集)，test.tsv(测试集)数据放入data下面
         训练数据格式：
         sent1,sent2,label
     """
-    p = multiprocessing.Process(target=train)
+    p = multiprocessing.Process(target=train_bert)
     p.start()
     global process_train
     process_train = p
@@ -181,7 +183,7 @@ def train_model(request):
 @api_view(http_method_names=['post'])  # 只允许post
 @permission_classes((permissions.AllowAny,))
 def train_add_model(request):
-    p = multiprocessing.Process(target=train)
+    p = multiprocessing.Process(target=train_bert)
     p.start()
     global process_add_train
     process_add_train = p
@@ -210,18 +212,17 @@ def get_retrain_state(request):
     else:
         return HttpResponse({"code": 200, "msg": "完成追加训练", "data": ""})
 
-def train():
+def train_bert():
     sim = BertSim()
     sim.set_mode(tf.estimator.ModeKeys.TRAIN)
     sim.train()
-    sim.set_mode(tf.estimator.ModeKeys.EVAL)
-    sim.eval()
+
 
 class SimProcessor(DataProcessor):
     def get_train_examples(self, data_dir):
         if args_do_train!=True:
           return [];
-        file_path = os.path.join(data_dir, 'train.csv')
+        file_path = os.path.join(data_dir, 'train1.csv')
         train_df = pd.read_csv(file_path, encoding='utf-8')
         train_data = []
         for index, train in enumerate(train_df.values):

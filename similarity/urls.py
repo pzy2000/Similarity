@@ -21,4 +21,5 @@ urlpatterns = [
     path('get_bert_retrain_state/', bert_model.get_retrain_state, name='get_bert_retrain_state'),
     path('get_bert_model_config/', bert_model.get_model_config, name='get_bert_model_config'),
     path('config_bert_model/', bert_model.config_model, name='config_bert_model'),
+    path('add_bert_data/', bert_model.add_model_data, name='add_bert_data'),
 ]
