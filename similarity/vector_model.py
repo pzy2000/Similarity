@@ -4,7 +4,7 @@ import os
 
 import gensim
 import jieba
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from gensim.models.word2vec import Word2Vec, LineSentence
 from rest_framework import permissions
@@ -57,8 +57,8 @@ def add_corpus(request):
         for files in myFile.chunks():
             f.write(files)
         f.close()
-        return Response({"code": 200, "msg": "上传文件成功！", "data": ""})
-    return Response({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
+        return JsonResponse({"code": 200, "msg": "上传文件成功！", "data": ""})
+    return JsonResponse({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
 
 # 训练模型
 @csrf_exempt
