@@ -30,7 +30,9 @@ args_output_dir = os.path.join(file_path, 'model/')
 args_vocab_file = os.path.join(file_path, 'albert_tiny_489k/vocab.txt')
 #数据目录
 args_data_dir = os.path.join(file_path, 'data/')
-more_sentences_path = os.getcwd() + '/similarity/data/pretrain.txt'
+more_sentences_path = os.path.join(file_path, 'data/pretrain.txt')
+args_adddata_path = os.path.join(file_path, 'data/data.csv')
+
 args_num_train_epochs = 10
 args_batch_size = 128
 args_learning_rate = 0.00005
@@ -75,6 +77,36 @@ def config_model(request):
     args_max_seq_len = parameter['max_seq_len']
     return HttpResponse({"code": 200, "msg": "修改成功！", "data": ""})
 
+# 增加训练数据
+@csrf_exempt
+@api_view(http_method_names=['post'])  # 只允许post
+@permission_classes((permissions.AllowAny,))
+def add_model_data(request):
+    # 上传一个数据文件.csv
+    if request.method == 'POST':
+        # 解析上传文件
+        files = self.request.files['files']
+        result = []  # 存放所有数据
+        for file in files:
+            f = file['body']  # bytes
+            f = f.decode('utf-8')  # str
+            f = StringIO(f, newline='')  # io
+            f = csv.reader(f)  # csv.reader
+            for i in f:
+                result.append(i)
+        # 保存文件
+        filename = args_adddata_path
+        with open(filename, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            for i in result:
+                writer.writerow(i)
+        myFile = request.FILES.get("data")
+        f = open(more_sentences_path, 'wb')
+        for files in myFile.chunks():
+            f.write(files)
+        f.close()
+        return HttpResponse({"code": 200, "msg": "上传文件成功！", "data": ""})
+    return HttpResponse({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
 
 # 获取模型参数
 @csrf_exempt
