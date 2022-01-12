@@ -189,6 +189,7 @@ def train_model(request):
     global process_train
     process_train = p
     do_train = True
+    return HttpResponse({"code": 200, "msg": "模型训练开始！", "data": ""})
 
 # 追加训练模型
 @csrf_exempt
@@ -201,6 +202,7 @@ def train_re_model(request):
     global do_retrain
     process_re_train = p
     do_retrain = True
+    return HttpResponse({"code": 200, "msg": "模型开始追加训练！", "data": ""})
 
 #获取训练状态
 @csrf_exempt
