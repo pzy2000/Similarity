@@ -34,9 +34,9 @@ pool = threadpool.ThreadPool(10)
 @permission_classes((permissions.AllowAny,))
 def get_state(request):
     if process == 0:
-        return HttpResponse({"code": 200, "msg": "模型和向量未初始化！", "data": ""})
+        return Response({"code": 200, "msg": "模型和向量未初始化！", "data": ""})
     if process > 0.99:
-        return HttpResponse({"code": 200, "msg": "模型和向量初始化完成！", "data": ""})
+        return Response({"code": 200, "msg": "模型和向量初始化完成！", "data": ""})
     return Response({"code": 200, "msg": "模型和向量初始化中！", "data": process})
 
 
