@@ -32,10 +32,10 @@ process = 0
 @permission_classes((permissions.AllowAny,))
 def get_state(request):
     if process == 0:
-        return HttpResponse("词模型未初始化！")
+        return HttpResponse({"code": 200, "msg": "模型和向量未初始化！", "data": ""})
     if process > 0.99:
-        return HttpResponse("词模型初始化完成！")
-    return HttpResponse(process)
+        return HttpResponse({"code": 200, "msg": "模型和向量初始化完成！", "data": ""})
+    return HttpResponse({"code": 200, "msg": "模型和向量初始化中！", "data": process})
 
 
 @csrf_exempt
@@ -63,7 +63,7 @@ def init_model_vector(request):
         segment2_1 = jieba.lcut(item[2], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         catalogue_data_vector.append(s2)
-    return HttpResponse("词模型初始化完成；词向量缓存完成！")
+    return HttpResponse({"code": 200, "msg": "词模型初始化完成；词向量缓存完成！", "data": ""})
 
 
 @csrf_exempt
@@ -98,7 +98,7 @@ def multiple_match(request):
 
         # 词向量匹配
         res.append(vector_matching(demand_data=data, k=k))
-    return Response({'data': res})
+    return Response({"code": 200, "msg": "查询成功！", "data": res})
 
 
 def string_matching(demand_data, k):
