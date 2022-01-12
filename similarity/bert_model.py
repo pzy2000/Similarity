@@ -118,7 +118,7 @@ def add_model_data(request):
 @api_view(http_method_names=['get'])  # 只允许get
 @permission_classes((permissions.AllowAny,))
 def get_model_config(request):
-    return Response({"code": 200, "msg": "修改成功！", "data": {'num_train_epochs': args_num_train_epochs, 'batch_size': args_batch_size, 'learning_rate': args_learning_rate,
+    return Response({"code": 200, "msg": "查看成功！", "data": {'num_train_epochs': args_num_train_epochs, 'batch_size': args_batch_size, 'learning_rate': args_learning_rate,
 
                      'gpu_memory_fraction': args_gpu_memory_fraction," args_max_seq_len" :  args_max_seq_len}})
 
