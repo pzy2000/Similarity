@@ -8,6 +8,8 @@ import similarity.bert_src.modeling
 from similarity.bert_src.run_classifier import InputFeatures, InputExample, DataProcessor, create_model, convert_examples_to_features
 import pandas as pd
 import os
+import  multiprocessing
+
 # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 tf.logging.set_verbosity(tf.logging.INFO)
@@ -28,7 +30,8 @@ args_output_dir = os.path.join(file_path, 'model/')
 args_vocab_file = os.path.join(file_path, 'albert_tiny_489k/vocab.txt')
 #数据目录
 args_data_dir = os.path.join(file_path, 'data/')
-
+more_sentences_path = os.path.join(file_path, 'data/pretrain.txt')
+args_adddata_path = os.path.join(file_path, 'data/data.csv')
 
 args_num_train_epochs = 10
 args_batch_size = 128
@@ -51,6 +54,14 @@ args_init_checkpoint = os.path.join(file_path, 'albert_tiny_489k/albert_model.ck
 args_do_train = False
 
 args_do_predict = True
+
+#记录当前训练服务状态
+process_status = None
+process_train = None
+process_re_train = None
+do_pretrain = False
+do_train = False
+do_retrain = False
 # 配置模型参数
 @csrf_exempt
 @api_view(http_method_names=['post'])  # 只允许post
@@ -67,17 +78,50 @@ def config_model(request):
     args_batch_size = parameter['batch_size']
     args_learning_rate = parameter['learning_rate']
     args_max_seq_len = parameter['max_seq_len']
-    return HttpResponse("模型配置成功！")
+    return HttpResponse({"code": 200, "msg": "修改成功！", "data": ""})
 
+# 增加训练数据
+@csrf_exempt
+@api_view(http_method_names=['post'])  # 只允许post
+@permission_classes((permissions.AllowAny,))
+def add_model_data(request):
+    # 上传一个数据文件.csv
+    if request.method == 'POST':
+        # 解析上传文件
+        files = self.request.files['files']
+        result = []  # 存放所有数据
+        for file in files:
+            f = file['body']  # bytes
+            f = f.decode('utf-8')  # str
+            f = StringIO(f, newline='')  # io
+            f = csv.reader(f)  # csv.reader
+            for i in f:
+                result.append(i)
+        # 保存文件
+        filename = args_adddata_path
+        with open(filename, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            for i in result:
+                writer.writerow(i)
+        df = pd.read_csv(os.path.join(file_path, 'data/data.csv'), encoding='utf-8')
+        # df.drop_duplicates(keep='first', inplace=True)  # 去重，只保留第一次出现的样本
+        df = df.sample(frac=1.0)  # 全部打乱
+        cut_idx = int(round(0.1 * df.shape[0]))
+        df_test, df_train = df.iloc[:cut_idx], df.iloc[cut_idx:]
+        df_test.to_csv(os.path.join(file_path, 'data/test.csv'), index=False)
+        df_train.to_csv(os.path.join(file_path, 'data/train.csv'), index=False)
+        return HttpResponse({"code": 200, "msg": "上传文件成功！", "data": ""})
+    return HttpResponse({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
 
 # 获取模型参数
 @csrf_exempt
 @api_view(http_method_names=['get'])  # 只允许get
 @permission_classes((permissions.AllowAny,))
 def get_model_config(request):
-    return Response({'num_train_epochs': args_num_train_epochs, 'batch_size': args_batch_size, 'learning_rate': args_learning_rate,
+    return Response({"code": 200, "msg": "查看成功！", "data": {'num_train_epochs': args_num_train_epochs, 'batch_size': args_batch_size, 'learning_rate': args_learning_rate,
 
-                     'gpu_memory_fraction': args_gpu_memory_fraction," args_max_seq_len" :  args_max_seq_len})
+                     'gpu_memory_fraction': args_gpu_memory_fraction," args_max_seq_len" :  args_max_seq_len}})
+
 
 
 # 新增语料库,进行预训练
@@ -86,9 +130,48 @@ def get_model_config(request):
 @permission_classes((permissions.AllowAny,))
 def add_corpus(request):
     # 上传一个语料库文件.txt
+    if request.method == 'POST':
+        myFile = request.FILES.get("corpus")
+        f = open(more_sentences_path, 'wb')
+        for files in myFile.chunks():
+            f.write(files)
+        f.close()
+        return HttpResponse({"code": 200, "msg": "上传文件成功！", "data": ""})
+    return HttpResponse({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
+
+
+# 进行预训练
+@csrf_exempt
+@api_view(http_method_names=['post'])  # 只允许post
+@permission_classes((permissions.AllowAny,))
+def do_pretrain(request):
+    # 上传一个语料库文件.txt
     import subprocess
-    process = subprocess.Popen("bash ./bert_src/create_pretrain_data.sh", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    return HttpResponse("预训练完毕！")
+
+    process = subprocess.Popen("bash ./bert_src/create_pretrain_data.sh", cwd=file_path, shell=True,
+                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    global do_pretrain
+    do_pretrain = True
+    global process_status
+    process_status = process
+
+    return HttpResponse({"code": 200, "msg": "开始预训练！", "data": ""})
+
+#获取预训练状态
+@csrf_exempt
+@api_view(http_method_names=['get'])  # 只允许post
+@permission_classes((permissions.AllowAny,))
+def get_pretrain_state(request):
+    global process_status
+    process_status_now = process_status.poll()
+    global do_pretrain
+    if do_pretrain == False:
+        return HttpResponse({"code": 200, "msg": "没有预训练", "data": ""})
+    if process_status_now == None:
+        return HttpResponse({"code": 200, "msg": "正在预训练", "data": ""})
+    else:
+        do_pretrain = True
+        return HttpResponse({"code": 200, "msg": "完成预训练", "data": ""})
 
 # 训练模型
 @csrf_exempt
@@ -96,41 +179,74 @@ def add_corpus(request):
 @permission_classes((permissions.AllowAny,))
 def train_model(request):
     """
-        需要train.tsv(训练集)，dev.tsv(验证集)，test.tsv(测试集)三个数据放入data下面
+        需要train.tsv(训练集)，test.tsv(测试集)数据放入data下面
         训练数据格式：
         sent1,sent2,label
-
-
     """
-    global args_do_train
-    sim = BertSim()
-    args_do_train = True
-    sim.set_mode(tf.estimator.ModeKeys.TRAIN)
-    sim.train()
-    sim.set_mode(tf.estimator.ModeKeys.EVAL)
-    sim.eval()
-    args_do_train = False
-    return HttpResponse("模型训练完毕！")
+    p = multiprocessing.Process(target=train_bert)
+    p.start()
+    global do_train
+    global process_train
+    process_train = p
+    do_train = True
+    return HttpResponse({"code": 200, "msg": "模型训练开始！", "data": ""})
 
 # 追加训练模型
 @csrf_exempt
 @api_view(http_method_names=['post'])  # 只允许post
 @permission_classes((permissions.AllowAny,))
-def train_model(request):
-    global args_do_train
+def train_re_model(request):
+    p = multiprocessing.Process(target=train_bert)
+    p.start()
+    global process_re_train
+    global do_retrain
+    process_re_train = p
+    do_retrain = True
+    return HttpResponse({"code": 200, "msg": "模型开始追加训练！", "data": ""})
+
+#获取训练状态
+@csrf_exempt
+@api_view(http_method_names=['get'])  # 只允许post
+@permission_classes((permissions.AllowAny,))
+def get_train_state(request):
+    global process_train
+    global do_train
+    if do_train == False:
+        return HttpResponse({"code": 200, "msg": "没有训练!", "data": ""})
+    process_train_now = process_train.is_alive()
+    if process_train_now == True:
+        return HttpResponse({"code": 200, "msg": "正在训练!", "data": ""})
+    else:
+        do_train = False
+        return HttpResponse({"code": 200, "msg": "完成训练!", "data": ""})
+
+#获取追加训练状态
+@csrf_exempt
+@api_view(http_method_names=['get'])  # 只允许post
+@permission_classes((permissions.AllowAny,))
+def get_retrain_state(request):
+    global process_re_train
+    global do_retrain
+    if do_retrain == False:
+        return HttpResponse({"code": 200, "msg": "没有追加训练!", "data": ""})
+    process_re_train_now = process_re_train.is_alive()
+    if process_re_train_now == True:
+        return HttpResponse({"code": 200, "msg": "正在追加训练!", "data": ""})
+    else:
+        do_retrain = False
+        return HttpResponse({"code": 200, "msg": "完成追加训练!", "data": ""})
+
+def train_bert():
     sim = BertSim()
-    args_do_train = True
     sim.set_mode(tf.estimator.ModeKeys.TRAIN)
     sim.train()
-    sim.set_mode(tf.estimator.ModeKeys.EVAL)
-    sim.eval()
-    args_do_train = False
-    return HttpResponse("模型训练完毕！")
+
+
 class SimProcessor(DataProcessor):
     def get_train_examples(self, data_dir):
         if args_do_train!=True:
           return [];
-        file_path = os.path.join(data_dir, 'train.csv')
+        file_path = os.path.join(data_dir, 'train1.csv')
         train_df = pd.read_csv(file_path, encoding='utf-8')
         train_data = []
         for index, train in enumerate(train_df.values):
