@@ -1,7 +1,7 @@
 import os
 import tensorflow as tf
 
-tf.logging.set_verbosity(tf.logging.INFO)
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
 file_path = os.path.dirname(os.path.dirname(__file__))
 # print(file_path)
