@@ -1,6 +1,8 @@
 # coding=utf-8
 import os
 import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 import gensim
 import threadpool
@@ -25,8 +27,9 @@ catalogue_data_number = 12000
 catalogue_data = []
 catalogue_data_vector = []
 bert_data = {}
+query_data = {}
 process = 0
-pool = threadpool.ThreadPool(10)
+executor = ThreadPoolExecutor(max_workers=5)
 
 
 @csrf_exempt
@@ -84,14 +87,18 @@ def multiple_match(request):
         if len(tmp) != 0:
             res.append(tmp)
             continue
-        # 查询BERT缓存
+        # 查看BERT缓存
         tmp = find_data(demand_data=data, k=k)
         if len(tmp) != 0:
             res.append(tmp)
             continue
-        # BERT缓存中不存在, 后台线程缓存
-        th = threading.Thread(target=save_data, args=(data, k))
-        th.start()
+
+        # 查看查询缓存
+        if data in query_data.keys():
+            tmp = query_data.get(data)
+            if len(tmp) == k:
+                res.append(tmp)
+                continue
 
         # requests = threadpool.makeRequests(save_data, (data, k))
         # [pool.putRequest(req) for req in requests]
@@ -99,9 +106,18 @@ def multiple_match(request):
         # 缓存清理FIFO
         if len(bert_data.keys()) >= 10000:
             bert_data.clear()
-
+        if len(query_data.keys()) >= 10000:
+            query_data.clear()
         # 词向量匹配
-        res.append(vector_matching(demand_data=data, k=k))
+        tmp = vector_matching(demand_data=data, k=k)
+        res.append(tmp)
+        query_data[data] = tmp
+
+        # 缓存中不存在, 后台线程缓存
+        # th = threading.Thread(target=save_data, args=(data, k))
+        # th.start()
+        executor.submit(save_data, data, k)
+
     return Response({"code": 200, "msg": "查询成功！", "data": res})
 
 
@@ -124,6 +140,7 @@ def find_data(demand_data, k):
 
 
 def save_data(demand_data, k):
+    print("开始执行")
     sim_words = {}
     for data in catalogue_data:
         sim = bert_sim.predict(data.split(' ')[2], demand_data)[0][1]

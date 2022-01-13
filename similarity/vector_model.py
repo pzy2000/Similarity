@@ -44,7 +44,7 @@ def config_model(request):
 @api_view(http_method_names=['get'])  # 只允许get
 @permission_classes((permissions.AllowAny,))
 def get_model_config(request):
-    return Response({"code": 200, "msg": "修改成功！", "data": {'window': window, 'min_count': min_count, 'dim': dim}})
+    return Response({"code": 200, "msg": "查看成功！", "data": {'window': window, 'min_count': min_count, 'dim': dim}})
 
 
 # 新增语料库
