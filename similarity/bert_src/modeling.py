@@ -1128,7 +1128,7 @@ def prelln_transformer_model(input_tensor,
 
 	attention_head_size = int(hidden_size / num_attention_heads)
 
-	input_shape = bert_utils.get_shape_list(input_tensor, expected_rank=3)
+	input_shape = similarity.bert_src.bert_utils.get_shape_list(input_tensor, expected_rank=3)
 	batch_size = input_shape[0]
 	seq_length = input_shape[1]
 	input_width = input_shape[2]
@@ -1143,7 +1143,7 @@ def prelln_transformer_model(input_tensor,
 	# forth from a 3D tensor to a 2D tensor. Re-shapes are normally free on
 	# the GPU/CPU but may not be free on the TPU, so we want to minimize them to
 	# help the optimizer.
-	prev_output = bert_utils.reshape_to_matrix(input_tensor)
+	prev_output = similarity.bert_src.bert_utils.reshape_to_matrix(input_tensor)
 
 	all_layer_outputs = []
 
@@ -1256,9 +1256,9 @@ def prelln_transformer_model(input_tensor,
 	if do_return_all_layers:
 		final_outputs = []
 		for layer_output in all_layer_outputs:
-			final_output = bert_utils.reshape_from_matrix(layer_output, input_shape)
+			final_output = similarity.bert_src.bert_utils.reshape_from_matrix(layer_output, input_shape)
 			final_outputs.append(final_output)
 		return final_outputs
 	else:
-		final_output = bert_utils.reshape_from_matrix(prev_output, input_shape)
+		final_output = similarity.bert_src.bert_utils.reshape_from_matrix(prev_output, input_shape)
 		return final_output
