@@ -4,18 +4,16 @@ from io import StringIO
 from queue import Queue
 from threading import Thread
 import tensorflow as tf
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-
 import similarity.bert_src.optimization
 import similarity.bert_src.tokenization
 import similarity.bert_src.modeling
+from similarity.bert_src.run_classifier import InputFeatures, InputExample, DataProcessor, create_model, convert_examples_to_features
 from similarity import bert_src
-from similarity.bert_src.run_classifier import InputFeatures, InputExample, DataProcessor, create_model, \
-    convert_examples_to_features
 import pandas as pd
 import os
-import multiprocessing
+import  multiprocessing
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -26,18 +24,19 @@ tf.logging.set_verbosity(tf.logging.INFO)
 
 file_path = os.path.dirname(__file__)
 
-# 模型目录
+
+#模型目录
 args_model_dir = os.path.join(file_path, 'albert_tiny_489k/')
 
-# config文件
+#config文件
 args_config_name = os.path.join(file_path, 'albert_tiny_489k/albert_config_tiny.json')
-# ckpt文件名称
+#ckpt文件名称
 args_ckpt_name = os.path.join(args_model_dir, 'albert_model.ckpt')
-# 输出文件目录
+#输出文件目录
 args_output_dir = os.path.join(file_path, 'model/')
-# vocab文件目录
+#vocab文件目录
 args_vocab_file = os.path.join(file_path, 'albert_tiny_489k/vocab.txt')
-# 数据目录
+#数据目录
 args_data_dir = os.path.join(file_path, 'data/')
 more_sentences_path = os.path.join(file_path, 'data/pretrain.txt')
 args_adddata_path = os.path.join(file_path, 'data/data.csv')
@@ -64,15 +63,13 @@ args_do_train = False
 
 args_do_predict = True
 
-# 记录当前训练服务状态
+#记录当前训练服务状态
 process_status = None
 process_train = None
 process_re_train = None
 do_pretrain = False
 do_train = False
 do_retrain = False
-
-
 # 配置模型参数
 @csrf_exempt
 @api_view(http_method_names=['post'])  # 只允许post
@@ -90,7 +87,6 @@ def config_model(request):
     args_learning_rate = parameter['learning_rate']
     args_max_seq_len = parameter['max_seq_len']
     return HttpResponse({"code": 200, "msg": "修改成功！", "data": ""})
-
 
 # 增加训练数据
 @csrf_exempt
@@ -125,17 +121,15 @@ def add_model_data(request):
         return HttpResponse({"code": 200, "msg": "上传文件成功！", "data": ""})
     return HttpResponse({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
 
-
 # 获取模型参数
 @csrf_exempt
 @api_view(http_method_names=['get'])  # 只允许get
 @permission_classes((permissions.AllowAny,))
 def get_model_config(request):
-    return Response({"code": 200, "msg": "查看成功！",
-                     "data": {'num_train_epochs': args_num_train_epochs, 'batch_size': args_batch_size,
-                              'learning_rate': args_learning_rate,
+    return Response({"code": 200, "msg": "查看成功！", "data": {'num_train_epochs': args_num_train_epochs, 'batch_size': args_batch_size, 'learning_rate': args_learning_rate,
 
-                              'gpu_memory_fraction': args_gpu_memory_fraction, " args_max_seq_len": args_max_seq_len}})
+                     'gpu_memory_fraction': args_gpu_memory_fraction," args_max_seq_len" :  args_max_seq_len}})
+
 
 
 # 新增语料库,进行预训练
@@ -171,8 +165,7 @@ def do_pretrain(request):
 
     return HttpResponse({"code": 200, "msg": "开始预训练！", "data": ""})
 
-
-# 获取预训练状态
+#获取预训练状态
 @csrf_exempt
 @api_view(http_method_names=['get'])  # 只允许post
 @permission_classes((permissions.AllowAny,))
@@ -187,7 +180,6 @@ def get_pretrain_state(request):
     else:
         do_pretrain = True
         return HttpResponse({"code": 200, "msg": "完成预训练", "data": ""})
-
 
 # 训练模型
 @csrf_exempt
@@ -207,7 +199,6 @@ def train_model(request):
     do_train = True
     return HttpResponse({"code": 200, "msg": "模型训练开始！", "data": ""})
 
-
 # 追加训练模型
 @csrf_exempt
 @api_view(http_method_names=['post'])  # 只允许post
@@ -221,8 +212,7 @@ def train_re_model(request):
     do_retrain = True
     return HttpResponse({"code": 200, "msg": "模型开始追加训练！", "data": ""})
 
-
-# 获取训练状态
+#获取训练状态
 @csrf_exempt
 @api_view(http_method_names=['get'])  # 只允许post
 @permission_classes((permissions.AllowAny,))
@@ -238,8 +228,7 @@ def get_train_state(request):
         do_train = False
         return HttpResponse({"code": 200, "msg": "完成训练!", "data": ""})
 
-
-# 获取追加训练状态
+#获取追加训练状态
 @csrf_exempt
 @api_view(http_method_names=['get'])  # 只允许post
 @permission_classes((permissions.AllowAny,))
@@ -255,7 +244,6 @@ def get_retrain_state(request):
         do_retrain = False
         return HttpResponse({"code": 200, "msg": "完成追加训练!", "data": ""})
 
-
 def train_bert():
     sim = BertSim()
     sim.set_mode(tf.estimator.ModeKeys.TRAIN)
@@ -264,8 +252,8 @@ def train_bert():
 
 class SimProcessor(DataProcessor):
     def get_train_examples(self, data_dir):
-        if args_do_train != True:
-            return [];
+        if args_do_train!=True:
+          return [];
         file_path = os.path.join(data_dir, 'train1.csv')
         train_df = pd.read_csv(file_path, encoding='utf-8')
         train_data = []
@@ -326,7 +314,7 @@ class BertSim():
         self.tokenizer = bert_src.tokenization.FullTokenizer(vocab_file=args_vocab_file, do_lower_case=True)
         self.batch_size = batch_size
         self.estimator = None
-        self.processor = SimProcessor()  # 加载训练、测试数据class
+        self.processor = SimProcessor()    # 加载训练、测试数据class
         # tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
         tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -336,7 +324,7 @@ class BertSim():
         if mode == tf.estimator.ModeKeys.PREDICT:
             self.input_queue = Queue(maxsize=1)
             self.output_queue = Queue(maxsize=1)
-            self.predict_thread = Thread(target=self.predict_from_queue, daemon=True)  # daemon守护进程
+            self.predict_thread = Thread(target=self.predict_from_queue, daemon=True)#daemon守护进程
             self.predict_thread.start()
 
     def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
@@ -349,6 +337,7 @@ class BertSim():
             input_mask=input_mask,
             token_type_ids=segment_ids,
             use_one_hot_embeddings=use_one_hot_embeddings)
+
 
         output_layer = model.get_pooled_output()
 
@@ -408,8 +397,7 @@ class BertSim():
             initialized_variable_names = {}
 
             if init_checkpoint:
-                (assignment_map, initialized_variable_names) = bert_src.modeling.get_assignment_map_from_checkpoint(
-                    tvars, init_checkpoint)
+                (assignment_map, initialized_variable_names) = bert_src.modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
                 # tf.compat.v1.train.init_from_checkpoint(init_checkpoint, assignment_map)
                 tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
 
@@ -470,7 +458,7 @@ class BertSim():
         if self.mode == tf.estimator.ModeKeys.TRAIN:
             init_checkpoint = args_init_checkpoint
         else:
-            init_checkpoint = args_output_dir  # 预测模式下加载
+            init_checkpoint = args_output_dir   # 预测模式下加载
 
         model_fn = self.model_fn_builder(
             bert_config=bert_config,
@@ -893,7 +881,8 @@ class BertSim():
         return prediction
 
 
-def input_fn_builder(bertSim, sentences):
+
+def input_fn_builder(bertSim,sentences):
     def predict_input_fn():
         return (tf.data.Dataset.from_generator(
             generate_from_input,
