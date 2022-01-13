@@ -4,6 +4,7 @@ from . import word2vec_similarity
 from . import vector_model
 from similarity.src.metadata import metadata_associate
 from . import bert_model
+
 urlpatterns = [
     path('init_model_vector/', word2vec_similarity.init_model_vector, name='init_model_vector'),
     path('init_data_path/', metadata_associate.init_data_path, name='init_data_path'),
