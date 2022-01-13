@@ -1,21 +1,18 @@
 # coding=utf-8
 import os
-import threading
-import time
 from concurrent.futures import ThreadPoolExecutor
 
 import gensim
-import threadpool
 import jieba
 import numpy as np
 import tensorflow as tf
+import torch
 import xlrd
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from sklearn.metrics.pairwise import cosine_similarity
 
 from similarity.bert_src.similarity_count import BertSim
 from .vector_model import dim, model, model_path
@@ -30,6 +27,27 @@ bert_data = {}
 query_data = {}
 process = 0
 executor = ThreadPoolExecutor(max_workers=5)
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+catalogue_data_tensor = None
+
+
+class CosineSimilarity(torch.nn.Module):
+    def __init__(self):
+        super(CosineSimilarity, self).__init__()
+
+    def forward(self, x1, x2):
+        x2 = x2.t()
+        x = x1.mm(x2)
+
+        x1_frobenius = x1.norm(dim=1).unsqueeze(0).t()
+        x2_frobenins = x2.norm(dim=0).unsqueeze(0)
+        x_frobenins = x1_frobenius.mm(x2_frobenins)
+
+        final = x.mul(1 / x_frobenins)
+        return final
+
+
+tensor_module = CosineSimilarity().to(device)
 
 
 @csrf_exempt
@@ -51,6 +69,7 @@ def init_model_vector(request):
     global catalogue_data_number
     global catalogue_data
     global catalogue_data_vector
+    global catalogue_data_tensor
     process = 0
     # 重新加载模型
     model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
@@ -68,6 +87,7 @@ def init_model_vector(request):
         segment2_1 = jieba.lcut(item[2], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         catalogue_data_vector.append(s2)
+    catalogue_data_tensor = torch.Tensor(catalogue_data_vector).to(device)
     return Response({"code": 200, "msg": "词模型初始化完成；词向量缓存完成！", "data": ""})
 
 
@@ -99,9 +119,6 @@ def multiple_match(request):
             if len(tmp) == k:
                 res.append(tmp)
                 continue
-
-        # requests = threadpool.makeRequests(save_data, (data, k))
-        # [pool.putRequest(req) for req in requests]
 
         # 缓存清理FIFO
         if len(bert_data.keys()) >= 10000:
@@ -163,29 +180,18 @@ def save_data(demand_data, k):
 
 def vector_matching(demand_data, k):
     # 字符串没有匹配项，则会进行向量相似度匹配，筛选前k个
-    sim_words = {}
+    # sim_words = {}
     segment1_1 = jieba.lcut(demand_data, cut_all=True, HMM=True)
-    s1 = word_avg(model, segment1_1)
-    for i in range(len(catalogue_data)):
-        data = catalogue_data[i]
-        # 计算整个信息项的相似度
-        sim = cosine_similarity(s1.reshape(1, -1), catalogue_data_vector[i].reshape(1, -1))[0][0]
-        if len(sim_words) < k:
-            sim_words[data] = sim
-        else:
-            min_sim = min(sim_words.values())
-            if sim > min_sim:
-                for key in list(sim_words.keys()):
-                    if sim_words.get(key) == min_sim:
-                        # 替换
-                        del sim_words[key]
-                        sim_words[data] = sim
-                        break
-    if len(sim_words) == 0:
-        return {'none': 0}
+    s1 = [word_avg(model, segment1_1)]
+    x = torch.Tensor(s1).to(device)
+    final_value = tensor_module(catalogue_data_tensor, x)
+
+    # 输出排序并输出top-k的输出
+    value, index = torch.topk(final_value, k, dim=0, largest=True, sorted=True)
+    sim_index = index.numpy().tolist()
     res = []
-    for sim_word in sim_words:
-        res.append(sim_word)
+    for i in sim_index:
+        res.append(catalogue_data[i[0]])
     return res
 
 
@@ -206,6 +212,6 @@ def word_avg(word_model, words):  # 对句子中的每个词的词向量简单�
             vector = word_model.get_vector(word)
             vectors.append(vector)
         except KeyError:
-            vectors.append([0] * dim)
+            vectors.append([1e-8] * dim)
             continue
     return np.mean(vectors, axis=0)

@@ -4,7 +4,7 @@ import os
 
 import gensim
 import jieba
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from gensim.models.word2vec import Word2Vec, LineSentence
 from rest_framework import permissions
@@ -22,7 +22,6 @@ more_sentences_path = os.getcwd() + '/similarity/corpus/more_sentences.txt'
 model_dir = os.getcwd() + '/similarity/model/'
 model_path = model_dir + 'baike_26g_news_13g_novel_229g.bin'
 model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
-
 
 # 配置模型参数
 @csrf_exempt
