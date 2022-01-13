@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 import os
 # import django
-# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'demo.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'demo.settings')
 
 import warnings
 import pandas as pd
@@ -54,6 +54,9 @@ class MetaData(object):
         # self.bert_sim = BertSim()
         # self.bert_sim.set_mode(tf.estimator.ModeKeys.PREDICT)
 
+    # def data_preprocess(self):
+
+
     def load_metadata(self):
         '''
         加载数据元
@@ -66,30 +69,18 @@ class MetaData(object):
         print('-'*25+'数据元加载完成'+'-'*25)
 
     def add_metadata(self):
-        if self.config.add_metadata_path != None and \
-           self.config.add_metadata_sheet != None and \
-           self.config.add_metadata_col != None:
-            # 当原始数据元路径不存在时，则将新增的数据元作为原始数据元处理
-            if os.path.exists(self.config.metadata_path) is False:
-                add_df = pd.read_excel(self.config.add_metadata_path, encoding='utf-8',
-                                       sheet_name=self.config.add_metadata_sheet)
-                # 新增的数据元去空去重操作
-                add_df = add_df[self.config.add_metadata_col].dropna()
-                add_df = add_df.drop_duplicates()
-                add_df.to_csv(self.config.metadata_path, encoding='utf-8_sig', index=False, header=['数据元'])
-                print('-' * 25 + '原始数据元添加成功' + '-' * 25)
-            else:
-                # 原来已存在数据元
-                origin_metadata_df = pd.read_csv(self.config.metadata_path, encoding='utf-8')
-                add_df = pd.read_excel(self.config.add_metadata_path, encoding='utf-8', sheet_name=self.config.add_metadata_sheet)
-                # 新增的数据元去空去重操作
-                add_df = add_df[self.config.add_metadata_col].dropna()
-                add_df = add_df.drop_duplicates()
-                # 与原来存在的数据元进行判重操作
-                total_df = origin_metadata_df['数据元'].append(add_df)
-                total_df = total_df.drop_duplicates()
-                total_df.to_csv(self.config.metadata_path, encoding='utf-8_sig', index=False, header=['数据元'])
-                print('-' * 25 + '新增数据元添加成功' + '-' * 25)
+        if self.config.add_metadata_path != None:
+            # 原来已存在数据元
+            origin_metadata_df = pd.read_csv(self.config.metadata_path, encoding='utf-8')
+            add_df = pd.read_csv(self.config.add_metadata_path, encoding='utf-8')
+            # 新增的数据元去空去重操作
+            add_df = add_df.dropna()
+            add_df = add_df.drop_duplicates()
+            # 与原来存在的数据元进行判重操作
+            total_df = origin_metadata_df.append(add_df, ignore_index=True)
+            total_df = total_df.drop_duplicates()
+            total_df.to_csv(config.metadata_path, encoding='utf-8_sig', index=False, header='数据元')
+            print('-' * 25 + '新增数据元添加成功' + '-' * 25)
         else:
             print('路径、表单名或列名为空，新增失败！')
 
@@ -166,7 +157,7 @@ class MetaData(object):
         模型表与数据元关联前的预处理，包括加载数据元，加载新增数据元，加载模型表，加载已存在的关联关系
         :return:
         '''
-        self.add_metadata()
+        # self.add_metadata()
         self.load_metadata()
         self.load_model()
         self.load_exist_assoc()
@@ -177,7 +168,7 @@ class MetaData(object):
         :return:
         '''
 
-        self.add_metadata()
+        # self.add_metadata()
         self.load_metadata()
         self.load_catalogue()
         self.load_exist_assoc()
@@ -249,21 +240,21 @@ class MetaData(object):
             self.asso_model_multimeta[i] = top_k_metadata_list
 
 
-        # 将关联关系保存为json文件
-        with open(meta_model_path, 'w', encoding='utf-8') as f:
-            json.dump(self.asso_meta_model, f, ensure_ascii=False, indent=2)
-
-        with open(model_meta_path, 'w', encoding='utf-8') as f:
-            json.dump(self.asso_model_meta, f, ensure_ascii=False, indent=2)
-        # 如果路径仍未默认，则并没有被就修改，按用户设置top_k格式命名
-        if model_multimeta_path == os.path.join(result_path, 'model_table\\multi\\model_meta_top5_multi.json'):
-            model_multimeta_path = os.path.join(result_path, 'model_table\\multi\\model_meta_top'+ str(self.top_k) + '_multi.json')
-        with open(model_multimeta_path, 'w', encoding='utf-8') as f:
-            json.dump(self.asso_model_multimeta, f, ensure_ascii=False, indent=2)
-
-        print('-' * 25 + '模型表与数据元字段自动关联完成' + '-' * 25)
-
-        self.model_save_asso(model_multimeta_path, model_asso_path)
+        # # 将关联关系保存为json文件
+        # with open(meta_model_path, 'w', encoding='utf-8') as f:
+        #     json.dump(self.asso_meta_model, f, ensure_ascii=False, indent=2)
+        #
+        # with open(model_meta_path, 'w', encoding='utf-8') as f:
+        #     json.dump(self.asso_model_meta, f, ensure_ascii=False, indent=2)
+        # # 如果路径仍未默认，则并没有被就修改，按用户设置top_k格式命名
+        # if model_multimeta_path == os.path.join(result_path, 'model_table\\multi\\model_meta_top5_multi.json'):
+        #     model_multimeta_path = os.path.join(result_path, 'model_table\\multi\\model_meta_top'+ str(self.top_k) + '_multi.json')
+        # with open(model_multimeta_path, 'w', encoding='utf-8') as f:
+        #     json.dump(self.asso_model_multimeta, f, ensure_ascii=False, indent=2)
+        #
+        # print('-' * 25 + '模型表与数据元字段自动关联完成' + '-' * 25)
+        #
+        # self.model_save_asso(model_multimeta_path, model_asso_path)
 
     def catalogue_associate(self, metadata, catalogue, isBert=False,
                   meta_catalogue_path=os.path.join(result_path, 'catalogue_table\\multi\\meta_catalogue_multi.json'),
@@ -333,21 +324,21 @@ class MetaData(object):
             top_k_metadata_list.append(top_k_list)
             self.asso_catalogue_multimeta[i] = top_k_metadata_list
 
-        # 将关联关系保存为json文件
-        with open(meta_catalogue_path, 'w', encoding='utf-8') as f:
-            json.dump(self.asso_meta_catalogue, f, ensure_ascii=False, indent=2)
-
-        with open(catalogue_meta_path, 'w', encoding='utf-8') as f:
-            json.dump(self.asso_catalogue_meta, f, ensure_ascii=False, indent=2)
-        # 如果路径仍未默认，则并没有被就修改，按用户设置top_k格式命名
-        if catalogue_multimeta_path == os.path.join(result_path, 'catalogue_table\\multi\\catalogue_meta_top5_multi.json'):
-            catalogue_multimeta_path = os.path.join(result_path, 'catalogue_table\\multi\\catalogue_meta_top' + str(self.top_k) + '_multi.json')
-        with open(catalogue_multimeta_path, 'w', encoding='utf-8') as f:
-            json.dump(self.asso_catalogue_multimeta, f, ensure_ascii=False, indent=2)
-
-        print('-' * 25 + '目录表数据项与数据元字段自动关联完成' + '-' * 25)
-
-        self.catalogue_save_asso(catalogue_multimeta_path, catalogue_asso_path)
+        # # 将关联关系保存为json文件
+        # with open(meta_catalogue_path, 'w', encoding='utf-8') as f:
+        #     json.dump(self.asso_meta_catalogue, f, ensure_ascii=False, indent=2)
+        #
+        # with open(catalogue_meta_path, 'w', encoding='utf-8') as f:
+        #     json.dump(self.asso_catalogue_meta, f, ensure_ascii=False, indent=2)
+        # # 如果路径仍未默认，则并没有被就修改，按用户设置top_k格式命名
+        # if catalogue_multimeta_path == os.path.join(result_path, 'catalogue_table\\multi\\catalogue_meta_top5_multi.json'):
+        #     catalogue_multimeta_path = os.path.join(result_path, 'catalogue_table\\multi\\catalogue_meta_top' + str(self.top_k) + '_multi.json')
+        # with open(catalogue_multimeta_path, 'w', encoding='utf-8') as f:
+        #     json.dump(self.asso_catalogue_multimeta, f, ensure_ascii=False, indent=2)
+        #
+        # print('-' * 25 + '目录表数据项与数据元字段自动关联完成' + '-' * 25)
+        #
+        # self.catalogue_save_asso(catalogue_multimeta_path, catalogue_asso_path)
 
     def model(self):
         # 加载数据元、模型表以及已存在的关联关系
@@ -614,24 +605,46 @@ def init_data_path(request):
     parameter = request.data
     # 数据元路径
     config.metadata_path = parameter['metadata_path']
-    # 新增数据元路径
-    config.add_metadata_path = parameter['add_metadata_path']
-    # 新增数据元表单名称
-    config.add_metadata_sheet = parameter['add_metadata_sheet']
-    # 新增数据元表列名称
-    config.add_metadata_col = parameter['add_metadata_col']
     # 模型表路径
     config.model_path = parameter['model_path']
     # 目录表路径
     config.catalogue_path = parameter['catalogue_path']
     # 前k个候选数据元
     config.top_k = parameter['top_k']
-    # 模型表关联结果保存路径
-    config.model_save_path = parameter['model_save_path']
-    # 目录表关联结果保存路径
-    config.catalogue_save_path = parameter['catalogue_save_path']
+    # # 模型表关联结果保存路径
+    # config.model_save_path = parameter['model_save_path']
+    # # 模型表字段与多个候选数据元的关联关系json文件
+    # config.model_multimeta_name = 'model_meta_top' + str(config.top_k) + '.json'
+    # # 模型表字段与数据元的关联关系txt结果文件
+    # config.model_asso_name = 'model_asso_top' + str(config.top_k) + '.txt'
+    # # 目录表关联结果保存路径
+    # config.catalogue_save_path = parameter['catalogue_save_path']
+    # # 目录表信息项与多个候选数据元关联关系的json文件
+    # config.catalogue_multimeta_name = 'catalogue_meta_top' + str(config.top_k) + '.json'
+    # # 目录表信息项与数据元的关联关系txt结果文件
+    # config.catalogue_asso_name = 'catalogue_asso_top' + str(config.top_k) + '.txt'
+
     init_flag = True
-    return HttpResponse("文件路径初始化成功")
+    return Response({"code": 200, "msg": "文件路径初始化成功", "data": ""})
+    # return HttpResponse("文件路径初始化成功")
+
+
+@csrf_exempt
+@api_view(http_method_names=['post'])  # 只允许post
+@permission_classes((permissions.AllowAny,))
+def add_metadata(request):
+    global config
+    global init_flag
+    if init_flag == False:
+        return HttpResponse("文件路径未初始化")
+    
+    parameter = request.data
+    # 新增数据元路径
+    config.add_metadata_path = parameter['add_metadata_path']
+    metadata = MetaData(config)
+    metadata.add_metadata()
+    return Response({"code": 200, "msg": "新增数据元成功", "data": ""})
+    # return HttpResponse("文件路径初始化成功")
 
 
 
@@ -653,7 +666,8 @@ def single_match(request):
         re = metadata.catalogue()
     else:
         return HttpResponse("类型错误")
-    return Response(re)
+    # return Response(re)
+    return Response({"code": 200, "msg": "关联成功", "data": re})
 
 
 
@@ -662,9 +676,9 @@ if __name__ == '__main__':
     # 初始化配置
     metadata = MetaData(config)
     # ---------------------------模型表与数据元字段自动关联--------------------------
-    # metadata.model()
+    metadata.model()
 
     # ---------------------------目录表信息项与数据元字段自动关联--------------------------
-    metadata.catalogue()
+    # metadata.catalogue()
     # metadata.catalogue_evaluate_new()
 

@@ -7,8 +7,8 @@ data_path = os.path.join(root_path, 'similarity\\data\\')
 result_path = os.path.join(root_path, 'similarity\\result\\')
 basedir2 = str(pathlib.Path(os.path.abspath(__file__)).parent.parent)  # 路径为 E:\PythonProject\demo\similarity\src
 
-print(root_path)
-print(basedir2)
+# print(root_path)
+# print(basedir2)
 
 
 
@@ -17,13 +17,14 @@ class Config():
 
     def __init__(self):
         # 数据元路径
-        self.metadata_path = os.path.join(data_path, 'metadata.csv')
+        self.metadata_path = os.path.join(data_path, 'origin_metadata.csv')
         # 新增数据元路径
-        self.add_metadata_path = os.path.join(data_path, '某区目录-信息项数据2.0.xlsx')
+        # self.add_metadata_path = os.path.join(data_path, '某区目录-信息项数据2.0.xlsx')
+        self.add_metadata_path = None
         # 新增数据元表单名称
-        self.add_metadata_sheet = '某区目录信息项'
+        # self.add_metadata_sheet = None
         # 新增数据元表列名称
-        self.add_metadata_col = '匹配数据元'
+        # self.add_metadata_col = None
         # 模型表单表路径
         self.model_path = os.path.join(data_path, 'single_model.csv')
         # 模型表多表路径

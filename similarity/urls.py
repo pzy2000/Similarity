@@ -8,6 +8,7 @@ from . import bert_model
 urlpatterns = [
     path('init_model_vector/', word2vec_similarity.init_model_vector, name='init_model_vector'),
     path('init_data_path/', metadata_associate.init_data_path, name='init_data_path'),
+    path('add_metadata/', metadata_associate.add_metadata, name='add_metadata'),
     path('single_match/', metadata_associate.single_match, name='single_match'),
     path('multiple_match/', word2vec_similarity.multiple_match, name='multiple_match'),
     path('get_state/', word2vec_similarity.get_state, name='get_state'),
