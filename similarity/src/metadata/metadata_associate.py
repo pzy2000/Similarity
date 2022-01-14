@@ -637,7 +637,7 @@ def add_metadata(request):
     global init_flag
     if init_flag == False:
         return HttpResponse("文件路径未初始化")
-    
+
     parameter = request.data
     # 新增数据元路径
     config.add_metadata_path = parameter['add_metadata_path']
