@@ -96,7 +96,7 @@ def add_model_data(request):
     # 上传一个数据文件.csv
     if request.method == 'POST':
         # 解析上传文件
-        files = self.request.files['files']
+        files = request.files['files']
         result = []  # 存放所有数据
         for file in files:
             f = file['body']  # bytes
