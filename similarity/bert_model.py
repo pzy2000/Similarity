@@ -86,7 +86,7 @@ def config_model(request):
     args_batch_size = parameter['batch_size']
     args_learning_rate = parameter['learning_rate']
     args_max_seq_len = parameter['max_seq_len']
-    return HttpResponse({"code": 200, "msg": "修改成功！", "data": ""})
+    return Response({"code": 200, "msg": "修改成功！", "data": ""})
 
 # 增加训练数据
 @csrf_exempt
@@ -118,8 +118,8 @@ def add_model_data(request):
         df_test, df_train = df.iloc[:cut_idx], df.iloc[cut_idx:]
         df_test.to_csv(os.path.join(file_path, 'data/test.csv'), index=False)
         df_train.to_csv(os.path.join(file_path, 'data/train.csv'), index=False)
-        return HttpResponse({"code": 200, "msg": "上传文件成功！", "data": ""})
-    return HttpResponse({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
+        return Response({"code": 200, "msg": "上传文件成功！", "data": ""})
+    return Response({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
 
 # 获取模型参数
 @csrf_exempt
@@ -144,8 +144,8 @@ def add_corpus(request):
         for files in myFile.chunks():
             f.write(files)
         f.close()
-        return HttpResponse({"code": 200, "msg": "上传文件成功！", "data": ""})
-    return HttpResponse({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
+        return Response({"code": 200, "msg": "上传文件成功！", "data": ""})
+    return Response({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
 
 
 # 进行预训练
@@ -163,7 +163,7 @@ def do_pretrain(request):
     global process_status
     process_status = process
 
-    return HttpResponse({"code": 200, "msg": "开始预训练！", "data": ""})
+    return Response({"code": 200, "msg": "开始预训练！", "data": ""})
 
 #获取预训练状态
 @csrf_exempt
@@ -174,12 +174,12 @@ def get_pretrain_state(request):
     process_status_now = process_status.poll()
     global do_pretrain
     if do_pretrain == False:
-        return HttpResponse({"code": 200, "msg": "没有预训练", "data": ""})
+        return Response({"code": 200, "msg": "没有预训练", "data": ""})
     if process_status_now == None:
-        return HttpResponse({"code": 200, "msg": "正在预训练", "data": ""})
+        return Response({"code": 200, "msg": "正在预训练", "data": ""})
     else:
         do_pretrain = True
-        return HttpResponse({"code": 200, "msg": "完成预训练", "data": ""})
+        return Response({"code": 200, "msg": "完成预训练", "data": ""})
 
 # 训练模型
 @csrf_exempt
@@ -197,7 +197,7 @@ def train_model(request):
     global process_train
     process_train = p
     do_train = True
-    return HttpResponse({"code": 200, "msg": "模型训练开始！", "data": ""})
+    return Response({"code": 200, "msg": "模型训练开始！", "data": ""})
 
 # 追加训练模型
 @csrf_exempt
@@ -210,7 +210,7 @@ def train_re_model(request):
     global do_retrain
     process_re_train = p
     do_retrain = True
-    return HttpResponse({"code": 200, "msg": "模型开始追加训练！", "data": ""})
+    return Response({"code": 200, "msg": "模型开始追加训练！", "data": ""})
 
 #获取训练状态
 @csrf_exempt
@@ -220,13 +220,13 @@ def get_train_state(request):
     global process_train
     global do_train
     if do_train == False:
-        return HttpResponse({"code": 200, "msg": "没有训练!", "data": ""})
+        return Response({"code": 200, "msg": "没有训练!", "data": ""})
     process_train_now = process_train.is_alive()
     if process_train_now == True:
-        return HttpResponse({"code": 200, "msg": "正在训练!", "data": ""})
+        return Response({"code": 200, "msg": "正在训练!", "data": ""})
     else:
         do_train = False
-        return HttpResponse({"code": 200, "msg": "完成训练!", "data": ""})
+        return Response({"code": 200, "msg": "完成训练!", "data": ""})
 
 #获取追加训练状态
 @csrf_exempt
@@ -236,13 +236,13 @@ def get_retrain_state(request):
     global process_re_train
     global do_retrain
     if do_retrain == False:
-        return HttpResponse({"code": 200, "msg": "没有追加训练!", "data": ""})
+        return Response({"code": 200, "msg": "没有追加训练!", "data": ""})
     process_re_train_now = process_re_train.is_alive()
     if process_re_train_now == True:
-        return HttpResponse({"code": 200, "msg": "正在追加训练!", "data": ""})
+        return Response({"code": 200, "msg": "正在追加训练!", "data": ""})
     else:
         do_retrain = False
-        return HttpResponse({"code": 200, "msg": "完成追加训练!", "data": ""})
+        return Response({"code": 200, "msg": "完成追加训练!", "data": ""})
 
 def train_bert():
     sim = BertSim()
