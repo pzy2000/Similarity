@@ -605,24 +605,23 @@ def init_data_path(request):
     parameter = request.data
     # 数据元路径
     config.metadata_path = parameter['metadata_path']
+    print('测试：' + config.metadata_path)
+    if os.path.exists(config.metadata_path) == False:
+        return Response({"code": 200, "msg": "数据元路径不存在", "data": ""})
     # 模型表路径
     config.model_path = parameter['model_path']
+    if os.path.exists(config.model_path) == False:
+        return Response({"code": 200, "msg": "模型表路径不存在", "data": ""})
     # 目录表路径
     config.catalogue_path = parameter['catalogue_path']
+    if os.path.exists(config.catalogue_path) == False:
+        return Response({"code": 200, "msg": "目录表路径不存在", "data": ""})
     # 前k个候选数据元
     config.top_k = parameter['top_k']
-    # # 模型表关联结果保存路径
-    # config.model_save_path = parameter['model_save_path']
-    # # 模型表字段与多个候选数据元的关联关系json文件
-    # config.model_multimeta_name = 'model_meta_top' + str(config.top_k) + '.json'
-    # # 模型表字段与数据元的关联关系txt结果文件
-    # config.model_asso_name = 'model_asso_top' + str(config.top_k) + '.txt'
-    # # 目录表关联结果保存路径
-    # config.catalogue_save_path = parameter['catalogue_save_path']
-    # # 目录表信息项与多个候选数据元关联关系的json文件
-    # config.catalogue_multimeta_name = 'catalogue_meta_top' + str(config.top_k) + '.json'
-    # # 目录表信息项与数据元的关联关系txt结果文件
-    # config.catalogue_asso_name = 'catalogue_asso_top' + str(config.top_k) + '.txt'
+    if type(config.top_k) == type(1.1):
+        return Response({"code": 200, "msg": "候选项必须为整型", "data": ""})
+    if config.top_k <= 0 or config.top_k > 10:
+        return Response({"code": 200, "msg": "候选项超出取值范围[1,10]", "data": ""})
 
     init_flag = True
     return Response({"code": 200, "msg": "文件路径初始化成功", "data": ""})
@@ -636,11 +635,13 @@ def add_metadata(request):
     global config
     global init_flag
     if init_flag == False:
-        return HttpResponse("文件路径未初始化")
+        return Response({"code": 200, "msg": "文件路径未初始化", "data": ""})
 
     parameter = request.data
     # 新增数据元路径
     config.add_metadata_path = parameter['add_metadata_path']
+    if os.path.exists(config.add_metadata_path) == False:
+        return Response({"code": 200, "msg": "新增数据元路径不存在", "data": ""})
     metadata = MetaData(config)
     metadata.add_metadata()
     return Response({"code": 200, "msg": "新增数据元成功", "data": ""})
@@ -654,7 +655,7 @@ def add_metadata(request):
 def single_match(request):
     global init_flag
     if init_flag == False:
-        return HttpResponse("文件路径未初始化")
+        return Response({"code": 200, "msg": "文件路径未初始化", "data": ""})
 
     metadata = MetaData(config)
     global re
@@ -665,7 +666,7 @@ def single_match(request):
     elif type == 'catalogue':   # 目录表信息项与数据元的关联
         re = metadata.catalogue()
     else:
-        return HttpResponse("类型错误")
+        return Response({"code": 200, "msg": "类型错误", "data": ""})
     # return Response(re)
     return Response({"code": 200, "msg": "关联成功", "data": re})
 
