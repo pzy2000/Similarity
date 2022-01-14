@@ -90,29 +90,18 @@ def config_model(request):
     args_max_seq_len = parameter['max_seq_len']
     return Response({"code": 200, "msg": "修改成功！", "data": ""})
 
-# 增加训练数据
 @csrf_exempt
-@api_view(http_method_names=['post'])  # 只允许post
-@permission_classes((permissions.AllowAny,))
 def add_model_data(request):
     # 上传一个数据文件.csv
     if request.method == 'POST':
         # 解析上传文件
-        files = request.files['files']
-        result = []  # 存放所有数据
-        for file in files:
-            f = file['body']  # bytes
-            f = f.decode('utf-8')  # str
-            f = StringIO(f, newline='')  # io
-            f = csv.reader(f)  # csv.reader
-            for i in f:
-                result.append(i)
+        myFile = request.FILES.get("files")
         # 保存文件
         filename = args_adddata_path
-        with open(filename, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            for i in result:
-                writer.writerow(i)
+        f = open(filename, 'wb')
+        for files in myFile.chunks():
+            f.write(files)
+        f.close()
         df = pd.read_csv(os.path.join(file_path, 'data/data.csv'), encoding='utf-8')
         # df.drop_duplicates(keep='first', inplace=True)  # 去重，只保留第一次出现的样本
         df = df.sample(frac=1.0)  # 全部打乱
@@ -134,10 +123,9 @@ def get_model_config(request):
 
 
 
-# 新增语料库,进行预训练
+
+# 新增语料库
 @csrf_exempt
-@api_view(http_method_names=['post'])  # 只允许post
-@permission_classes((permissions.AllowAny,))
 def add_corpus(request):
     # 上传一个语料库文件.txt
     if request.method == 'POST':
@@ -173,6 +161,8 @@ def do_pretrain(request):
 @permission_classes((permissions.AllowAny,))
 def get_pretrain_state(request):
     global process_status
+    if process_status == None:
+        return HttpResponse({"code": 200, "msg": "没有预训练", "data": ""})
     process_status_now = process_status.poll()
     global do_pretrain
     if do_pretrain == False:
@@ -180,7 +170,7 @@ def get_pretrain_state(request):
     if process_status_now == None:
         return Response({"code": 200, "msg": "正在预训练", "data": ""})
     else:
-        do_pretrain = True
+        do_pretrain = None
         return Response({"code": 200, "msg": "完成预训练", "data": ""})
 
 # 训练模型
@@ -193,12 +183,14 @@ def train_model(request):
         训练数据格式：
         sent1,sent2,label
     """
+    global do_train
+    do_train = True
+    global args_do_train
+    args_do_train = True
     p = multiprocessing.Process(target=train_bert)
     p.start()
-    global do_train
     global process_train
     process_train = p
-    do_train = True
     return Response({"code": 200, "msg": "模型训练开始！", "data": ""})
 
 # 追加训练模型
@@ -220,6 +212,8 @@ def train_re_model(request):
 @permission_classes((permissions.AllowAny,))
 def get_train_state(request):
     global process_train
+    if process_train == None:
+        return Response({"code": 200, "msg": "没有训练!", "data": ""})
     global do_train
     if do_train == False:
         return Response({"code": 200, "msg": "没有训练!", "data": ""})
@@ -227,7 +221,7 @@ def get_train_state(request):
     if process_train_now == True:
         return Response({"code": 200, "msg": "正在训练!", "data": ""})
     else:
-        do_train = False
+        process_train = None
         return Response({"code": 200, "msg": "完成训练!", "data": ""})
 
 #获取追加训练状态
@@ -236,6 +230,8 @@ def get_train_state(request):
 @permission_classes((permissions.AllowAny,))
 def get_retrain_state(request):
     global process_re_train
+    if  process_re_train == None:
+        return Response({"code": 200, "msg": "没有追加训练!", "data": ""})
     global do_retrain
     if do_retrain == False:
         return Response({"code": 200, "msg": "没有追加训练!", "data": ""})
@@ -248,15 +244,27 @@ def get_retrain_state(request):
 
 def train_bert():
     sim = BertSim()
+    global do_train
+    global do_retrain
+    global args_do_train
+    args_do_train = True
     sim.set_mode(tf.estimator.ModeKeys.TRAIN)
-    sim.train()
-
+    try:
+        sim.train()
+    except ValueError:
+        do_train = False
+        do_retrain = False
+        args_do_train = False
+        return
+    do_train = False
+    do_retrain = False
+    args_do_train = False
 
 class SimProcessor(DataProcessor):
     def get_train_examples(self, data_dir):
         if args_do_train!=True:
           return [];
-        file_path = os.path.join(data_dir, 'train1.csv')
+        file_path = os.path.join(data_dir, 'train.csv')
         train_df = pd.read_csv(file_path, encoding='utf-8')
         train_data = []
         for index, train in enumerate(train_df.values):
