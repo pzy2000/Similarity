@@ -409,7 +409,7 @@ def _decode_record(record, name_to_features):
 
 
 def main(_):
-  tf.logging.set_verbosity(tf.logging.INFO)
+  tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
   if not FLAGS.do_train and not FLAGS.do_eval: # 必须是训练或验证的类型
     raise ValueError("At least one of `do_train` or `do_eval` must be True.")

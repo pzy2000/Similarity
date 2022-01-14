@@ -18,14 +18,14 @@ click==8.0.3
 colorama==0.4.4
 cryptography==36.0.0
 Cython==0.29.21
-dataclasses==0.8
+dataclasses==0.6
 Django==3.2.11
 djangorestframework==3.13.1
 filelock==3.4.0
 frozenlist==1.2.0
 fuzzywuzzy==0.18.0
 gast==0.2.2
-gensim==3.8.1
+gensim==4.0.1
 google-auth==1.34.0
 google-auth-oauthlib==0.4.5
 google-pasta==0.2.0
@@ -34,6 +34,7 @@ h5py==2.9.0
 huggingface-hub==0.0.8
 idna==3.2
 importlib-metadata==4.6.4
+intel-openmp==2022.0.0
 jieba==0.42.1
 joblib==1.1.0
 Keras==2.3.1
@@ -43,6 +44,7 @@ ltp==4.1.5.post2
 Mako==1.1.6
 Markdown==3.3.4
 MarkupSafe==2.0.1
+mkl==2022.0.0
 mkl-service==2.3.0
 multidict==5.2.0
 numpy==1.21.4
@@ -50,12 +52,10 @@ oauthlib==3.1.1
 opt-einsum==3.3.0
 packaging==21.3
 pandas==1.0.5
-pip==21.3.1
 protobuf==3.17.3
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycparser==2.21
-pygpu==0.7.6
 pygtrie==2.4.2
 PyJWT==2.3.0
 pyOpenSSL==21.0.0
@@ -76,10 +76,10 @@ rsa==4.7.2
 sacremoses==0.0.46
 scikit-learn==1.0.2
 scipy==1.7.1
-setuptools==60.5.0
 six==1.16.0
 smart-open==5.1.0
 sqlparse==0.4.2
+tbb==2021.5.0
 tensorboard==1.14.0
 tensorflow==1.14.0
 tensorflow-estimator==1.14.0
@@ -95,7 +95,6 @@ typing-extensions==3.10.0.0
 urllib3==1.26.6
 utils==1.0.1
 Werkzeug==2.0.1
-wheel==0.37.1
 win-inet-pton==1.1.0
 wincertstore==0.2
 wrapt==1.12.1
