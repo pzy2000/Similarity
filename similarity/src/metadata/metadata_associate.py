@@ -26,7 +26,8 @@ from similarity.src.metadata.metadata_config import Config, data_path, result_pa
 warnings.filterwarnings("ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"]='3'
 
-
+bert_data={}
+query_data={}
 
 class MetaData(object):
 
@@ -375,6 +376,78 @@ class MetaData(object):
 
         # self.catalogue_evaluate_new(json_path=catalogue_multimeta_path)
         return self.asso_catalogue_multimeta
+
+    def integrate_model_sim(self, metadata, model):
+        res_metadata_list = []
+        model_list = [[]]
+
+
+        metadata_list = metadata.values.tolist()
+        metadata_list = list(np.array(metadata_list).flat)
+
+        model_list = model.values.tolist()
+
+        for i in range(len(model_list)):
+            for j in range(len(metadata_list)):
+                # 字符串匹配
+                if model_list[i][2] == metadata_list[j]:
+                    res_metadata_list.append(metadata_list[j])
+                    # 记录每个数据元对应的表中字段,完成数据元到模型表的映射{meta1:[[ins1,table1,word1],[ins2,table2,word2]]}
+                    self.asso_meta_model.setdefault(metadata_list[j], [])
+                    self.asso_meta_model[metadata_list[j]].append(model_list[i])
+                    # 完成模型表到数据元的映射,index为与数据元匹配的模型表字段的下标，避免模型表字段重复的情况
+                    # {index1:[[ins1,table1,word1],meta1],index2:[[ins2,table2,word2],meta2]}
+                    top_one_metadata_list = [model_list[i][:3]]
+                    top_one_metadata_list.append(max_sim_metadata)
+                    self.asso_model_meta[i] = top_one_metadata_list
+
+                    if len(res_metadata_list) != 0:
+                        break
+                # 查看BERT缓存
+                if model_list[i][2] in bert_data.keys():
+                    tmp = bert_data.get(model_list[i][2])
+                    res_metadata_list.append(tmp)
+                    if len(res_metadata_list) != 0:
+                        break
+                # 查看查询缓存
+                if model_list[i][2] in query_data.keys():
+                    tmp = query_data.get(model_list[i][2])
+                    res_metadata_list.append(tmp)
+                    if len(res_metadata_list) != 0:
+                        break
+                # 缓存清理FIFO
+                if len(bert_data.keys()) >= 10000:
+                    bert_data.clear()
+                if len(query_data.keys()) >= 10000:
+                    query_data.clear()
+
+                # 完成模型表到数据元的映射,index为与数据元匹配的模型表字段的下标，避免模型表字段重复的情况
+                # {index1:[[ins1,table1,word1],meta1],index2:[[ins2,table2,word2],meta2]}
+
+
+
+
+                top_k_metadata_list = [model_list[i][:3]]
+                top_k_list = []
+                for k in range(self.top_k):
+                    top_k_list.append(metadata_list[sim_index[k][1]])
+
+                top_k_metadata_list.append(top_k_list)
+                self.asso_model_multimeta[i] = top_k_metadata_list
+
+
+
+
+                # # 词向量匹配
+                # tmp = vector_matching(demand_data=data, k=k)
+                # res.append(tmp)
+                # query_data[data] = tmp
+
+
+            # 完成模型表到数据元的映射,index为与数据元匹配的模型表字段的下标，避免模型表字段重复的情况
+            # {index1:[[ins1,table1,word1],meta1],index2:[[ins2,table2,word2],meta2]}
+
+
 
     def sim_common_str(self, test_data, metadata):
         '''
