@@ -102,14 +102,14 @@ class BertSim():
 
         hidden_size = output_layer.shape[-1].value
 
-        output_weights = tf.get_variable(
+        output_weights = tf.compat.v1.get_variable(
             "output_weights", [num_labels, hidden_size],
             initializer=tf.truncated_normal_initializer(stddev=0.02))
 
-        output_bias = tf.get_variable(
+        output_bias = tf.compat.v1.get_variable(
             "output_bias", [num_labels], initializer=tf.zeros_initializer())
 
-        with tf.variable_scope("loss"):
+        with tf.compat.v1.variable_scope("loss"):
             if is_training:
                 # I.e., 0.1 dropout
                 output_layer = tf.nn.dropout(output_layer, keep_prob=0.9)
@@ -152,13 +152,13 @@ class BertSim():
                 num_labels, use_one_hot_embeddings)
 
             # tvars = tf.compat.v1.trainable_variables()
-            tvars = tf.trainable_variables()
+            tvars = tf.compat.v1.trainable_variables()
             initialized_variable_names = {}
 
             if init_checkpoint:
                 (assignment_map, initialized_variable_names) = similarity.bert_src.modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
                 # tf.compat.v1.train.init_from_checkpoint(init_checkpoint, assignment_map)
-                tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
+                tf.compat.v1.train.init_from_checkpoint(init_checkpoint, assignment_map)
 
             # # tf.compat.v1.logging.info("**** Trainable Variables ****")
             # tf.logging.info("**** Trainable Variables ****")
