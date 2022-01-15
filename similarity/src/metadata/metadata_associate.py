@@ -363,7 +363,7 @@ class MetaData(object):
         # self.model_associate(self.metadata_df, self.model_df,model_meta_path,
         #                      meta_model_path,model_multimeta_path,model_asso_path)
 
-        self.integrate_model_sim(self.metadata_df, self.model_df)
+        self.integrate_sim(self.metadata_df, self.model_df, 2, self.asso_model_multimeta)
 
         # 数据元与模型表关联关系的评估
         self.model_evaluate(model_multimeta_path)
@@ -383,11 +383,13 @@ class MetaData(object):
                                     catalogue_multimeta_path=catalogue_multimeta_path,
                                     catalogue_asso_path=catalogue_asso_path)
 
+
+
         # 数据元与目录表信息项关联关系的评估
         # metadata.catalogue_evaluate(min_confid=self.config.min_confid, max_confid=self.config.max_confid,
         #                             json_path=catalogue_multimeta_path)
 
-        # self.catalogue_evaluate_new(json_path=catalogue_multimeta_path)
+        self.catalogue_evaluate_new(json_path=catalogue_multimeta_path)
         return self.asso_catalogue_multimeta
 
     def build_metadata_map(self, index, data_list,
@@ -417,6 +419,154 @@ class MetaData(object):
             res.append(sim_word)
         bert_data[item_data] = res
 
+    def string_matching(self, index, item_list, metadata_list, key_index,
+                        res_metadata_list, item_multimeta_dic):
+        '''
+        事项表字段与数据元的字符匹配
+        :param index: 在事项表中的下标
+        :param item_list: 事项表的一维列表[*,*,item]
+        :param metadata_list: 数据元一维列表
+        :param key_index: 关键字段在事项表中的下标
+        :param res_metadata_list: 匹配到的结果数据元一维列表
+        :param item_multimeta_dic: 事项表与数据元的映射字典，格式为
+                {index1:[[ins1,table1,word1],[meta1,meta22,meta35]],
+                index2:[[ins2,table2,word2],[meta12,meta20,meta13]]}
+        :return:
+        '''
+        for metadata in metadata_list:
+            if item_list[key_index] == metadata:
+                res_metadata_list.append(metadata)
+            # 匹配到的数据元列表不为空，则说明找到最相似的，退出循环
+            # 继续寻找下一个字段关联的数据元
+            if len(res_metadata_list) != 0:
+                # 构建模型表字段与数据元的映射
+                self.build_metadata_map(index, item_list, res_metadata_list,
+                                        item_multimeta_dic)
+                break
+
+
+    def bert_matching(self, index, item_list, key_index,
+                      res_metadata_list, item_multimeta_dic):
+        '''
+        事项表字段与数据元在bert缓冲中的匹配
+        :param index: 在事项表中的下标
+        :param item_list: 事项表的一维列表[*,*,item]
+        :param key_index: 关键字段在事项表中的下标
+        :param res_metadata_list: 匹配到的结果数据元一维列表
+        :param item_multimeta_dic: 事项表与数据元的映射字典，格式为
+                {index1:[[ins1,table1,word1],[meta1,meta22,meta35]],
+                index2:[[ins2,table2,word2],[meta12,meta20,meta13]]}
+        :return: 返回匹配是否成功，True表示成功
+        '''
+        # 查看BERT缓存
+        if item_list[key_index] in bert_data.keys():
+            tmp = bert_data.get(item_list[key_index])
+            res_metadata_list.append(tmp)
+        if len(res_metadata_list) != 0:
+            # 构建模型表字段与数据元的映射
+            self.build_metadata_map(index, item_list, res_metadata_list,
+                                    item_multimeta_dic)
+            return True   # 表示在bert缓存中找到，继续匹配下一字段
+        return False
+
+    def query_matching(self, index, item_list, key_index,
+                       res_metadata_list, item_multimeta_dic):
+        '''
+        事项表字段与数据元在查询query缓冲中的匹配
+        :param index: 在事项表中的下标
+        :param item_list: 事项表的一维列表[*,*,item]
+        :param key_index: 关键字段在事项表中的下标
+        :param res_metadata_list: 匹配到的结果数据元一维列表
+        :param item_multimeta_dic: 事项表与数据元的映射字典，格式为
+                {index1:[[ins1,table1,word1],[meta1,meta22,meta35]],
+                index2:[[ins2,table2,word2],[meta12,meta20,meta13]]}
+        :return: 返回匹配是否成功，True表示成功
+        '''
+        # 查看查询缓存
+        if item_list[key_index] in query_data.keys():
+            tmp = query_data.get(item_list[key_index])
+            res_metadata_list.append(tmp)
+        if len(res_metadata_list) != 0:
+            # 构建模型表字段与数据元的映射
+            self.build_metadata_map(index, item_list, res_metadata_list,
+                                    item_multimeta_dic)
+            return True
+        return False
+
+    def vector_matching(self, index, item_list, metadata_list,
+                        key_index, res_metadata_list, item_multimeta_dic):
+        '''
+        事项表字段与数据元的词向量匹配
+        :param index: 在事项表中的下标
+        :param item_list: 事项表的一维列表[*,*,item]
+        :param metadata_list: 数据元一维列表
+        :param key_index: 关键字段在事项表中的下标
+        :param res_metadata_list: 匹配到的结果数据元一维列表
+        :param item_multimeta_dic: 事项表与数据元的映射字典，格式为
+                {index1:[[ins1,table1,word1],[meta1,meta22,meta35]],
+                index2:[[ins2,table2,word2],[meta12,meta20,meta13]]}
+        :return: 返回匹配出的数据元一维列表
+        '''
+        # 词向量匹配
+        # 字符串没有匹配项，则会进行向量相似度匹配，筛选前k个
+        segment1_1 = jieba.lcut(item_list[key_index], cut_all=True, HMM=True)
+        s1 = [word_avg(model, segment1_1)]
+        x = torch.Tensor(s1).to(device)
+        # print(catalogue_data_tensor)
+        final_value = tensor_module(model_data_tensor, x)
+
+        # 输出排序并输出top-k的输出
+        value, _index = torch.topk(final_value, self.top_k, dim=0, largest=True, sorted=True)
+        sim_index = _index.numpy().tolist()
+        tmp = []
+        for k in sim_index:
+            tmp.append(metadata_list[k[0]])
+        res_metadata_list.append(tmp)
+        # 构建模型表字段与数据元的映射
+        self.build_metadata_map(index, item_list, res_metadata_list,
+                                item_multimeta_dic)
+        return tmp
+
+
+    def integrate_sim(self, metadata_df, item_df, key_index, item_multimeta_dic):
+        '''
+        多重方法的匹配度计算，包括字符串匹配、bert缓冲查询、query缓冲查询以及词向量相似度计算
+        :param metadata_df: 数据元dataframe
+        :param item_df: 事项表dataframe
+        :param key_index: 事项表中关键字段所在的下标
+        :param item_multimeta_dic: 事项表与数据元的映射字典
+        :return:
+        '''
+        metadata_list = metadata_df.values.tolist()
+        metadata_list = list(np.array(metadata_list).flat)
+        item_list = item_df.values.tolist()
+        for i in tqdm(range(len(item_list))):
+            res_metadata_list = []
+            # 字符串匹配
+            self.string_matching(i, item_list[i], metadata_list,
+             key_index, res_metadata_list, item_multimeta_dic)
+            # 查看BERT缓存
+            if self.bert_matching(i, item_list[i], key_index,
+                res_metadata_list, item_multimeta_dic) == True:
+                continue
+            # 查看查询缓存
+            if self.query_matching(i, item_list[i],
+                key_index, res_metadata_list,item_multimeta_dic) == True:
+                continue
+            # 缓存清理FIFO
+            if len(bert_data.keys()) >= 10000:
+                bert_data.clear()
+            if len(query_data.keys()) >= 10000:
+                query_data.clear()
+            # 词向量匹配
+            # 字符串没有匹配项，则会进行向量相似度匹配，筛选前k个
+            tmp = self.vector_matching(i, item_list[i], metadata_list,
+                    key_index, res_metadata_list,item_multimeta_dic)
+            # 加入查询缓存
+            query_data[item_list[i][key_index]] = tmp
+            # 缓存中不存在, 后台线程缓存
+            executor.submit(self.save_data, metadata_list, item_list[i])
+
 
     def integrate_model_sim(self, metadata, model_data):
 
@@ -424,7 +574,6 @@ class MetaData(object):
         metadata_list = list(np.array(metadata_list).flat)
 
         model_list = model_data.values.tolist()
-        print('开始')
         for i in tqdm(range(len(model_list))):
             res_metadata_list = []
             for j in range(len(metadata_list)):
@@ -438,13 +587,11 @@ class MetaData(object):
                     self.build_metadata_map(i, model_list[i], res_metadata_list,
                                             self.asso_model_multimeta)
                     break
-
                 # 查看BERT缓存
                 if model_list[i][2] in bert_data.keys():
                     tmp = bert_data.get(model_list[i][2])
                     res_metadata_list.append(tmp)
                 if len(res_metadata_list) != 0:
-                    print(model_list[i])
                     # 构建模型表字段与数据元的映射
                     self.build_metadata_map(i, model_list[i], res_metadata_list,
                                             self.asso_model_multimeta)
@@ -489,8 +636,6 @@ class MetaData(object):
                 query_data[model_list[i][2]] = tmp
                 # 缓存中不存在, 后台线程缓存
                 executor.submit(self.save_data, metadata_list, model_list[i])
-
-
 
     def sim_common_str(self, test_data, metadata):
         '''
@@ -789,17 +934,14 @@ def single_match(request):
 
 
 if __name__ == '__main__':
-
-    # model_data_vector = word2vec_similarity.init_model_vector_new()
-
     # 初始化配置
     metadata = MetaData(config)
 
 
     # ---------------------------模型表与数据元字段自动关联--------------------------
-    metadata.model()
+    # metadata.model()
 
     # ---------------------------目录表信息项与数据元字段自动关联--------------------------
-    # metadata.catalogue()
+    metadata.catalogue()
     # metadata.catalogue_evaluate_new()
 
