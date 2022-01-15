@@ -10,6 +10,7 @@ from gensim.models.word2vec import Word2Vec, LineSentence
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from .tools import model_dir
 
 window = 5
 min_count = 1
@@ -19,7 +20,7 @@ origin_corpus_path = os.getcwd() + '/similarity/corpus/gov.txt'
 seg_corpus_path = os.getcwd() + '/similarity/corpus/corpus.txt'
 more_sentences_path = os.getcwd() + '/similarity/corpus/more_sentences.txt'
 # 默认模型
-model_dir = os.getcwd() + '/similarity/model/'
+# model_dir = os.getcwd() + '/similarity/model/'
 model_path = model_dir + 'baike_26g_news_13g_novel_229g.bin'
 model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
 
