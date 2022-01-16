@@ -526,7 +526,8 @@ class MetaData(object):
             tmp = query_data.get(item_list[key_index])
         if len(tmp) == self.top_k:
             # 构建模型表字段与数据元的映射
-            res_metadata_list.append(tmp)
+            for x in tmp:
+                res_metadata_list.append(x)
             self.build_metadata_map(index, item_list, res_metadata_list,
                                     item_multimeta_dic)
             return True
