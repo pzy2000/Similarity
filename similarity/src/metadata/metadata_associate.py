@@ -1,6 +1,9 @@
 # -*- coding:utf-8 -*-
 import os
+
 # import django
+import time
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'demo.settings')
 
 import warnings
@@ -25,13 +28,14 @@ from similarity.src.metadata.metadata_config import Config, data_dir, result_dir
 import threading
 
 warnings.filterwarnings("ignore")
-os.environ["TF_CPP_MIN_LOG_LEVEL"]='3'
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
 
 model_data_tensor = None
 model_data_vector = []
 
-bert_data={}
-query_data={}
+bert_data = {}
+query_data = {}
+
 
 class MetaData(object):
 
@@ -43,19 +47,19 @@ class MetaData(object):
         self.catalogue_path = self.config.catalogue_path
         self.exist_asso_path = self.config.exist_asso_path
         self.top_k = self.config.top_k
-        self.metadata_df = None     # 数据元dataframe
-        self.model_df = None        # 模型表dataframe
-        self.catalogue_df = None    # 目录表信息项dataframe
-        self.exist_asso_df = None   # 已存在关联关系的dataframe
-        self.train_df = None        # 训练集dataframe
-        self.test_df = None         # 测试集dataframe
-        self.asso_meta_model = {}           # 数据元与模型表的关联关系{meta1:[[ins1,table1,word1],[ins2,table2,word2]]}
-        self.asso_model_meta = {}           # 模型表与数据元的关联关系{index1:[[ins1,table1,word1],meta1],index2:[[ins2,table2,word2],meta2]}
-        self.asso_model_multimeta = {}      # 模型表与数据元的多关联关系{index1:[[ins1,table1,word1],[meta1,meta22,meta35]],index2:[[ins2,table2,word2],[meta12,meta20,meta13]]}
-        self.asso_meta_catalogue = {}       # 数据元与目录表信息项的关联关系{meta1:[[catalogue_name1,word1,ins1],[catalogue_name2,word2,ins2]]}
-        self.asso_catalogue_meta = {}       # 目录表信息项与数据元的关联关系{index1:[[catalogue_name1,word1,ins1],meta1],index2:[[catalogue_name2,word2,ins2],meta2]}
+        self.metadata_df = None  # 数据元dataframe
+        self.model_df = None  # 模型表dataframe
+        self.catalogue_df = None  # 目录表信息项dataframe
+        self.exist_asso_df = None  # 已存在关联关系的dataframe
+        self.train_df = None  # 训练集dataframe
+        self.test_df = None  # 测试集dataframe
+        self.asso_meta_model = {}  # 数据元与模型表的关联关系{meta1:[[ins1,table1,word1],[ins2,table2,word2]]}
+        self.asso_model_meta = {}  # 模型表与数据元的关联关系{index1:[[ins1,table1,word1],meta1],index2:[[ins2,table2,word2],meta2]}
+        self.asso_model_multimeta = {}  # 模型表与数据元的多关联关系{index1:[[ins1,table1,word1],[meta1,meta22,meta35]],index2:[[ins2,table2,word2],[meta12,meta20,meta13]]}
+        self.asso_meta_catalogue = {}  # 数据元与目录表信息项的关联关系{meta1:[[catalogue_name1,word1,ins1],[catalogue_name2,word2,ins2]]}
+        self.asso_catalogue_meta = {}  # 目录表信息项与数据元的关联关系{index1:[[catalogue_name1,word1,ins1],meta1],index2:[[catalogue_name2,word2,ins2],meta2]}
         self.asso_catalogue_multimeta = {}  # 目录表信息项与数据元的多关联关系{index1:[[catalogue_name1,word1,ins1],[meta1,meta22,meta35]],index2:[[catalogue_name2,word2,ins2],[meta12,meta20,meta13]]}
-        self.exist_asso_dic = {}            # 已存在的关联关系
+        self.exist_asso_dic = {}  # 已存在的关联关系
         # self.bert_sim = BertSim()
         # self.bert_sim.set_mode(tf.estimator.ModeKeys.PREDICT)
 
@@ -68,7 +72,7 @@ class MetaData(object):
         # 去除重复行
         self.metadata_df = self.metadata_df.drop_duplicates()
         print('数据元数据量：' + str(len(self.metadata_df)))
-        print('-'*25+'数据元加载完成'+'-'*25)
+        print('-' * 25 + '数据元加载完成' + '-' * 25)
 
     def add_metadata(self):
         if self.config.add_metadata_path != None:
@@ -130,7 +134,7 @@ class MetaData(object):
             json.dump(self.exist_asso_dic, f, ensure_ascii=False, indent=2)
         # 随机采样产生训练集与测试集
         print('现存关联数据量：' + str(len(self.exist_asso_df)))
-        print('-'*25+'已存在关联数据加载完成'+'-'*25)
+        print('-' * 25 + '已存在关联数据加载完成' + '-' * 25)
 
     def model_addition_info(self, metadata, ins_info, table_info, scale=0.5):
         '''
@@ -186,10 +190,10 @@ class MetaData(object):
         self.load_exist_assoc()
 
     def model_associate(self, metadata, model,
-                  meta_model_path=os.path.join(result_dir, 'model_table\\multi\\meta_model_multi.json'),
-                  model_meta_path=os.path.join(result_dir, 'model_table\\multi\\model_meta_multi.json'),
-                  model_multimeta_path=os.path.join(result_dir, 'model_table\\multi\\model_meta_top5_multi.json'),
-                  model_asso_path=os.path.join(result_dir, 'model_table\\multi\\model_asso.txt')):
+                        meta_model_path=os.path.join(result_dir, 'model_table\\multi\\meta_model_multi.json'),
+                        model_meta_path=os.path.join(result_dir, 'model_table\\multi\\model_meta_multi.json'),
+                        model_multimeta_path=os.path.join(result_dir, 'model_table\\multi\\model_meta_top5_multi.json'),
+                        model_asso_path=os.path.join(result_dir, 'model_table\\multi\\model_asso.txt')):
 
         metadata_list = []
         model_list = [[]]
@@ -226,11 +230,11 @@ class MetaData(object):
                 sim_index.append(tmp)
             # 当筛选出的数据元不足待选数量时进行补全
             if len(sim_index) < self.top_k:
-                for m in range(self.top_k-len(sim_index)):
-                    tmp = [0,random.randint(0,len(metadata_list)-1)]
+                for m in range(self.top_k - len(sim_index)):
+                    tmp = [0, random.randint(0, len(metadata_list) - 1)]
                     sim_index.append(tmp)
 
-            sim_index = sorted(sim_index, key=lambda x:x[0], reverse=True)
+            sim_index = sorted(sim_index, key=lambda x: x[0], reverse=True)
             # print(sim_index[0][1])
             max_sim_metadata = metadata_list[sim_index[0][1]]
 
@@ -251,7 +255,6 @@ class MetaData(object):
             top_k_metadata_list.append(top_k_list)
             self.asso_model_multimeta[i] = top_k_metadata_list
 
-
         # # 将关联关系保存为json文件
         # with open(meta_model_path, 'w', encoding='utf-8') as f:
         #     json.dump(self.asso_meta_model, f, ensure_ascii=False, indent=2)
@@ -269,10 +272,13 @@ class MetaData(object):
         # self.model_save_asso(model_multimeta_path, model_asso_path)
 
     def catalogue_associate(self, metadata, catalogue, isBert=False,
-                  meta_catalogue_path=os.path.join(result_dir, 'catalogue_table\\multi\\meta_catalogue_multi.json'),
-                  catalogue_meta_path=os.path.join(result_dir, 'catalogue_table\\multi\\catalogue_meta_multi.json'),
-                  catalogue_multimeta_path=os.path.join(result_dir, 'catalogue_table\\multi\\catalogue_meta_top5_multi.json'),
-                  catalogue_asso_path=os.path.join(result_dir, 'catalogue_table\\multi\\catalogue_asso.txt')):
+                            meta_catalogue_path=os.path.join(result_dir,
+                                                             'catalogue_table\\multi\\meta_catalogue_multi.json'),
+                            catalogue_meta_path=os.path.join(result_dir,
+                                                             'catalogue_table\\multi\\catalogue_meta_multi.json'),
+                            catalogue_multimeta_path=os.path.join(result_dir,
+                                                                  'catalogue_table\\multi\\catalogue_meta_top5_multi.json'),
+                            catalogue_asso_path=os.path.join(result_dir, 'catalogue_table\\multi\\catalogue_asso.txt')):
 
         metadata_list = []
         catalogue_list = [[]]
@@ -300,7 +306,7 @@ class MetaData(object):
                 # similarity = self.catalogue_bert(catalogue_list[i][1], metadata_list[j], isBert)
                 # 在现存关联关系表中是否存在，若存在则权重增加
                 if (catalogue_list[i][1] in self.exist_asso_dic.keys()) and \
-                    self.exist_asso_dic[catalogue_list[i][1]] == metadata_list[j]:
+                        self.exist_asso_dic[catalogue_list[i][1]] == metadata_list[j]:
                     similarity += 1
 
                 if similarity <= 0:
@@ -314,7 +320,7 @@ class MetaData(object):
             # 当筛选出的数据元不足待选数量时进行补全
             if len(sim_index) < self.top_k:
                 for m in range(self.top_k - len(sim_index)):
-                    tmp = [0, random.randint(0, len(metadata_list)-1)]
+                    tmp = [0, random.randint(0, len(metadata_list) - 1)]
                     sim_index.append(tmp)
 
             sim_index = sorted(sim_index, key=lambda x: x[0], reverse=True)
@@ -379,12 +385,10 @@ class MetaData(object):
         catalogue_multimeta_path = self.config.catalogue_save_path + self.config.catalogue_multimeta_name
         catalogue_asso_path = self.config.catalogue_save_path + self.config.catalogue_asso_name
         self.catalogue_associate(self.metadata_df, self.catalogue_df, isBert=False,
-                                    catalogue_meta_path=catalogue_meta_path,
-                                    meta_catalogue_path=meta_catalogue_path,
-                                    catalogue_multimeta_path=catalogue_multimeta_path,
-                                    catalogue_asso_path=catalogue_asso_path)
-
-
+                                 catalogue_meta_path=catalogue_meta_path,
+                                 meta_catalogue_path=meta_catalogue_path,
+                                 catalogue_multimeta_path=catalogue_multimeta_path,
+                                 catalogue_asso_path=catalogue_asso_path)
 
         # 数据元与目录表信息项关联关系的评估
         # metadata.catalogue_evaluate(min_confid=self.config.min_confid, max_confid=self.config.max_confid,
@@ -476,7 +480,6 @@ class MetaData(object):
         #     return True
         # return False
 
-
     def bert_matching(self, index, item_list, key_index,
                       res_metadata_list, item_multimeta_dic):
         '''
@@ -499,7 +502,7 @@ class MetaData(object):
             # 构建模型表字段与数据元的映射
             self.build_metadata_map(index, item_list, res_metadata_list,
                                     item_multimeta_dic)
-            return True   # 表示在bert缓存中找到，继续匹配下一字段
+            return True  # 表示在bert缓存中找到，继续匹配下一字段
         return False
 
     def query_matching(self, index, item_list, key_index,
@@ -578,7 +581,7 @@ class MetaData(object):
             res_metadata_list = []
             # 字符串匹配
             if self.string_matching(i, item_list[i], metadata_list,
-             key_index, res_metadata_list, item_multimeta_dic) == True:
+                                    key_index, res_metadata_list, item_multimeta_dic) == True:
                 continue
 
             # executor.submit(self.string_matching, i, item_list[i], metadata_list,
@@ -593,14 +596,13 @@ class MetaData(object):
             # if len(res_metadata_list) >= self.top_k:
             #     continue
 
-
             # 查看BERT缓存
             if self.bert_matching(i, item_list[i], key_index,
-                res_metadata_list, item_multimeta_dic) == True:
+                                  res_metadata_list, item_multimeta_dic) == True:
                 continue
             # 查看查询缓存
-            if self.query_matching(i, item_list[i],key_index,
-                res_metadata_list,item_multimeta_dic) == True:
+            if self.query_matching(i, item_list[i], key_index,
+                                   res_metadata_list, item_multimeta_dic) == True:
                 continue
             # 缓存清理FIFO
             if len(bert_data.keys()) >= 10000:
@@ -610,7 +612,7 @@ class MetaData(object):
             # 词向量匹配
             # 字符串没有匹配项，则会进行向量相似度匹配，筛选前k个
             tmp = self.vector_matching(i, item_list[i], metadata_list,
-                    key_index, res_metadata_list,item_multimeta_dic)
+                                       key_index, res_metadata_list, item_multimeta_dic)
             # 加入查询缓存
             query_data[item_list[i][key_index]] = tmp
             # 缓存中不存在, 后台线程缓存
@@ -732,7 +734,6 @@ class MetaData(object):
                            str(value[1][0]) + \
                            '\t\t候选数据元：' + '、'.join(value[1][1:])
 
-
                 asso_txt_file.write(asso_str + '\n')
 
         asso_txt_file.close()
@@ -768,7 +769,7 @@ class MetaData(object):
         for key, value in json_data.items():
             index = int(key)
             # 若模型表中下标内容与现存关联关系表中同位置内容不一致时对下标进行重映射
-            if(operator.eq(model_list[index], exist_asso_list[index][:3]) is False):
+            if (operator.eq(model_list[index], exist_asso_list[index][:3]) is False):
                 index = self.remap_index(model_list[index], exist_asso_list)
             # 前者为真实值，后者为预测值
             if exist_asso_list[index][3] in value[1]:
@@ -784,7 +785,7 @@ class MetaData(object):
                 print('predict：', end='')
                 print(exist_asso_list[index][:3], end=':')
                 print(value[1])
-                print('-'*50)
+                print('-' * 50)
         print('top_1：' + str(count))
         print('top_' + str(self.top_k) + '：' + str(top_k_count))
         print('acc：', count / len(self.model_df))
@@ -844,7 +845,7 @@ class MetaData(object):
             # 前者为真实值，后者为预测值
             if catalogue_list[index][1] in value[1]:
                 top_k_count += 1
-            else: # 当候选数据元中最大匹配度大于置信度时则认为已被匹配
+            else:  # 当候选数据元中最大匹配度大于置信度时则认为已被匹配
                 sim = self.sim_common_str(catalogue_list[index][1], value[1][0])
                 # 当相似度大于最大置信度时则认为相似
                 if sim >= max_confid:
@@ -881,8 +882,9 @@ class MetaData(object):
     def catalogue_evaluate_new(self, json_path=os.path.join(result_dir, 'catalogue\\multi\\catalogue_meta_multi.json')):
 
         # 现存目录表信息项与数据元的关联关系
-        catalogue_exist_asso_df = pd.read_excel(os.path.join(data_dir, '某区目录-信息项数据2.0.xlsx'), encoding='utf-8', sheet_name='某区目录信息项')
-        catalogue_exist_asso_df = catalogue_exist_asso_df.iloc[:,[0,1,4,2]]
+        catalogue_exist_asso_df = pd.read_excel(os.path.join(data_dir, '某区目录-信息项数据2.0.xlsx'), encoding='utf-8',
+                                                sheet_name='某区目录信息项')
+        catalogue_exist_asso_df = catalogue_exist_asso_df.iloc[:, [0, 1, 4, 2]]
         catalogue_exist_asso_list = catalogue_exist_asso_df.values.tolist()
 
         # 纯目录表信息项
@@ -911,11 +913,11 @@ class MetaData(object):
 
             # 前者为真实值，后者为预测值
             if (catalogue_exist_asso_list[index][3] == catalogue_exist_asso_list[index][3]) and \
-                catalogue_exist_asso_list[index][3] in value[1]:
+                    catalogue_exist_asso_list[index][3] in value[1]:
                 top_k_count += 1
 
             if (catalogue_exist_asso_list[index][3] == catalogue_exist_asso_list[index][3]) and \
-                catalogue_exist_asso_list[index][3] == value[1][0]:
+                    catalogue_exist_asso_list[index][3] == value[1][0]:
                 count += 1
             else:
                 if catalogue_exist_asso_list[index][3] == catalogue_exist_asso_list[index][3]:
@@ -937,17 +939,21 @@ class MetaData(object):
         print('top_' + str(self.top_k) + '_acc：', top_k_count / catalogue_len)
 
 
-
-
 # TODO:词向量匹配算法
 def vector_sim(str1, str2):
-    sim = 0
+    segment1 = jieba.lcut(str1)
+    s1 = [word_avg(model, segment1)]
+    x1 = torch.Tensor(s1).to(device)
+    segment2 = jieba.lcut(str2)
+    s2 = [word_avg(model, segment2)]
+    x2 = torch.Tensor(s2).to(device)
+    sim = tensor_module(x1, x2).numpy().tolist()[0][0]
     return sim
-
 
 
 config = Config()
 init_flag = False
+
 
 @csrf_exempt
 @api_view(http_method_names=['post'])  # 只允许post
@@ -1001,7 +1007,6 @@ def add_metadata(request):
     # return HttpResponse("文件路径初始化成功")
 
 
-
 @csrf_exempt
 @api_view(http_method_names=['post'])  # 只允许post
 @permission_classes((permissions.AllowAny,))
@@ -1014,9 +1019,9 @@ def single_match(request):
     global re
     parameter = request.data
     type = parameter['type']
-    if type == 'model':     # 模型表与数据元的关联
+    if type == 'model':  # 模型表与数据元的关联
         re = metadata.model()
-    elif type == 'catalogue':   # 目录表信息项与数据元的关联
+    elif type == 'catalogue':  # 目录表信息项与数据元的关联
         re = metadata.catalogue()
     else:
         return Response({"code": 200, "msg": "类型错误", "data": ""})
@@ -1024,11 +1029,9 @@ def single_match(request):
     return Response({"code": 200, "msg": "关联成功", "data": re})
 
 
-
 if __name__ == '__main__':
     # 初始化配置
     metadata = MetaData(config)
-
 
     # ---------------------------模型表与数据元字段自动关联--------------------------
     metadata.model()
@@ -1036,4 +1039,3 @@ if __name__ == '__main__':
     # ---------------------------目录表信息项与数据元字段自动关联--------------------------
     # metadata.catalogue()
     # metadata.catalogue_evaluate_new()
-
