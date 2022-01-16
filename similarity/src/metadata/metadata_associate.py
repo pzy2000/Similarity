@@ -30,8 +30,8 @@ import threading
 warnings.filterwarnings("ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
 
-model_data_tensor = None
-model_data_vector = []
+metadata_tensor = None
+metadata_vector = []
 
 bert_data = {}
 query_data = {}
@@ -71,6 +71,16 @@ class MetaData(object):
         self.metadata_df = pd.read_csv(self.metadata_load_path, encoding='utf-8')
         # 去除重复行
         self.metadata_df = self.metadata_df.drop_duplicates()
+        # 对字段进行词向量预处理
+        global metadata_tensor
+        global metadata_vector
+        metadata_list = self.metadata_df.values.tolist()
+        # print(metadata_list)
+        for metadata in metadata_list:
+            segment2_1 = jieba.lcut(metadata[0], cut_all=True, HMM=True)
+            s2 = word_avg(model, segment2_1)
+            metadata_vector.append(s2)
+        metadata_tensor = torch.Tensor(metadata_vector).to(device)
         print('数据元数据量：' + str(len(self.metadata_df)))
         print('-' * 25 + '数据元加载完成' + '-' * 25)
 
@@ -97,15 +107,6 @@ class MetaData(object):
         '''
         # 加载模型表数据
         self.model_df = pd.read_csv(self.model_path, encoding='utf-8')
-        # 对字段进行词向量预处理
-        global model_data_tensor
-        global model_data_vector
-        model_list = self.model_df.values.tolist()
-        for data in model_list:
-            segment2_1 = jieba.lcut(data[2], cut_all=True, HMM=True)
-            s2 = word_avg(model, segment2_1)
-            model_data_vector.append(s2)
-        model_data_tensor = torch.Tensor(model_data_vector).to(device)
         print('模型表数据量：' + str(len(self.model_df)))
         print('-' * 25 + '模型表数据加载完成' + '-' * 25)
 
@@ -272,12 +273,9 @@ class MetaData(object):
         # self.model_save_asso(model_multimeta_path, model_asso_path)
 
     def catalogue_associate(self, metadata, catalogue, isBert=False,
-                            meta_catalogue_path=os.path.join(result_dir,
-                                                             'catalogue_table\\multi\\meta_catalogue_multi.json'),
-                            catalogue_meta_path=os.path.join(result_dir,
-                                                             'catalogue_table\\multi\\catalogue_meta_multi.json'),
-                            catalogue_multimeta_path=os.path.join(result_dir,
-                                                                  'catalogue_table\\multi\\catalogue_meta_top5_multi.json'),
+                            meta_catalogue_path=os.path.join(result_dir,'catalogue_table\\multi\\meta_catalogue_multi.json'),
+                            catalogue_meta_path=os.path.join(result_dir,'catalogue_table\\multi\\catalogue_meta_multi.json'),
+                            catalogue_multimeta_path=os.path.join(result_dir,'catalogue_table\\multi\\catalogue_meta_top5_multi.json'),
                             catalogue_asso_path=os.path.join(result_dir, 'catalogue_table\\multi\\catalogue_asso.txt')):
 
         metadata_list = []
@@ -384,17 +382,21 @@ class MetaData(object):
         meta_catalogue_path = self.config.catalogue_save_path + self.config.meta_catalogue_name
         catalogue_multimeta_path = self.config.catalogue_save_path + self.config.catalogue_multimeta_name
         catalogue_asso_path = self.config.catalogue_save_path + self.config.catalogue_asso_name
-        self.catalogue_associate(self.metadata_df, self.catalogue_df, isBert=False,
-                                 catalogue_meta_path=catalogue_meta_path,
-                                 meta_catalogue_path=meta_catalogue_path,
-                                 catalogue_multimeta_path=catalogue_multimeta_path,
-                                 catalogue_asso_path=catalogue_asso_path)
+        # self.catalogue_associate(self.metadata_df, self.catalogue_df, isBert=False,
+        #                          catalogue_meta_path=catalogue_meta_path,
+        #                          meta_catalogue_path=meta_catalogue_path,
+        #                          catalogue_multimeta_path=catalogue_multimeta_path,
+        #                          catalogue_asso_path=catalogue_asso_path)
+
+        self.integrate_sim(self.metadata_df, self.catalogue_df, 1, self.asso_catalogue_multimeta)
 
         # 数据元与目录表信息项关联关系的评估
         # metadata.catalogue_evaluate(min_confid=self.config.min_confid, max_confid=self.config.max_confid,
         #                             json_path=catalogue_multimeta_path)
 
-        self.catalogue_evaluate_new(json_path=catalogue_multimeta_path)
+        # self.catalogue_evaluate_new(json_path=catalogue_multimeta_path)
+
+        self.catalogue_evaluate_integrate()
         return self.asso_catalogue_multimeta
 
     def build_metadata_map(self, index, item_list,
@@ -547,11 +549,9 @@ class MetaData(object):
         # 词向量匹配
         # 字符串没有匹配项，则会进行向量相似度匹配，筛选前k个
         segment1_1 = jieba.lcut(item_list[key_index], cut_all=True, HMM=True)
-        s1 = [word_avg(model, segment1_1)]
-        x = torch.Tensor(s1).to(device)
-        # print(catalogue_data_tensor)
-        final_value = tensor_module(model_data_tensor, x)
-
+        model_data_vector = [word_avg(model, segment1_1)]
+        model_data_tensor = torch.Tensor(model_data_vector).to(device)
+        final_value = tensor_module(metadata_tensor, model_data_tensor)
         # 输出排序并输出top-k的输出
         value, _index = torch.topk(final_value, self.top_k, dim=0, largest=True, sorted=True)
         sim_index = _index.numpy().tolist()
@@ -559,7 +559,6 @@ class MetaData(object):
         for k in sim_index:
             tmp.append(metadata_list[k[0]])
             res_metadata_list.append(metadata_list[k[0]])
-        # res_metadata_list.append(tmp)
         # 构建模型表字段与数据元的映射
         self.build_metadata_map(index, item_list, res_metadata_list,
                                 item_multimeta_dic)
@@ -669,7 +668,7 @@ class MetaData(object):
                 s1 = [word_avg(model, segment1_1)]
                 x = torch.Tensor(s1).to(device)
                 # print(catalogue_data_tensor)
-                final_value = tensor_module(model_data_tensor, x)
+                final_value = tensor_module(metadata_tensor, x)
 
                 # 输出排序并输出top-k的输出
                 value, index = torch.topk(final_value, self.top_k, dim=0, largest=True, sorted=True)
@@ -794,7 +793,7 @@ class MetaData(object):
     def model_evaluate_new(self):
         exist_asso_list = self.exist_asso_df.values.tolist()
         model_list = self.model_df.values.tolist()
-        print(self.asso_model_multimeta)
+        # print(self.asso_model_multimeta)
         # top_1数据元的命中个数
         count = 0
         # 前k个数据元中命中个数
@@ -938,6 +937,63 @@ class MetaData(object):
         print('acc：', count / catalogue_len)
         print('top_' + str(self.top_k) + '_acc：', top_k_count / catalogue_len)
 
+    def catalogue_evaluate_integrate(self):
+        # 现存目录表信息项与数据元的关联关系
+        catalogue_exist_asso_df = pd.read_excel(os.path.join(data_dir, '某区目录-信息项数据2.0.xlsx'), encoding='utf-8',
+                                                sheet_name='某区目录信息项')
+        catalogue_exist_asso_df = catalogue_exist_asso_df.iloc[:, [0, 1, 4, 2]]
+        catalogue_exist_asso_list = catalogue_exist_asso_df.values.tolist()
+
+        print(self.asso_catalogue_multimeta)
+
+        # 纯目录表信息项
+        catalogue_list = self.catalogue_df.values.tolist()
+        catalogue_len = len(self.catalogue_df)
+        origin_catalogue_len = catalogue_len
+
+        # top_1数据元的命中个数
+        count = 0
+        # 前k个数据元中命中个数
+        top_k_count = 0
+        # 加载目录表信息项与数据元关联json文件
+        # {index1:[[catalogue_name1,word1,ins1],meta1],index2:[[catalogue_name2,word2,ins2],meta2]}
+
+        for key, value in self.asso_catalogue_multimeta.items():
+            index = int(key)
+
+            # 若目录表中下标内容与现存关联关系表中同位置内容不一致时对下标进行重映射
+            if (operator.eq(catalogue_list[index], catalogue_exist_asso_list[index][:3]) is False):
+                index = self.remap_index(catalogue_list[index], catalogue_exist_asso_list)
+
+            if catalogue_exist_asso_list[index][3] != catalogue_exist_asso_list[index][3]:
+                catalogue_len -= 1
+
+            # 前者为真实值，后者为预测值
+            if (catalogue_exist_asso_list[index][3] == catalogue_exist_asso_list[index][3]) and \
+                    catalogue_exist_asso_list[index][3] in value[1]:
+                top_k_count += 1
+
+            if (catalogue_exist_asso_list[index][3] == catalogue_exist_asso_list[index][3]) and \
+                    catalogue_exist_asso_list[index][3] == value[1][0]:
+                count += 1
+            else:
+                if catalogue_exist_asso_list[index][3] == catalogue_exist_asso_list[index][3]:
+                    print('true：', end='')
+                    print(catalogue_exist_asso_list[index][:3], end=':')
+                    print(catalogue_exist_asso_list[index][3])
+
+                    print('predict：', end='')
+                    print(catalogue_exist_asso_list[index][:3], end=':')
+                    print(value[1])
+                    print('-' * 50)
+
+        print('origin eliminate：' + str(origin_catalogue_len))
+        print('after eliminate：' + str(catalogue_len))
+
+        print('top_1：' + str(count))
+        print('top_' + str(self.top_k) + '：' + str(top_k_count))
+        print('acc：', count / catalogue_len)
+        print('top_' + str(self.top_k) + '_acc：', top_k_count / catalogue_len)
 
 # TODO:词向量匹配算法
 def vector_sim(str1, str2):
@@ -948,7 +1004,10 @@ def vector_sim(str1, str2):
     s2 = [word_avg(model, segment2)]
     x2 = torch.Tensor(s2).to(device)
     sim = tensor_module(x1, x2).numpy().tolist()[0][0]
+    # print(tensor_module(x1, x2))
+    # print(tensor_module(x1, x2).numpy().tolist())
     return sim
+
 
 
 config = Config()
@@ -1030,12 +1089,15 @@ def single_match(request):
 
 
 if __name__ == '__main__':
+
+    # print(vector_sim('行政区划', '行政区划名称'))
+
     # 初始化配置
     metadata = MetaData(config)
 
     # ---------------------------模型表与数据元字段自动关联--------------------------
-    metadata.model()
+    # metadata.model()
 
     # ---------------------------目录表信息项与数据元字段自动关联--------------------------
-    # metadata.catalogue()
+    metadata.catalogue()
     # metadata.catalogue_evaluate_new()
