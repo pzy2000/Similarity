@@ -29,11 +29,11 @@ class Config():
         # 模型表单表路径
         self.model_path = os.path.join(data_dir, 'single_model.csv')
         # 模型表多表路径
-        # self.model_path = os.path.join(data_path, 'multi_model.csv')
+        # self.model_path = os.path.join(data_dir, 'multi_model.csv')
         # 目录表单表路径
         self.catalogue_path = os.path.join(data_dir, 'single_catalogue.csv')
         # 目录表多表路径
-        # self.catalogue_path = os.path.join(data_path, 'multi_catalogue.csv')
+        # self.catalogue_path = os.path.join(data_dir, 'multi_catalogue.csv')
         # 已存在关联关系路径
         self.exist_asso_path = os.path.join(data_dir, '人口库建设过程资料v0.1.xlsx')
         # 前k个候选数据元

@@ -360,7 +360,7 @@ class MetaData(object):
 
     def model(self):
         # 加载数据元、模型表以及已存在的关联关系
-        # self.model_preprocess()
+        self.model_preprocess()
         # 数据元与模型表的关联
         model_meta_path = self.config.model_save_path + self.config.model_meta_name
         meta_model_path = self.config.model_save_path + self.config.meta_model_name
@@ -378,7 +378,7 @@ class MetaData(object):
 
     def catalogue(self):
         # 加载数据元、模型表以及已存在的关联关系
-        # self.catalogue_preprocess()
+        self.catalogue_preprocess()
         # 数据元与目录表信息项的关联
         catalogue_meta_path = self.config.catalogue_save_path + self.config.catalogue_meta_name
         meta_catalogue_path = self.config.catalogue_save_path + self.config.meta_catalogue_name
@@ -1049,9 +1049,9 @@ def init_data_path(request):
     if config.top_k <= 0 or config.top_k > 10:
         return Response({"code": 200, "msg": "候选项超出取值范围[1,10]", "data": ""})
 
-    metadata = MetaData(config)
-    metadata.model_preprocess()
-    metadata.catalogue_preprocess()
+    # metadata = MetaData(config)
+    # metadata.model_preprocess()
+    # metadata.catalogue_preprocess()
     init_flag = True
     return Response({"code": 200, "msg": "文件路径初始化成功", "data": ""})
     # return HttpResponse("文件路径初始化成功")
@@ -1107,9 +1107,13 @@ if __name__ == '__main__':
     metadata = MetaData(config)
 
     # ---------------------------模型表与数据元字段自动关联--------------------------
+    # time_start = time.time()
     metadata.model()
-    # print('-' * 50)
-    # time.sleep(4)
+    # time_end = time.time()
+    # print('耗时：' + str(time_end-time_start))
     # ---------------------------目录表信息项与数据元字段自动关联--------------------------
+    # time_start = time.time()
     # metadata.catalogue()
+    # time_end = time.time()
+    # print('耗时：' + str(time_end - time_start))
     # metadata.catalogue_evaluate_new()
