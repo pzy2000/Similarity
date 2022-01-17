@@ -74,6 +74,8 @@ class MetaData(object):
         # 对字段进行词向量预处理
         global metadata_tensor
         global metadata_vector
+        metadata_tensor = None
+        metadata_vector = []
         metadata_list = self.metadata_df.values.tolist()
         # print(metadata_list)
         for metadata in metadata_list:
@@ -358,7 +360,7 @@ class MetaData(object):
 
     def model(self):
         # 加载数据元、模型表以及已存在的关联关系
-        self.model_preprocess()
+        # self.model_preprocess()
         # 数据元与模型表的关联
         model_meta_path = self.config.model_save_path + self.config.model_meta_name
         meta_model_path = self.config.model_save_path + self.config.meta_model_name
@@ -371,12 +373,12 @@ class MetaData(object):
 
         # 数据元与模型表关联关系的评估
         # self.model_evaluate(model_multimeta_path)
-        self.model_evaluate_new()
+        # self.model_evaluate_new()
         return self.asso_model_multimeta
 
     def catalogue(self):
         # 加载数据元、模型表以及已存在的关联关系
-        self.catalogue_preprocess()
+        # self.catalogue_preprocess()
         # 数据元与目录表信息项的关联
         catalogue_meta_path = self.config.catalogue_save_path + self.config.catalogue_meta_name
         meta_catalogue_path = self.config.catalogue_save_path + self.config.meta_catalogue_name
@@ -396,7 +398,7 @@ class MetaData(object):
 
         # self.catalogue_evaluate_new(json_path=catalogue_multimeta_path)
 
-        self.catalogue_evaluate_integrate()
+        # self.catalogue_evaluate_integrate()
         return self.asso_catalogue_multimeta
 
     def build_metadata_map(self, index, item_list,
@@ -550,14 +552,15 @@ class MetaData(object):
         # 词向量匹配
         # 字符串没有匹配项，则会进行向量相似度匹配，筛选前k个
         segment1_1 = jieba.lcut(item_list[key_index], cut_all=True, HMM=True)
-        model_data_vector = [word_avg(model, segment1_1)]
-        model_data_tensor = torch.Tensor(model_data_vector).to(device)
-        final_value = tensor_module(metadata_tensor, model_data_tensor)
+        item_data_vector = [word_avg(model, segment1_1)]
+        item_data_tensor = torch.Tensor(item_data_vector).to(device)
+        final_value = tensor_module(metadata_tensor, item_data_tensor)
         # 输出排序并输出top-k的输出
         value, _index = torch.topk(final_value, self.top_k, dim=0, largest=True, sorted=True)
         sim_index = _index.numpy().tolist()
         tmp = []
         for k in sim_index:
+            # print(k[0])
             tmp.append(metadata_list[k[0]])
             res_metadata_list.append(metadata_list[k[0]])
         # 构建模型表字段与数据元的映射
@@ -945,7 +948,7 @@ class MetaData(object):
         catalogue_exist_asso_df = catalogue_exist_asso_df.iloc[:, [0, 1, 4, 2]]
         catalogue_exist_asso_list = catalogue_exist_asso_df.values.tolist()
 
-        print(self.asso_catalogue_multimeta)
+        # print(self.asso_catalogue_multimeta)
 
         # 纯目录表信息项
         catalogue_list = self.catalogue_df.values.tolist()
@@ -1021,10 +1024,14 @@ init_flag = False
 def init_data_path(request):
     global init_flag
     global config
+    global metadata_tensor
+    global metadata_vector
+    metadata_tensor = None
+    metadata_vector = []
+
     parameter = request.data
     # 数据元路径
     config.metadata_path = parameter['metadata_path']
-    print('测试：' + config.metadata_path)
     if os.path.exists(config.metadata_path) == False:
         return Response({"code": 200, "msg": "数据元路径不存在", "data": ""})
     # 模型表路径
@@ -1042,6 +1049,9 @@ def init_data_path(request):
     if config.top_k <= 0 or config.top_k > 10:
         return Response({"code": 200, "msg": "候选项超出取值范围[1,10]", "data": ""})
 
+    metadata = MetaData(config)
+    metadata.model_preprocess()
+    metadata.catalogue_preprocess()
     init_flag = True
     return Response({"code": 200, "msg": "文件路径初始化成功", "data": ""})
     # return HttpResponse("文件路径初始化成功")
@@ -1097,8 +1107,9 @@ if __name__ == '__main__':
     metadata = MetaData(config)
 
     # ---------------------------模型表与数据元字段自动关联--------------------------
-    # metadata.model()
-
+    metadata.model()
+    # print('-' * 50)
+    # time.sleep(4)
     # ---------------------------目录表信息项与数据元字段自动关联--------------------------
-    metadata.catalogue()
+    # metadata.catalogue()
     # metadata.catalogue_evaluate_new()
