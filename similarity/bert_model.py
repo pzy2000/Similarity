@@ -11,6 +11,8 @@ from similarity.bert_src.run_classifier import InputFeatures, InputExample, Data
 from similarity import bert_src
 import pandas as pd
 import os
+from django.http import JsonResponse
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'demo.settings')
 import  multiprocessing
 from django.http import HttpResponse
@@ -109,8 +111,8 @@ def add_model_data(request):
         df_test, df_train = df.iloc[:cut_idx], df.iloc[cut_idx:]
         df_test.to_csv(os.path.join(file_path, 'data/test.csv'), index=False)
         df_train.to_csv(os.path.join(file_path, 'data/train.csv'), index=False)
-        return Response({"code": 200, "msg": "上传文件成功！", "data": ""})
-    return Response({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
+        return JsonResponse({"code": 200, "msg": "上传文件成功！", "data": ""})
+    return JsonResponse({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
 
 # 获取模型参数
 @csrf_exempt
@@ -134,9 +136,8 @@ def add_corpus(request):
         for files in myFile.chunks():
             f.write(files)
         f.close()
-        return Response({"code": 200, "msg": "上传文件成功！", "data": ""})
-    return Response({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
-
+        return JsonResponse({"code": 200, "msg": "上传文件成功！", "data": ""})
+    return JsonResponse({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
 
 # 进行预训练
 @csrf_exempt
