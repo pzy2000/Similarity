@@ -3,6 +3,13 @@ import collections
 from queue import Queue
 from threading import Thread
 import tensorflow as tf
+import sys
+import os
+curPath = os.path.abspath(os.path.dirname(__file__))
+print(curPath)
+rootPath = os.path.split(curPath)[0]
+rootPath = os.path.split(rootPath)[0]
+sys.path.append(rootPath)
 import similarity.bert_src.args
 import similarity.bert_src.optimization
 import similarity.bert_src.tokenization
