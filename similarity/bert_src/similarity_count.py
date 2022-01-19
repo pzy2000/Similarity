@@ -6,7 +6,7 @@ import tensorflow as tf
 import sys
 import os
 curPath = os.path.abspath(os.path.dirname(__file__))
-print(curPath)
+# print(curPath)
 rootPath = os.path.split(curPath)[0]
 rootPath = os.path.split(rootPath)[0]
 sys.path.append(rootPath)
@@ -214,7 +214,6 @@ class BertSim():
 
         from tensorflow.python.estimator.estimator import Estimator
         from tensorflow.python.estimator.run_config import RunConfig
-
         bert_config = similarity.bert_src.modeling.BertConfig.from_json_file(similarity.bert_src.args.config_name)
         label_list = self.processor.get_labels()
         train_examples = self.processor.get_train_examples(similarity.bert_src.args.data_dir)

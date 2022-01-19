@@ -3,9 +3,9 @@ import pathlib
 import os
 
 root_path = str(pathlib.Path(os.path.abspath(__file__)).parent.parent.parent.parent)  # 路径为 E:\PythonProject\demo
-data_dir = os.path.join(root_path, 'similarity\\data\\')
-result_dir = os.path.join(root_path, 'similarity\\result\\')
-model_dir = os.path.join(root_path, 'similarity\\model\\')
+data_dir = os.path.join(root_path, 'similarity/data/')
+result_dir = os.path.join(root_path, 'similarity/result/')
+model_dir = os.path.join(root_path, 'similarity/model/')
 basedir2 = str(pathlib.Path(os.path.abspath(__file__)).parent.parent)  # 路径为 E:\PythonProject\demo\similarity\src
 
 # print(root_path)
