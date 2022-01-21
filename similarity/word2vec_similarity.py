@@ -71,6 +71,12 @@ def init_model_vector(request):
     global catalogue_data
     global catalogue_data_vector
     global catalogue_data_tensor
+    global catalogue_data_path
+    parameter = request.data
+    # 目录表路径
+    catalogue_data_path = parameter['catalogue_path']
+    if not os.path.exists(catalogue_data_path):
+        return Response({"code": 404, "msg": "目录表路径不存在", "data": ""})
     process = 0
     # 重新加载模型
     model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
