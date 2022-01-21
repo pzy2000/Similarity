@@ -1,4 +1,5 @@
 # coding=utf-8
+import json
 import os
 from concurrent.futures import ThreadPoolExecutor
 
@@ -8,7 +9,7 @@ import numpy as np
 import tensorflow as tf
 import torch
 import xlrd
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
@@ -99,25 +100,25 @@ def multiple_match(request):
     source_data = parameter['data']
     k = parameter['k']
     if len(catalogue_data) == 0:
-        return HttpResponse("模型和向量未初始化")
-    res = []
+        return Response({"code": 404, "msg": "模型和向量未初始化！", "data": ''})
+    data_link = []
     for data in source_data:
         # 字符串匹配
         tmp = string_matching(demand_data=data, k=k)
         if len(tmp) != 0:
-            res.append(tmp)
+            data_link.append(tmp)
             continue
         # 查看BERT缓存
         tmp = find_data(demand_data=data, k=k)
         if len(tmp) != 0:
-            res.append(tmp)
+            data_link.append(tmp)
             continue
 
         # 查看查询缓存
         if data in query_data.keys():
             tmp = query_data.get(data)
             if len(tmp) == k:
-                res.append(tmp)
+                data_link.append(tmp)
                 continue
 
         # 缓存清理FIFO
@@ -127,7 +128,7 @@ def multiple_match(request):
             query_data.clear()
         # 词向量匹配
         tmp = vector_matching(demand_data=data, k=k)
-        res.append(tmp)
+        data_link.append(tmp)
         query_data[data] = tmp
 
         # 缓存中不存在, 后台线程缓存
@@ -135,7 +136,18 @@ def multiple_match(request):
         # th.start()
         executor.submit(save_data, data, k)
 
-    return Response({"code": 200, "msg": "查询成功！", "data": res})
+    res = {}
+    single_res = []
+    for i in range(len(data_link)):
+        single_data_link = data_link[i]
+        for d in single_data_link:
+            tmp = d.split(' ')
+            single_res.append({'departmentName': tmp[0], 'catalogName': tmp[1], 'infoItemName': tmp[2],
+                               'departmentID': tmp[3], 'catalogID': tmp[4]})
+        res[source_data[i]] = single_res
+        single_res = []
+
+    return Response({"code": 200, "msg": "查询成功！", "data": [[res]]})
 
 
 def string_matching(demand_data, k):
@@ -202,7 +214,8 @@ def prepare_catalogue_data(path):
     sh = wb.sheet_by_name('信息资源导入模板')
     row_number = sh.nrows
     for i in range(2, row_number):
-        catalogue_data.append(sh.cell(i, 0).value + ' ' + sh.cell(i, 3).value + ' ' + sh.cell(i, 11).value)
+        catalogue_data.append(sh.cell(i, 0).value + ' ' + sh.cell(i, 3).value + ' ' + sh.cell(i, 11).value + ' ' +
+                              sh.cell(i, 6).value + ' ' + sh.cell(i, 15).value)
 
 
 def word_avg(word_model, words):  # 对句子中的每个词的词向量简单做平均 作为句子的向量表示
