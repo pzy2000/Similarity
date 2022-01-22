@@ -4,14 +4,21 @@ from io import StringIO
 from queue import Queue
 from threading import Thread
 import tensorflow as tf
+import  sys
+import os
+curPath = os.path.abspath(os.path.dirname(__file__))
+# print(curPath)
+rootPath = os.path.split(curPath)[0]
+# rootPath = os.path.split(rootPath)[0]
+sys.path.append(rootPath)
 import similarity.bert_src.optimization
 import similarity.bert_src.tokenization
 import similarity.bert_src.modeling
 from similarity.bert_src.run_classifier import InputFeatures, InputExample, DataProcessor, create_model, convert_examples_to_features
 from similarity import bert_src
 import pandas as pd
-import os
 from django.http import JsonResponse
+import argparse
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'demo.settings')
 import  multiprocessing
@@ -29,7 +36,7 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.WARN)
 file_path = os.path.dirname(__file__)
 
 
-#模型目录
+#初始模型目录
 args_model_dir = os.path.join(file_path, 'albert_tiny_489k/')
 
 #config文件
@@ -59,9 +66,9 @@ args_layer_indexes = [-2]
 args_max_seq_len = 128
 
 # graph名字
-args_graph_file = os.path.join(file_path, 'albert_lcqmc_checkpoints/graph')
+args_graph_file = os.path.join(file_path, 'newmodel/graph')
 # 初始模型
-args_init_checkpoint = os.path.join(file_path, 'albert_tiny_489k/albert_model.ckpt')
+args_init_checkpoint = os.path.join(file_path, 'newmodel/model.ckpt')
 
 args_do_train = False
 
@@ -260,6 +267,47 @@ def train_bert():
     do_train = False
     do_retrain = False
     args_do_train = False
+
+def train_bert_cmd(batch_size,learningrate,seqlen,epochs):
+    global args_num_train_epochs
+    global args_batch_size
+    # gpu使用率
+    global args_learning_rate
+    global args_gpu_memory_fraction
+    global args_max_seq_len
+    if epochs !=None:
+        args_max_seq_len=epochs
+    if batch_size !=None:
+        args_batch_size=batch_size
+    if learningrate !=None:
+        args_learning_rate=learningrate
+    if seqlen != None:
+        args_max_seq_len=seqlen
+    df = pd.read_csv(os.path.join(file_path, 'data/data.csv'), encoding='utf-8')
+    # df.drop_duplicates(keep='first', inplace=True)  # 去重，只保留第一次出现的样本
+    df = df.sample(frac=1.0)  # 全部打乱
+    cut_idx = int(round(0.1 * df.shape[0]))
+    df_test, df_train = df.iloc[:cut_idx], df.iloc[cut_idx:]
+    df_test.to_csv(os.path.join(file_path, 'data/test.csv'), index=False)
+    df_train.to_csv(os.path.join(file_path, 'data/train.csv'), index=False)
+    print("训练开始")
+    sim = BertSim()
+    global do_train
+    global do_retrain
+    global args_do_train
+    args_do_train = True
+    sim.set_mode(tf.estimator.ModeKeys.TRAIN)
+    try:
+        sim.train()
+    except ValueError:
+        do_train = False
+        do_retrain = False
+        args_do_train = False
+        return
+    do_train = False
+    do_retrain = False
+    args_do_train = False
+    print("训练结束")
 
 class SimProcessor(DataProcessor):
     def get_train_examples(self, data_dir):
@@ -924,15 +972,20 @@ def input_fn_builder(bertSim,sentences):
 
 
 if __name__ == '__main__':
-    sim = BertSim()
-    if args_do_train:
-        sim.set_mode(tf.estimator.ModeKeys.TRAIN)
-        sim.train()
-        sim.set_mode(tf.estimator.ModeKeys.EVAL)
-        sim.eval()
-    if args_do_predict:
-        sim.set_mode(tf.estimator.ModeKeys.PREDICT)
-        sentence1 = '身份证号'
-        sentence2 = '身份证id'
-        predict = sim.predict(sentence1, sentence2)
-        print(predict[0][1])
+    parser = argparse.ArgumentParser("you should add those parameter")
+    parser.add_argument('-d', dest='d', type=str, help='Operations on the model')
+    parser.add_argument('-batch', dest='batch_size', type=int, help='The batch size for the model')
+    parser.add_argument('-learningrate', dest='learnrate', type=int, help='The learning rate in the model')
+    parser.add_argument('-seqlen', dest='seqlen', type=int, help='Max sequence length of the model')
+    parser.add_argument('-epochs', dest='epochs', type=int, help='the number of the epoch for model trainning ')
+    args = parser.parse_args()
+    print(args.batch_size,args.learnrate,args.seqlen,args.epochs)
+    if args.d:
+        if args.d == 'train':
+            train_bert_cmd(args.batch_size,args.learnrate,args.seqlen,args.epochs)
+        elif args.d == 'retrain':
+            train_bert_cmd(args.batch_size,args.learnrate,args.seqlen,args.epochs)
+        else:
+            print('参数错误')
+    else:
+        print("缺少参数")
