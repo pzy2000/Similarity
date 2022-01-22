@@ -1,5 +1,4 @@
 # coding=utf-8
-import json
 import os
 from concurrent.futures import ThreadPoolExecutor
 
@@ -9,15 +8,18 @@ import numpy as np
 import tensorflow as tf
 import torch
 import xlrd
-from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
 from similarity.bert_src.similarity_count import BertSim
-from .vector_model import dim, model, model_path
 
+# 默认模型
+model_dir = os.getcwd() + '/similarity/model/'
+model_path = model_dir + 'current_model.bin'
+model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
+dim = len(model.vectors[0])
 catalogue_data_path = os.getcwd() + '/similarity/data/政务数据目录编制数据.xlsx'
 bert_sim = BertSim()
 bert_sim.set_mode(tf.estimator.ModeKeys.PREDICT)
@@ -91,8 +93,9 @@ def init_model_vector(request):
         process = 0.75 + i / (catalogue_data_number * 4)
         data = catalogue_data[i]
         item = data.split(' ')
-        segment2_1 = jieba.lcut(item[0] + item[1] + item[2], cut_all=True, HMM=True)
-        s2 = word_avg(model, segment2_1)
+        segment2_1 = jieba.lcut(item[0] + item[1], cut_all=True, HMM=True)
+        segment2_2 = jieba.lcut(item[2], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1, segment2_2)
         catalogue_data_vector.append(s2)
     catalogue_data_tensor = torch.Tensor(catalogue_data_vector).to(device)
     return Response({"code": 200, "msg": "词模型初始化完成；词向量缓存完成！", "data": ""})
@@ -165,7 +168,7 @@ def multiple_match(request):
 def string_matching(demand_data, k):
     res = []
     for data in catalogue_data:
-        if demand_data in data:
+        if demand_data.split(' ')[2] in data.split(' ')[2]:
             res.append(data)
             if len(res) == k:
                 break
@@ -205,8 +208,10 @@ def save_data(demand_data, k):
 def vector_matching(demand_data, k):
     # 字符串没有匹配项，则会进行向量相似度匹配，筛选前k个
     # sim_words = {}
-    segment1_1 = jieba.lcut(demand_data, cut_all=True, HMM=True)
-    s1 = [word_avg(model, segment1_1)]
+    item = demand_data.split(' ')
+    segment1_1 = jieba.lcut(item[0] + item[1], cut_all=True, HMM=True)
+    segment1_2 = jieba.lcut(item[2], cut_all=True, HMM=True)
+    s1 = [word_avg(model, segment1_1, segment1_2)]
     x = torch.Tensor(s1).to(device)
     final_value = tensor_module(catalogue_data_tensor, x)
 
@@ -230,12 +235,19 @@ def prepare_catalogue_data(path):
                               sh.cell(i, 6).value + ' ' + sh.cell(i, 15).value)
 
 
-def word_avg(word_model, words):  # 对句子中的每个词的词向量简单做平均 作为句子的向量表示
+def word_avg(word_model, words, last_words):  # 对句子中的每个词的词向量简单做平均 作为句子的向量表示
     vectors = []
     for word in words:
         try:
             vector = word_model.get_vector(word)
             vectors.append(vector)
+        except KeyError:
+            vectors.append([1e-8] * dim)
+            continue
+    for word in last_words:
+        try:
+            vector = word_model.get_vector(word)
+            vectors.append(vector * 3)
         except KeyError:
             vectors.append([1e-8] * dim)
             continue

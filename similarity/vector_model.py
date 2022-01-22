@@ -1,80 +1,30 @@
 # coding=utf-8
+import argparse
 import multiprocessing
-import os
 
 import gensim
 import jieba
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from gensim.models.word2vec import Word2Vec, LineSentence
-from rest_framework import permissions
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from .tools import model_dir
 
 window = 5
 min_count = 1
 dim = 128
+model_dir = './model/'
+origin_corpus_path = './corpus/gov.txt'
+seg_corpus_path = './corpus/corpus.txt'
+more_sentences_path = './corpus/more_sentences.txt'
 
-origin_corpus_path = os.getcwd() + '/similarity/corpus/gov.txt'
-seg_corpus_path = os.getcwd() + '/similarity/corpus/corpus.txt'
-more_sentences_path = os.getcwd() + '/similarity/corpus/more_sentences.txt'
-# 默认模型
-# model_dir = os.getcwd() + '/similarity/model/'
-model_path = model_dir + 'baike_26g_news_13g_novel_229g.bin'
-model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
-
-# 配置模型参数
-@csrf_exempt
-@api_view(http_method_names=['post'])  # 只允许post
-@permission_classes((permissions.AllowAny,))
-def config_model(request):
-    global window
-    global dim
-    global min_count
-    parameter = request.data
-    window = parameter['window']
-    dim = parameter['dim']
-    min_count = parameter['min_count']
-    return Response({"code": 200, "msg": "修改成功！", "data": ""})
-
-
-# 获取模型参数
-@csrf_exempt
-@api_view(http_method_names=['get'])  # 只允许get
-@permission_classes((permissions.AllowAny,))
-def get_model_config(request):
-    return Response({"code": 200, "msg": "查看成功！", "data": {'window': window, 'min_count': min_count, 'dim': dim}})
-
-
-# 新增语料库
-@csrf_exempt
-def add_corpus(request):
-    # 上传一个语料库文件.txt
-    if request.method == 'POST':
-        myFile = request.FILES.get("corpus")
-        f = open(more_sentences_path, 'wb')
-        for files in myFile.chunks():
-            f.write(files)
-        f.close()
-        return JsonResponse({"code": 200, "msg": "上传文件成功！", "data": ""})
-    return JsonResponse({"code": 404, "msg": "请使用POST方式请求！", "data": ""})
 
 # 训练模型
-@csrf_exempt
-@api_view(http_method_names=['post'])  # 只允许post
-@permission_classes((permissions.AllowAny,))
-def train_model(request):
+def train_model(i_window, i_min_count, i_dim):
     f = open(origin_corpus_path, encoding='utf-8')
     line = f.readline()
     # stopwords = [line.strip() for line in open(r'./stopwords/cn_stopwords.txt', 'r', encoding='utf-8')]
     seg_list = []
-    count = 0
+    print("------------------------训练模型--------------------------")
     while line:
         if line != '\n' and line != '':
             segment = jieba.lcut(line, cut_all=True, HMM=True)
-            print(count)
-            count += 1
             for s in segment:
                 for i in range(0, len(s)):
                     if is_all_chinese(s[i]):
@@ -83,29 +33,30 @@ def train_model(request):
     f2 = open(seg_corpus_path, 'w', encoding='utf-8')
     for s in seg_list:
         f2.write(s + ' ')
-    tmp_model = Word2Vec(LineSentence(seg_corpus_path), window=window, min_count=min_count, vector_size=dim,
+    if not i_window:
+        i_window = window
+    if not i_min_count:
+        i_min_count = min_count
+    if not i_dim:
+        i_dim = dim
+    tmp_model = Word2Vec(LineSentence(seg_corpus_path), window=i_window, min_count=i_min_count, vector_size=i_dim,
                          workers=multiprocessing.cpu_count())
     tmp_model.save(model_dir + "word2vec.model")
     tmp_model.wv.save_word2vec_format(model_dir + "word2vec.vector", binary=True)
-    return Response({"code": 200, "msg": "模型训练完成！", "data": ""})
+    print("-----------------------训练模型结束------------------------")
 
 
 # 追加训练模型
-@csrf_exempt
-@api_view(http_method_names=['post'])  # 只允许post
-@permission_classes((permissions.AllowAny,))
-def retrain_model(request):
+def retrain_model():
     tmp_model = gensim.models.Word2Vec.load(model_dir + 'word2vec.model')
     f = open(more_sentences_path, encoding='utf-8')
     line = f.readline()
     # stopwords = [line.strip() for line in open(r'./stopwords/cn_stopwords.txt', 'r', encoding='utf-8')]
     seg_list = []
-    count = 0
+    print("-----------------------开始追加训练模型------------------------")
     while line:
         if line != '\n' and line != '':
             segment = jieba.lcut(line, cut_all=True, HMM=True)
-            print(count)
-            count += 1
             for s in segment:
                 for i in range(0, len(s)):
                     if is_all_chinese(s[i]):
@@ -116,7 +67,7 @@ def retrain_model(request):
     tmp_model.train(more_sentences, total_examples=tmp_model.corpus_count, epochs=tmp_model.epochs)
     tmp_model.save(model_dir + "word2vec.model")
     tmp_model.wv.save_word2vec_format(model_dir + "word2vec.vector", binary=True)
-    return Response({"code": 200, "msg": "模型追加训练完成！", "data": ""})
+    print("-----------------------追加训练模型结束------------------------")
 
 
 # 判断是否为中文
@@ -125,3 +76,21 @@ def is_all_chinese(strs):
         if not '\u4e00' <= _char <= '\u9fa5':
             return False
     return True
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser("you should add those parameter")
+    parser.add_argument('-d', dest='d', type=str, help='Operations on the model')
+    parser.add_argument('-window', dest='window', type=int, help='The size of window for the model')
+    parser.add_argument('-min_count', dest='min_count', type=int, help='The lowest word frequency counted in the model')
+    parser.add_argument('-dim', dest='dim', type=int, help='Vector size')
+    args = parser.parse_args()
+    if args.d:
+        if args.d == 'train':
+            train_model(window, min_count, dim)
+        elif args.d == 'retrain':
+            retrain_model()
+        else:
+            print('参数错误')
+    else:
+        print("缺少参数")
