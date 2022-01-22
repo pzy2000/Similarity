@@ -91,7 +91,7 @@ def init_model_vector(request):
         process = 0.75 + i / (catalogue_data_number * 4)
         data = catalogue_data[i]
         item = data.split(' ')
-        segment2_1 = jieba.lcut(item[2], cut_all=True, HMM=True)
+        segment2_1 = jieba.lcut(item[0] + item[1] + item[2], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         catalogue_data_vector.append(s2)
     catalogue_data_tensor = torch.Tensor(catalogue_data_vector).to(device)
@@ -103,17 +103,22 @@ def init_model_vector(request):
 @permission_classes((permissions.AllowAny,))
 def multiple_match(request):
     parameter = request.data
-    source_data = parameter['data']
+    full_data = parameter['data']
     k = parameter['k']
     if len(catalogue_data) == 0:
         return Response({"code": 404, "msg": "模型和向量未初始化！", "data": ''})
     data_link = []
+    source_data = []
+    for i in range(len(full_data)):
+        source_data.append(full_data[i]['departmentName'] + ' ' + full_data[i]['catalogName'] + ' '
+                           + full_data[i]['infoItemName'])
     for data in source_data:
         # 字符串匹配
         tmp = string_matching(demand_data=data, k=k)
         if len(tmp) != 0:
             data_link.append(tmp)
             continue
+
         # 查看BERT缓存
         tmp = find_data(demand_data=data, k=k)
         if len(tmp) != 0:
@@ -132,6 +137,7 @@ def multiple_match(request):
             bert_data.clear()
         if len(query_data.keys()) >= 10000:
             query_data.clear()
+
         # 词向量匹配
         tmp = vector_matching(demand_data=data, k=k)
         data_link.append(tmp)
@@ -150,7 +156,7 @@ def multiple_match(request):
             tmp = d.split(' ')
             single_res.append({'departmentName': tmp[0], 'catalogName': tmp[1], 'infoItemName': tmp[2],
                                'departmentID': tmp[3], 'catalogID': tmp[4]})
-        res[source_data[i]] = single_res
+        res[source_data[i].split(' ')[2]] = single_res
         single_res = []
 
     return Response({"code": 200, "msg": "查询成功！", "data": [[res]]})
@@ -159,7 +165,7 @@ def multiple_match(request):
 def string_matching(demand_data, k):
     res = []
     for data in catalogue_data:
-        if demand_data in data.split(' ')[2]:
+        if demand_data in data:
             res.append(data)
             if len(res) == k:
                 break
