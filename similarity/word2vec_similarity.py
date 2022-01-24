@@ -110,29 +110,32 @@ def multiple_match(request):
     k = parameter['k']
     if len(catalogue_data) == 0:
         return Response({"code": 404, "msg": "模型和向量未初始化！", "data": ''})
-    data_link = []
     source_data = []
     for i in range(len(full_data)):
         source_data.append(full_data[i]['departmentName'] + ' ' + full_data[i]['catalogName'] + ' '
                            + full_data[i]['infoItemName'])
-    for data in source_data:
+    result = []
+    for i in range(len(source_data)):
+        res = {}
+        data = source_data[i]
+        query_id = full_data[i]['id']
         # 字符串匹配
         tmp = string_matching(demand_data=data, k=k)
         if len(tmp) != 0:
-            data_link.append(tmp)
+            result.append(save_result(tmp, res, query_id))
             continue
 
         # 查看BERT缓存
         tmp = find_data(demand_data=data, k=k)
         if len(tmp) != 0:
-            data_link.append(tmp)
+            result.append(save_result(tmp, res, query_id))
             continue
 
         # 查看查询缓存
         if data in query_data.keys():
             tmp = query_data.get(data)
             if len(tmp) == k:
-                data_link.append(tmp)
+                result.append(save_result(tmp, res, query_id))
                 continue
 
         # 缓存清理FIFO
@@ -143,7 +146,7 @@ def multiple_match(request):
 
         # 词向量匹配
         tmp = vector_matching(demand_data=data, k=k)
-        data_link.append(tmp)
+        result.append(save_result(tmp, res, query_id))
         query_data[data] = tmp
 
         # 缓存中不存在, 后台线程缓存
@@ -151,18 +154,7 @@ def multiple_match(request):
         # th.start()
         executor.submit(save_data, data, k)
 
-    res = {}
-    single_res = []
-    for i in range(len(data_link)):
-        single_data_link = data_link[i]
-        for d in single_data_link:
-            tmp = d.split(' ')
-            single_res.append({'departmentName': tmp[0], 'catalogName': tmp[1], 'infoItemName': tmp[2],
-                               'departmentID': tmp[3], 'catalogID': tmp[4]})
-        res[source_data[i].split(' ')[2]] = single_res
-        single_res = []
-
-    return Response({"code": 200, "msg": "查询成功！", "data": [[res]]})
+    return Response({"code": 200, "msg": "查询成功！", "data": result})
 
 
 def string_matching(demand_data, k):
@@ -252,3 +244,14 @@ def word_avg(word_model, words, last_words):  # 对句子中的每个词的词�
             vectors.append([1e-8] * dim)
             continue
     return np.mean(vectors, axis=0)
+
+
+def save_result(tmp, res, query_id):
+    single_res = []
+    for d in tmp:
+        tmp = d.split(' ')
+        single_res.append({'departmentName': tmp[0], 'catalogName': tmp[1], 'infoItemName': tmp[2],
+                           'departmentID': tmp[3], 'catalogID': tmp[4]})
+    res['key'] = query_id
+    res['result'] = single_res
+    return res
