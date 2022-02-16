@@ -1,9 +1,9 @@
 from django.urls import path
 
 from . import word2vec_similarity
-from . import vector_model
 from similarity.src.metadata import metadata_associate
 from . import bert_model
+from . import recommend
 
 urlpatterns = [
     path('init_model_vector/', word2vec_similarity.init_model_vector, name='init_model_vector'),
@@ -22,5 +22,6 @@ urlpatterns = [
     path('train_bert_model/', bert_model.train_model, name='train_model'),
     path('retrain_bert_model/', bert_model.train_re_model, name='retrain_model'),
     path('pretrain_bert_model/', bert_model.do_pretrain, name='pretrain_model'),
+    path('recommend/', recommend.recommend, name='recommend')
 
 ]
