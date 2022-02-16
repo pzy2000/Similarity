@@ -93,8 +93,8 @@ def init_model_vector(request):
         process = 0.75 + i / (catalogue_data_number * 4)
         data = catalogue_data[i]
         item = data.split(' ')
-        segment2_1 = jieba.lcut(item[0] + item[1], cut_all=True, HMM=True)
-        segment2_2 = jieba.lcut(item[2], cut_all=True, HMM=True)
+        segment2_1 = jieba.lcut(item[1] + item[2], cut_all=True, HMM=True)
+        segment2_2 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1, segment2_2)
         catalogue_data_vector.append(s2)
     catalogue_data_tensor = torch.Tensor(catalogue_data_vector).to(device)
@@ -122,20 +122,25 @@ def multiple_match(request):
         # 字符串匹配
         tmp = string_matching(demand_data=data, k=k)
         if len(tmp) != 0:
-            result.append(save_result(tmp, res, query_id))
+            sim_value = [1] * len(tmp)
+            result.append(save_result(tmp, res, query_id, sim_value))
             continue
 
         # 查看BERT缓存
         tmp = find_data(demand_data=data, k=k)
         if len(tmp) != 0:
-            result.append(save_result(tmp, res, query_id))
+            sim_value = tmp[int(len(tmp) / 2):]
+            tmp = tmp[0: int(len(tmp) / 2)]
+            result.append(save_result(tmp, res, query_id, sim_value))
             continue
 
         # 查看查询缓存
         if data in query_data.keys():
             tmp = query_data.get(data)
             if len(tmp) == k:
-                result.append(save_result(tmp, res, query_id))
+                sim_value = tmp[int(len(tmp) / 2):]
+                tmp = tmp[0: int(len(tmp) / 2)]
+                result.append(save_result(tmp, res, query_id, sim_value))
                 continue
 
         # 缓存清理FIFO
@@ -145,13 +150,11 @@ def multiple_match(request):
             query_data.clear()
 
         # 词向量匹配
-        tmp = vector_matching(demand_data=data, k=k)
-        result.append(save_result(tmp, res, query_id))
-        query_data[data] = tmp
+        tmp, sim_value = vector_matching(demand_data=data, k=k)
+        result.append(save_result(tmp, res, query_id, sim_value))
+        query_data[data] = tmp + sim_value
 
         # 缓存中不存在, 后台线程缓存
-        # th = threading.Thread(target=save_data, args=(data, k))
-        # th.start()
         executor.submit(save_data, data, k)
 
     return Response({"code": 200, "msg": "查询成功！", "data": result})
@@ -160,7 +163,8 @@ def multiple_match(request):
 def string_matching(demand_data, k):
     res = []
     for data in catalogue_data:
-        if demand_data.split(' ')[2] in data.split(' ')[2]:
+        tmp_data = data.split(' ')
+        if demand_data == tmp_data[0] + ' ' + tmp_data[1] + ' ' + tmp_data[2]:
             res.append(data)
             if len(res) == k:
                 break
@@ -176,10 +180,9 @@ def find_data(demand_data, k):
 
 
 def save_data(demand_data, k):
-    print("开始执行")
     sim_words = {}
     for data in catalogue_data:
-        sim = bert_sim.predict(data.split(' ')[2], demand_data)[0][1]
+        sim = bert_sim.predict(data, demand_data)[0][1]
         if len(sim_words) < k:
             sim_words[data] = sim
         else:
@@ -194,6 +197,8 @@ def save_data(demand_data, k):
     res = []
     for sim_word in sim_words:
         res.append(sim_word)
+    for sim_word in sim_words:
+        res.append(sim_words.get(sim_word))
     bert_data[demand_data] = res
 
 
@@ -201,8 +206,8 @@ def vector_matching(demand_data, k):
     # 字符串没有匹配项，则会进行向量相似度匹配，筛选前k个
     # sim_words = {}
     item = demand_data.split(' ')
-    segment1_1 = jieba.lcut(item[0] + item[1], cut_all=True, HMM=True)
-    segment1_2 = jieba.lcut(item[2], cut_all=True, HMM=True)
+    segment1_1 = jieba.lcut(item[1] + item[2], cut_all=True, HMM=True)
+    segment1_2 = jieba.lcut(item[0], cut_all=True, HMM=True)
     s1 = [word_avg(model, segment1_1, segment1_2)]
     x = torch.Tensor(s1).to(device)
     final_value = tensor_module(catalogue_data_tensor, x)
@@ -210,10 +215,14 @@ def vector_matching(demand_data, k):
     # 输出排序并输出top-k的输出
     value, index = torch.topk(final_value, k, dim=0, largest=True, sorted=True)
     sim_index = index.numpy().tolist()
+    sim_value = value.numpy().tolist()
     res = []
+    res_sim_value = []
     for i in sim_index:
         res.append(catalogue_data[i[0]])
-    return res
+    for i in sim_value:
+        res_sim_value.append(i[0])
+    return res, res_sim_value
 
 
 def prepare_catalogue_data(path):
@@ -246,12 +255,14 @@ def word_avg(word_model, words, last_words):  # 对句子中的每个词的词�
     return np.mean(vectors, axis=0)
 
 
-def save_result(tmp, res, query_id):
+def save_result(temp, res, query_id, sim_value):
     single_res = []
-    for d in tmp:
+    for i in range(len(temp)):
+        d = temp[i]
         tmp = d.split(' ')
         single_res.append({'departmentName': tmp[0], 'catalogName': tmp[1], 'infoItemName': tmp[2],
-                           'departmentID': tmp[3], 'catalogID': tmp[4]})
+                           'departmentID': tmp[3], 'catalogID': tmp[4], 'sim': sim_value[i]})
     res['key'] = query_id
     res['result'] = single_res
     return res
+
