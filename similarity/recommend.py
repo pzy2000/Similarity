@@ -3,7 +3,7 @@
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
-from word2vec_similarity import multiple_match
+from .word2vec_similarity import multiple_match
 from rest_framework.response import Response
 
 '''

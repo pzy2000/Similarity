@@ -137,7 +137,7 @@ def multiple_match(request):
         # 查看查询缓存
         if data in query_data.keys():
             tmp = query_data.get(data)
-            if len(tmp) == k:
+            if len(tmp) == 2 * k:
                 sim_value = tmp[int(len(tmp) / 2):]
                 tmp = tmp[0: int(len(tmp) / 2)]
                 result.append(save_result(tmp, res, query_id, sim_value))
@@ -174,7 +174,7 @@ def string_matching(demand_data, k):
 def find_data(demand_data, k):
     if demand_data in bert_data.keys():
         tmp = bert_data.get(demand_data)
-        if len(tmp) == k:
+        if len(tmp) == 2 * k:
             return tmp
     return []
 
