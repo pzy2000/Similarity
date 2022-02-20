@@ -116,6 +116,8 @@ def increment_business_data_catalog(request):
         s2 = word_avg(model, segment2_1, segment2_2)
         catalogue_data_vector.append(s2)
     catalogue_data_tensor = torch.Tensor(catalogue_data_vector).to(device)
+    bert_data.clear()
+    query_data.clear()
     return Response({"code": 200, "msg": "新增数据成功！", "data": ""})
 
 
