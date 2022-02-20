@@ -23,7 +23,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from similarity.word2vec_similarity import model, word_avg, tensor_module, bert_sim, executor, device
+from similarity.word2vec_similarity_catalog import model, word_avg, tensor_module, bert_sim, executor, device
 from similarity.src.metadata.metadata_config import Config, data_dir, result_dir
 import threading
 

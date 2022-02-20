@@ -3,7 +3,8 @@
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
-from .word2vec_similarity import multiple_match
+from .word2vec_similarity_catalog import catalog_multiple_match, init_model_vector_catalog, \
+    increment_business_data_catalog
 from rest_framework.response import Response
 
 '''
@@ -16,11 +17,42 @@ from rest_framework.response import Response
 @csrf_exempt
 @api_view(http_method_names=['post'])
 @permission_classes((permissions.AllowAny,))
-def recommend(request):
+def multiple_match(request):
     parameter = request.data
-    recommend_type = parameter['type']
-    if recommend_type == 1:
-        # 需求一
-        multiple_match(request)
+    business_type = parameter['businessType']
+    if business_type == 'catalog_data':
+        # 需求一，目录数据推荐
+        return catalog_multiple_match(request)
     else:
-        Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
+        return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
+
+'''
+模型和数据初始化总入口
+'''
+@csrf_exempt
+@api_view(http_method_names=['post'])
+@permission_classes((permissions.AllowAny,))
+def init_model_vector(request):
+    parameter = request.data
+    business_type = parameter['businessType']
+    data_type = parameter['dataType']
+    if business_type == 'catalog_data' and data_type == 'excel':
+        return init_model_vector_catalog(request)
+    else:
+        return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
+
+
+'''
+数据新增总入口
+'''
+@csrf_exempt
+@api_view(http_method_names=['post'])
+@permission_classes((permissions.AllowAny,))
+def increment_business_data(request):
+    parameter = request.data
+    business_type = parameter['businessType']
+    data_type = parameter['dataType']
+    if business_type == 'catalog_data' and data_type == 'excel':
+        return increment_business_data_catalog(request)
+    return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
+

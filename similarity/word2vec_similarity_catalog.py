@@ -64,10 +64,7 @@ def get_state(request):
     return Response({"code": 200, "msg": "模型和向量初始化中！", "data": process})
 
 
-@csrf_exempt
-@api_view(http_method_names=['post'])  # 只允许post
-@permission_classes((permissions.AllowAny,))
-def init_model_vector(request):
+def init_model_vector_catalog(request):
     global process
     global catalogue_data_number
     global catalogue_data
@@ -76,7 +73,7 @@ def init_model_vector(request):
     global catalogue_data_path
     parameter = request.data
     # 目录表路径
-    catalogue_data_path = parameter['catalogue_path']
+    catalogue_data_path = parameter['filePath']
     if not os.path.exists(catalogue_data_path):
         return Response({"code": 404, "msg": "目录表路径不存在", "data": ""})
     process = 0
@@ -101,10 +98,28 @@ def init_model_vector(request):
     return Response({"code": 200, "msg": "词模型初始化完成；词向量缓存完成！", "data": ""})
 
 
-@csrf_exempt
-@api_view(http_method_names=['post'])  # 只允许post
-@permission_classes((permissions.AllowAny,))
-def multiple_match(request):
+def increment_business_data_catalog(request):
+    global catalogue_data_tensor
+    parameter = request.data
+    full_data = parameter['data']
+    for single_data in full_data:
+        match_str = single_data['matchStr']
+        original_code = single_data['originalCode']
+        original_data = single_data['originalData']
+        # 加入缓存中
+        tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
+              original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
+        catalogue_data.append(tmp)
+        item = tmp.split(' ')
+        segment2_1 = jieba.lcut(item[1] + item[2], cut_all=True, HMM=True)
+        segment2_2 = jieba.lcut(item[0], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1, segment2_2)
+        catalogue_data_vector.append(s2)
+    catalogue_data_tensor = torch.Tensor(catalogue_data_vector).to(device)
+    return Response({"code": 200, "msg": "新增数据成功！", "data": ""})
+
+
+def catalog_multiple_match(request):
     parameter = request.data
     full_data = parameter['data']
     k = parameter['k']
@@ -112,8 +127,7 @@ def multiple_match(request):
         return Response({"code": 404, "msg": "模型和向量未初始化！", "data": ''})
     source_data = []
     for i in range(len(full_data)):
-        source_data.append(full_data[i]['departmentName'] + ' ' + full_data[i]['catalogName'] + ' '
-                           + full_data[i]['infoItemName'])
+        source_data.append(full_data[i]['matchStr'].replace('-', ' '))
     result = []
     for i in range(len(source_data)):
         res = {}
@@ -206,7 +220,10 @@ def vector_matching(demand_data, k):
     # 字符串没有匹配项，则会进行向量相似度匹配，筛选前k个
     # sim_words = {}
     item = demand_data.split(' ')
-    segment1_1 = jieba.lcut(item[1] + item[2], cut_all=True, HMM=True)
+    tmp = ''
+    for i in range(1, len(item)):
+        tmp = tmp + item[i]
+    segment1_1 = jieba.lcut(tmp, cut_all=True, HMM=True)
     segment1_2 = jieba.lcut(item[0], cut_all=True, HMM=True)
     s1 = [word_avg(model, segment1_1, segment1_2)]
     x = torch.Tensor(s1).to(device)
@@ -260,9 +277,10 @@ def save_result(temp, res, query_id, sim_value):
     for i in range(len(temp)):
         d = temp[i]
         tmp = d.split(' ')
-        single_res.append({'departmentName': tmp[0], 'catalogName': tmp[1], 'infoItemName': tmp[2],
-                           'departmentID': tmp[3], 'catalogID': tmp[4], 'sim': sim_value[i]})
+        single_res.append({'originalCode': tmp[4], 'originalData': {'departmentName': tmp[0], 'catalogName': tmp[1],
+                                                                    'infoItemName': tmp[2],
+                                                                    'departmentID': tmp[3], 'catalogID': tmp[4]},
+                           'similarity': sim_value[i]})
     res['key'] = query_id
     res['result'] = single_res
     return res
-
