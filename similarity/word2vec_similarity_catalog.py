@@ -236,10 +236,11 @@ def save_data(demand_data, k):
                         sim_words[data] = sim
                         break
     res = []
+    sim_words = sorted(sim_words.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
     for sim_word in sim_words:
-        res.append(sim_word)
+        res.append(sim_word[0])
     for sim_word in sim_words:
-        res.append(sim_words.get(sim_word))
+        res.append(sim_word[1])
     bert_data[demand_data] = res
 
 
