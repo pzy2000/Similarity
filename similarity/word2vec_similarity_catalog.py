@@ -35,10 +35,27 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 catalogue_data_tensor = None
 
 
+class RejectQueue(queue.Queue):
+    def __init__(self, maxsize=20):
+        super(RejectQueue, self).__init__(maxsize=maxsize)
+
+    def put(self, item, block=False, timeout=None):
+        with self.not_full:
+            if self.maxsize > 0:
+                if not block:
+                    if self._qsize() >= self.maxsize:
+                        # 不阻塞
+                        pass
+                    else:
+                        self._put(item)
+                        self.unfinished_tasks += 1
+                        self.not_empty.notify()
+
+
 class ThreadPoolExecutorWithQueueSizeLimit(futures.ThreadPoolExecutor):
     def __init__(self, maxsize=20, *args, **kwargs):
         super(ThreadPoolExecutorWithQueueSizeLimit, self).__init__(*args, **kwargs)
-        self._work_queue = queue.Queue(maxsize=maxsize)
+        self._work_queue = RejectQueue(maxsize=maxsize)
 
 
 class CosineSimilarity(torch.nn.Module):
