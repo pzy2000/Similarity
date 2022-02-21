@@ -1,7 +1,8 @@
 # coding=utf-8
 import os
 from concurrent.futures import ThreadPoolExecutor
-
+from concurrent import futures
+import queue
 import gensim
 import jieba
 import numpy as np
@@ -29,9 +30,15 @@ catalogue_data_vector = []
 bert_data = {}
 query_data = {}
 process = 0
-executor = ThreadPoolExecutor(max_workers=5)
+# executor = ThreadPoolExecutor(max_workers=5)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 catalogue_data_tensor = None
+
+
+class ThreadPoolExecutorWithQueueSizeLimit(futures.ThreadPoolExecutor):
+    def __init__(self, maxsize=20, *args, **kwargs):
+        super(ThreadPoolExecutorWithQueueSizeLimit, self).__init__(*args, **kwargs)
+        self._work_queue = queue.Queue(maxsize=maxsize)
 
 
 class CosineSimilarity(torch.nn.Module):
@@ -50,6 +57,7 @@ class CosineSimilarity(torch.nn.Module):
         return final
 
 
+executor = ThreadPoolExecutorWithQueueSizeLimit(max_workers=5, maxsize=50)
 tensor_module = CosineSimilarity().to(device)
 
 
