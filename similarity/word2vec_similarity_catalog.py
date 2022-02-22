@@ -293,7 +293,7 @@ def word_avg(word_model, words, last_words):  # 对句子中的每个词的词�
     for word in last_words:
         try:
             vector = word_model.get_vector(word)
-            vectors.append(vector * 3)
+            vectors.append(vector * 1.5)
         except KeyError:
             vectors.append([1e-8] * dim)
             continue
