@@ -137,6 +137,8 @@ def init_model_vector_catalog(request):
     catalogue_data_tensor_department = torch.Tensor(catalogue_data_vector_department).to(device)
     catalogue_data_tensor_catalog = torch.Tensor(catalogue_data_vector_catalog).to(device)
     catalogue_data_tensor_item = torch.Tensor(catalogue_data_vector_item).to(device)
+    bert_data.clear()
+    query_data.clear()
     return Response({"code": 200, "msg": "词模型初始化完成；词向量缓存完成！", "data": ""})
 
 
@@ -281,22 +283,23 @@ def vector_matching(demand_data, k):
     # 字符串没有匹配项，则会进行向量相似度匹配，筛选前k个
     # sim_words = {}
     item = demand_data.split(' ')
-    segment1_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
-    s1 = [word_avg(model, segment1_1)]
-    x = torch.Tensor(s1).to(device)
-    final_value_department = tensor_module(catalogue_data_tensor_department, x)
-
-    segment1_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
-    s1 = [word_avg(model, segment1_1)]
-    x = torch.Tensor(s1).to(device)
-    final_value_catalog = tensor_module(catalogue_data_tensor_catalog, x)
 
     segment1_1 = jieba.lcut(item[2], cut_all=True, HMM=True)
     s1 = [word_avg(model, segment1_1)]
     x = torch.Tensor(s1).to(device)
-    final_value_item = tensor_module(catalogue_data_tensor_item, x)
+    final_value = tensor_module(catalogue_data_tensor_item, x) * percent[2]
 
-    final_value = final_value_department * percent[0] + final_value_catalog * percent[1] + final_value_item * percent[2]
+    if item[0] != '':
+        segment1_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
+        s1 = [word_avg(model, segment1_1)]
+        x = torch.Tensor(s1).to(device)
+        final_value += tensor_module(catalogue_data_tensor_department, x) * percent[0]
+
+    if item[1] != '':
+        segment1_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
+        s1 = [word_avg(model, segment1_1)]
+        x = torch.Tensor(s1).to(device)
+        final_value += tensor_module(catalogue_data_tensor_catalog, x) * percent[1]
 
     # 输出排序并输出top-k的输出
     value, index = torch.topk(final_value, k, dim=0, largest=True, sorted=True)
