@@ -195,14 +195,6 @@ def catalog_multiple_match(request):
             result.append(save_result(tmp, res, query_id, sim_value))
             continue
 
-        # 查看BERT缓存
-        tmp = find_data(demand_data=data, k=k)
-        if len(tmp) != 0:
-            sim_value = tmp[int(len(tmp) / 2):]
-            tmp = tmp[0: int(len(tmp) / 2)]
-            result.append(save_result(tmp, res, query_id, sim_value))
-            continue
-
         # 查看查询缓存
         if data in query_data.keys():
             tmp = query_data.get(data)
@@ -211,6 +203,14 @@ def catalog_multiple_match(request):
                 tmp = tmp[0: int(len(tmp) / 2)]
                 result.append(save_result(tmp, res, query_id, sim_value))
                 continue
+
+        # 查看BERT缓存
+        tmp = find_data(demand_data=data, k=k)
+        if len(tmp) != 0:
+            sim_value = tmp[int(len(tmp) / 2):]
+            tmp = tmp[0: int(len(tmp) / 2)]
+            result.append(save_result(tmp, res, query_id, sim_value))
+            continue
 
         # 缓存清理FIFO
         if len(bert_data.keys()) >= 10000:
