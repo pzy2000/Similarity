@@ -13,15 +13,16 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-
+from similarity.tools import model_dir, data_dir
 from similarity.bert_src.similarity_count import BertSim
 
 # 默认模型
-model_dir = os.getcwd() + '/similarity/model/'
+# model_dir = os.getcwd() + '/similarity/model/'
 model_path = model_dir + 'current_model.bin'
 model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
 dim = len(model.vectors[0])
-catalogue_data_path = os.getcwd() + '/similarity/data/政务数据目录编制数据.xlsx'
+# catalogue_data_path = os.getcwd() + '/similarity/data/政务数据目录编制数据.xlsx'
+catalogue_data_path = data_dir + '/similarity/data/政务数据目录编制数据.xlsx'
 bert_sim = BertSim()
 bert_sim.set_mode(tf.estimator.ModeKeys.PREDICT)
 catalogue_data_number = 12000
