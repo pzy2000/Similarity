@@ -687,7 +687,7 @@ if __name__ == '__main__':
         sim.eval()
     if similarity.bert_src.args.do_predict:
         sim.set_mode(tf.estimator.ModeKeys.PREDICT)
-        sentence1 = '身份证号'
-        sentence2 = '身份证id'
+        sentence1 = '身份'
+        sentence2 = '学段'
         predict = sim.predict(sentence1, sentence2)
         print(predict[0][1])

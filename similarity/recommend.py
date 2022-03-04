@@ -54,3 +54,15 @@ def increment_business_data(request):
         return increment_business_data_catalog(request)
     return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
 
+'''
+数据删除总入口
+'''
+@csrf_exempt
+@api_view(http_method_names=['post'])
+@permission_classes((permissions.AllowAny,))
+def delete_business_data(request):
+    parameter = request.data
+    business_type = parameter['businessType']
+    if business_type == 'catalog_data':
+        return delete_business_data_catalog(request)
+    return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
