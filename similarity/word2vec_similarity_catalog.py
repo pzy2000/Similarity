@@ -9,6 +9,7 @@ import numpy as np
 import tensorflow as tf
 import torch
 import xlrd
+import pandas as pd
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
@@ -21,8 +22,10 @@ from similarity.bert_src.similarity_count import BertSim
 model_path = model_dir + 'current_model.bin'
 model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
 dim = len(model.vectors[0])
-# catalogue_data_path = os.getcwd() + '/similarity/data/政务数据目录编制数据.xlsx'
-catalogue_data_path = data_dir + '/similarity/data/政务数据目录编制数据.xlsx'
+catalogue_data_path = os.getcwd() + '/similarity/data/政务数据目录编制数据.xlsx'
+# 处理完后的目录表路径
+exec_catalog_path = os.path.join(data_dir, 'catalog_data.csv')
+
 bert_sim = BertSim()
 bert_sim.set_mode(tf.estimator.ModeKeys.PREDICT)
 catalogue_data_number = 12000
@@ -30,6 +33,12 @@ catalogue_data = []
 catalogue_data_vector_department = []
 catalogue_data_vector_catalog = []
 catalogue_data_vector_item = []
+# 目录表信息项tensor的保存路径
+catalog_item_tensor_path = os.path.join(data_dir, 'catalog_item.pt')
+# 目录表部门tensor的保存路径
+catalog_department_tensor_path = os.path.join(data_dir, 'catalog_department.pt')
+# 目录表目录项tensor的保存路径
+catalog_catalog_tensor_path = os.path.join(data_dir, 'catalog_catalog.pt')
 bert_data = {}
 query_data = {}
 process = 0
@@ -138,6 +147,10 @@ def init_model_vector_catalog(request):
     catalogue_data_tensor_department = torch.Tensor(catalogue_data_vector_department).to(device)
     catalogue_data_tensor_catalog = torch.Tensor(catalogue_data_vector_catalog).to(device)
     catalogue_data_tensor_item = torch.Tensor(catalogue_data_vector_item).to(device)
+    torch.save(catalogue_data_tensor_item, catalog_item_tensor_path)
+    torch.save(catalogue_data_tensor_department, catalog_department_tensor_path)
+    torch.save(catalogue_data_tensor_catalog, catalog_catalog_tensor_path)
+
     bert_data.clear()
     query_data.clear()
     return Response({"code": 200, "msg": "词模型初始化完成；词向量缓存完成！", "data": ""})
@@ -326,6 +339,10 @@ def prepare_catalogue_data(path):
     for i in range(2, row_number):
         catalogue_data.append(sh.cell(i, 0).value + ' ' + sh.cell(i, 3).value + ' ' + sh.cell(i, 11).value + ' ' +
                               sh.cell(i, 6).value + ' ' + sh.cell(i, 15).value)
+
+    catalogue_df = pd.DataFrame(catalogue_data)
+    catalogue_df.to_csv(exec_catalog_path, encoding='utf-8_sig', index=False)
+
 
 
 def word_avg(word_model, words):  # 对句子中的每个词的词向量简单做平均 作为句子的向量表示
