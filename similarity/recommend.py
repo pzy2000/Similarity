@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from .word2vec_similarity_catalog import catalog_multiple_match, init_model_vector_catalog, \
-    increment_business_data_catalog
+    increment_business_data_catalog, delete_business_data_catalog
 from rest_framework.response import Response
 
 '''

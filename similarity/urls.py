@@ -25,5 +25,6 @@ urlpatterns = [
     path('train_bert_model/', bert_model.train_model, name='train_model'),
     path('retrain_bert_model/', bert_model.train_re_model, name='retrain_model'),
     path('pretrain_bert_model/', bert_model.do_pretrain, name='pretrain_model'),
-    path('increment_business_data/', recommend.increment_business_data, name='increment_business_data')
+    path('increment_business_data/', recommend.increment_business_data, name='increment_business_data'),
+    path('delete_business_data/', recommend.delete_business_data, name='delete_business_data')
 ]
