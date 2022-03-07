@@ -9,6 +9,8 @@ from rest_framework.response import Response
 from similarity.src.recommend.recommend_catalog import catalog_recommend
 from similarity.src.process.data_to_model import init_model_vector_model, \
     increment_business_data_model, delete_business_data_model
+from similarity.src.process.model_to_data import init_model_vector_data, \
+    increment_business_model_data, delete_business_model_data
 
 '''
 数据推荐总入口，实现内容包括：
@@ -50,6 +52,9 @@ def init_model_vector(request):
     # 需求3，根据数据表字段推荐模型属性
     elif business_type == 'data_model':
         return init_model_vector_model(request)
+    # 需求4，根据模型属性推荐数据表字段
+    elif business_type == 'model_data':
+        return init_model_vector_data(request)
     else:
         return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
 
@@ -70,8 +75,11 @@ def increment_business_data(request):
     elif business_type == 'item_material':
         return increment_business_data_catalog(request)
     # 需求3，模型表数据增加
-    elif business_type == 'item_material':
+    elif business_type == 'data_model':
         return increment_business_data_model(request)
+    # 需求4，数据表数据增加
+    elif business_type == 'model_data':
+        return increment_business_model_data(request)
     return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
 
 '''
@@ -90,6 +98,9 @@ def delete_business_data(request):
     elif business_type == 'item_material':
         return delete_business_data_catalog(request)
     # 需求3，模型表数据删除
-    elif business_type == 'item_material':
+    elif business_type == 'data_model':
         return delete_business_data_model(request)
+    # 需求4，数据表数据删除
+    elif business_type == 'model_data':
+        return delete_business_model_data(request)
     return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
