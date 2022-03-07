@@ -287,7 +287,6 @@ def catalog_multiple_match(request):
 
     return Response({"code": 200, "msg": "查询成功！", "data": result})
 
-
 def string_matching(demand_data, k):
     res = []
     for data in catalogue_data:
@@ -297,7 +296,6 @@ def string_matching(demand_data, k):
             if len(res) == k:
                 break
     return res
-
 
 def find_data(demand_data, k):
     if demand_data in bert_data.keys():

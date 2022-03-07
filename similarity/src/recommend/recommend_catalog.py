@@ -85,7 +85,7 @@ def load_catalogue_data():
     global catalogue_data
     catalogue_df = pd.read_csv(exec_catalog_path, encoding='utf-8')
     catalogue_data = [str(x[0]) for x in catalogue_df.values]
-    print(catalogue_data)
+    # print(catalogue_data)
 
 def string_matching(demand_data, k):
     res = []
@@ -172,8 +172,3 @@ def save_data(demand_data, k):
             sim_word[1] = 1.0
         res.append(sim_word[1])
     bert_data[demand_data] = res
-
-
-
-if __name__ == '__main__':
-    catalog_recommend()
