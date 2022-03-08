@@ -20,9 +20,7 @@ bert_data = {}
 query_data = {}
 catalogue_data = []
 
-@csrf_exempt
-@api_view(http_method_names=['post'])
-@permission_classes((permissions.AllowAny,))
+
 def catalog_recommend(request):
     global catalogue_data
     parameter = request.data
