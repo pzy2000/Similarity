@@ -2,27 +2,20 @@
 
 import os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'demo.settings')
-from concurrent.futures import ThreadPoolExecutor
-from concurrent import futures
-import queue
 import gensim
 import jieba
-import numpy as np
-import tensorflow as tf
 import torch
 import xlrd
 import pandas as pd
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework import permissions
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from similarity.tools import model_dir, data_dir
-from similarity.bert_src.similarity_count import BertSim
-from similarity.word2vec_similarity_catalog import word_avg, device, model, delete_ndarray
+from similarity.word2vec_similarity_catalog import find_data, word_avg
+from similarity.word2vec_similarity_catalog import device, model, delete_ndarray, \
+    bert_sim, executor, tensor_module, model_path
 
-data_model_path = os.path.join(data_dir + '/01人口模型汇总_v1.0.xlsx')
+data_model_path = os.path.join(data_dir, '01人口模型汇总_v1.0.xlsx')
 # 处理完后的目录表路径
-exec_model_path = os.path.join(data_dir, '/data_model.csv')
+exec_model_path = os.path.join(data_dir, 'data_model.csv')
 data_model = []
 data_model_number = 4900
 data_model_vector_modelName = []
@@ -35,12 +28,11 @@ model_modelName_tensor_path = os.path.join(data_dir, 'model_modelName.pt')
 model_valueName_tensor_path = os.path.join(data_dir, 'model_valueName.pt')
 bert_data = {}
 query_data = {}
-
+percent = [0, 0, 0, 1, 0]
 
 
 def init_model_vector_model(request):
     global process
-
     global data_model_path
     global data_model
     global data_model_number
@@ -56,7 +48,7 @@ def init_model_vector_model(request):
         return Response({"code": 404, "msg": "模型表路径不存在", "data": ""})
     process = 0
     # 重新加载模型
-    model = gensim.models.KeyedVectors.load_word2vec_format(data_model_path, binary=True)
+    model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
     process = 0.5
     # 重新缓存向量
     data_model = []
@@ -69,6 +61,7 @@ def init_model_vector_model(request):
         process = 0.75 + i / (data_model_number * 4)
         data = data_model[i]
         item = data.split(' ')
+
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         data_model_vector_modelName.append(s2)
@@ -99,6 +92,8 @@ def prepare_data_model(path):
     model_df.to_csv(exec_model_path, encoding='utf-8_sig', index=False)
 
 def increment_business_data_model(request):
+    global data_model_vector_modelName
+    global data_model_vector_valueName
     global data_model_tensor_modelName
     global data_model_tensor_valueName
     parameter = request.data
@@ -107,18 +102,23 @@ def increment_business_data_model(request):
         match_str = single_data['matchStr']
         original_code = single_data['originalCode']
         original_data = single_data['originalData']
-        match_str.replace('-', ' ')
+        # match_str = match_str.replace('-', ' ')
         # 加入缓存中
         # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
         #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
-        data_model.append(match_str)
-        item = match_str.split(' ')
-        segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
-        s2 = word_avg(model, segment2_1)
-        data_model_vector_modelName.append(s2)
+
+        item = match_str.split('-')
+        data_model.append(item[1] + ' ' + item[3])
+        print('insert：')
+        print(data_model[-5:])
         segment2_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
+        data_model_vector_modelName.append(s2)
+
+        segment2_1 = jieba.lcut(item[3], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1)
         data_model_vector_valueName.append(s2)
+
     data_model_tensor_modelName = torch.Tensor(data_model_vector_modelName).to(device)
     data_model_tensor_valueName = torch.Tensor(data_model_vector_valueName).to(device)
     bert_data.clear()
@@ -139,13 +139,20 @@ def delete_business_data_model(request):
         # 加入缓存中
         # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
         #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
-        match_str.replace('-', ' ')
+        # match_str = match_str.replace('-', ' ')
+        item = match_str.split('-')
         # 在目录列表中删除数据
         try:
-            data_model.remove(match_str)
+            data_model.remove(str(item[1] + ' ' + item[3]))
         except:
+            print(str(item[1] + ' ' + item[3]))
+            print('delete：')
+            print(data_model[-5:])
             return Response({"code": 200, "msg": "无该数据！", "data": ""})
-        item = match_str.split(' ')
+        print(str(item[1] + ' ' + item[3]))
+        print('delete：')
+        print(data_model[-5:])
+
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         delete_ndarray(data_model_vector_modelName, s2)
@@ -158,8 +165,166 @@ def delete_business_data_model(request):
     query_data.clear()
     return Response({"code": 200, "msg": "删除数据成功！", "data": ""})
 
-# def delete_ndarray(with_array_list, array):
-#     for i in range(len(with_array_list)):
-#         if all(with_array_list[i] == np.array(array)) == True:
-#             with_array_list.pop(i)
-#             break
+def data2model_recommend(request):
+    global data_model
+    parameter = request.data
+    full_data = parameter['data']
+    k = parameter['k']
+    # load_model_data()
+    if len(data_model) == 0:
+        return Response({"code": 404, "msg": "模型和向量未初始化！", "data": ''})
+    # 顺序是模型表名-字段名
+    source_data = []
+    for i in range(len(full_data)):
+        source_data.append(full_data[i]['matchStr'].replace('-', ' '))
+    result = []
+    for i in range(len(source_data)):
+        res = {}
+        data = source_data[i]
+        query_id = full_data[i]['id']
+        # 字符串匹配
+        tmp = string_matching(demand_data=data, k=k)
+        if len(tmp) != 0:
+            sim_value = [1] * len(tmp)
+            result.append(save_result(tmp, res, query_id, sim_value))
+            continue
+
+        # 查看查询缓存
+        if data in query_data.keys():
+            tmp = query_data.get(data)
+            if len(tmp) == 2 * k:
+                sim_value = tmp[int(len(tmp) / 2):]
+                tmp = tmp[0: int(len(tmp) / 2)]
+                result.append(save_result(tmp, res, query_id, sim_value))
+                continue
+
+        # 查看BERT缓存
+        tmp = find_data(demand_data=data, k=k)
+        if len(tmp) != 0:
+            sim_value = tmp[int(len(tmp) / 2):]
+            tmp = tmp[0: int(len(tmp) / 2)]
+            result.append(save_result(tmp, res, query_id, sim_value))
+            continue
+
+        # 缓存清理FIFO
+        if len(bert_data.keys()) >= 10000:
+            bert_data.clear()
+        if len(query_data.keys()) >= 10000:
+            query_data.clear()
+
+        # 词向量匹配
+        tmp, sim_value = vector_matching(demand_data=data, k=k)
+        result.append(save_result(tmp, res, query_id, sim_value))
+        query_data[data] = tmp + sim_value
+
+        # 缓存中不存在, 后台线程缓存
+        executor.submit(save_data, data, k)
+
+    return Response({"code": 200, "msg": "查询成功！", "data": result})
+
+
+def string_matching(demand_data, k):
+    res = []
+    for data in data_model:
+        tmp_data = data.split(' ')
+        tmp_demand_data = demand_data.split(' ')
+        if tmp_demand_data[1] + ' ' + tmp_demand_data[3] == tmp_data[0] + ' ' + tmp_data[1]:
+            res.append(data)
+            if len(res) == k:
+                break
+    return res
+
+def vector_matching(demand_data, k):
+    # 字符串没有匹配项，则会进行向量相似度匹配，筛选前k个
+    # sim_words = {}
+    item = demand_data.split(' ')
+    # 输入的数据表字段名
+    segment1_1 = jieba.lcut(item[3], cut_all=True, HMM=True)
+    s1 = [word_avg(model, segment1_1)]
+    x = torch.Tensor(s1).to(device)
+    final_value = tensor_module(torch.load(model_valueName_tensor_path), x) * percent[3]
+
+    # # 输入的数据表表名
+    # if item[1] != '':
+    #     segment1_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
+    #     s1 = [word_avg(model, segment1_1)]
+    #     x = torch.Tensor(s1).to(device)
+    #     final_value += tensor_module(torch.load(model_modelName_tensor_path), x) * percent[1]
+
+    # # 材料描述、材料类型
+    # if item[1] != '':
+    #     segment1_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
+    #     s1 = [word_avg(model, segment1_1)]
+    #     x = torch.Tensor(s1).to(device)
+    #     final_value += tensor_module(catalogue_data_tensor_catalog, x) * percent[1]
+
+    # 输出排序并输出top-k的输出
+    value, index = torch.topk(final_value, k, dim=0, largest=True, sorted=True)
+    sim_index = index.numpy().tolist()
+    sim_value = value.numpy().tolist()
+    res = []
+    res_sim_value = []
+    for i in sim_index:
+        res.append(data_model[i[0]])
+    for i in sim_value:
+        if i[0] > 1:
+            i[0] = 1.0
+        res_sim_value.append(i[0])
+    return res, res_sim_value
+
+def load_model_data():
+    global data_model
+    model_df = pd.read_csv(exec_model_path, encoding='utf-8')
+    data_model = [str(x[0]) for x in model_df.values]
+    # print(catalogue_data)
+
+def save_data(demand_data, k):
+    sim_words = {}
+
+    # item1(输入): 部门-表名称-表描述-字段名称-字段描述
+    # item2(加入内存的数据格式): 模型表名-模型字段名
+    item1 = demand_data.split(' ')
+    for data in data_model:
+        sim = 0
+        item2 = data.split(' ')
+        # sim += bert_sim.predict(item1[0], item2[0])[0][1] * percent[0]
+        # sim += bert_sim.predict(item1[1], item2[1])[0][1] * percent[1]
+        # sim += bert_sim.predict(item1[2], item2[2])[0][1] * percent[2]
+        # 数据表名与模型表名
+        sim += bert_sim.predict(item1[1], item2[0])[0][1] * percent[1]
+        # 数据表字段与模型属性
+        sim += bert_sim.predict(item1[3], item2[1])[0][1] * percent[3]
+
+        if len(sim_words) < k:
+            sim_words[data] = sim
+        else:
+            min_sim = min(sim_words.values())
+            if sim > min_sim:
+                for key in list(sim_words.keys()):
+                    if sim_words.get(key) == min_sim:
+                        # 替换
+                        del sim_words[key]
+                        sim_words[data] = sim
+                        break
+    res = []
+    sim_words = sorted(sim_words.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
+    for sim_word in sim_words:
+        res.append(sim_word[0])
+    for sim_word in sim_words:
+        if sim_word[1] > 1:
+            sim_word[1] = 1.0
+        res.append(sim_word[1])
+    bert_data[demand_data] = res
+
+
+def save_result(temp, res, query_id, sim_value):
+    single_res = []
+    for i in range(len(temp)):
+        d = temp[i]
+        tmp = d.split(' ')
+        single_res.append({'originalCode': 'data2model', 'originalData': {'modelName':tmp[0],
+                                                                          'itemName':tmp[1]},
+                           'similarity': sim_value[i]})
+    res['key'] = query_id
+    res['result'] = single_res
+    return res

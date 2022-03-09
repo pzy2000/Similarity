@@ -1,12 +1,9 @@
 # -*- coding:utf-8 -*-
 
-from similarity.tools import model_dir, data_dir
+
 import jieba
 import torch
 import pandas as pd
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework import permissions
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from similarity.word2vec_similarity_catalog import save_result, find_data, word_avg
 from similarity.word2vec_similarity_catalog import model, device, tensor_module, \
@@ -89,7 +86,8 @@ def string_matching(demand_data, k):
     res = []
     for data in catalogue_data:
         tmp_data = data.split(' ')
-        if demand_data == tmp_data[0] + ' ' + tmp_data[1] + ' ' + tmp_data[2]:
+        tmp_demand_data = demand_data.split(' ')
+        if tmp_demand_data[3] + ' ' + tmp_demand_data[0] == tmp_data[0] + ' ' + tmp_data[2]:
             res.append(data)
             if len(res) == k:
                 break
@@ -170,3 +168,5 @@ def save_data(demand_data, k):
             sim_word[1] = 1.0
         res.append(sim_word[1])
     bert_data[demand_data] = res
+
+

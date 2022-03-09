@@ -155,7 +155,6 @@ def init_model_vector_catalog(request):
     query_data.clear()
     return Response({"code": 200, "msg": "词模型初始化完成；词向量缓存完成！", "data": ""})
 
-
 def increment_business_data_catalog(request):
     global catalogue_data_tensor_department
     global catalogue_data_tensor_catalog
@@ -170,6 +169,45 @@ def increment_business_data_catalog(request):
         tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
               original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
         catalogue_data.append(tmp)
+        print(catalogue_data[-5:])
+        print(len(catalogue_data))
+        item = tmp.split(' ')
+        segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1)
+        catalogue_data_vector_department.append(s2)
+        segment2_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1)
+        catalogue_data_vector_catalog.append(s2)
+        segment2_1 = jieba.lcut(item[2], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1)
+        catalogue_data_vector_item.append(s2)
+    catalogue_data_tensor_department = torch.Tensor(catalogue_data_vector_department).to(device)
+    catalogue_data_tensor_catalog = torch.Tensor(catalogue_data_vector_catalog).to(device)
+    catalogue_data_tensor_item = torch.Tensor(catalogue_data_vector_item).to(device)
+    bert_data.clear()
+    query_data.clear()
+    return Response({"code": 200, "msg": "新增数据成功！", "data": ""})
+
+def increment_business_data_material(request):
+    global catalogue_data_tensor_department
+    global catalogue_data_tensor_catalog
+    global catalogue_data_tensor_item
+    parameter = request.data
+    full_data = parameter['data']
+    for single_data in full_data:
+        match_str = single_data['matchStr']
+        original_code = single_data['originalCode']
+        original_data = single_data['originalData']
+        # 加入缓存中
+        tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
+              original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
+        catalogue_data.append(tmp)
+        # 将更改保存在处理好的文件中
+        catalogue_df = pd.DataFrame(catalogue_data)
+        catalogue_df.to_csv(exec_catalog_path, encoding='utf-8_sig', index=False)
+
+        print(catalogue_data[-5:])
+        print(len(catalogue_data))
         item = tmp.split(' ')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
@@ -204,6 +242,52 @@ def delete_business_data_catalog(request):
         # 在目录列表中删除数据
         try:
             catalogue_data.remove(tmp)
+        except:
+            return Response({"code": 200, "msg": "无该数据！", "data": ""})
+        item = tmp.split(' ')
+        segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1)
+
+        delete_ndarray(catalogue_data_vector_department, s2)
+        # catalogue_data_vector_department.pop(catalogue_data_vector_department.index(s2))
+        segment2_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1)
+        delete_ndarray(catalogue_data_vector_catalog, s2)
+        # catalogue_data_vector_catalog.pop(catalogue_data_vector_catalog.index(s2))
+        segment2_1 = jieba.lcut(item[2], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1)
+        delete_ndarray(catalogue_data_vector_item, s2)
+        # catalogue_data_vector_item.pop(catalogue_data_vector_item.index(s2))
+    catalogue_data_tensor_department = torch.Tensor(catalogue_data_vector_department).to(device)
+    catalogue_data_tensor_catalog = torch.Tensor(catalogue_data_vector_catalog).to(device)
+    catalogue_data_tensor_item = torch.Tensor(catalogue_data_vector_item).to(device)
+    bert_data.clear()
+    query_data.clear()
+    return Response({"code": 200, "msg": "删除数据成功！", "data": ""})
+
+def delete_business_data_material(request):
+    global catalogue_data_tensor_department
+    global catalogue_data_tensor_catalog
+    global catalogue_data_tensor_item
+    parameter = request.data
+    full_data = parameter['data']
+    for single_data in full_data:
+        match_str = single_data['matchStr']
+        original_code = single_data['originalCode']
+        original_data = single_data['originalData']
+        # 加入缓存中
+        tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
+              original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
+
+        # 在目录列表中删除数据
+        try:
+            catalogue_data.remove(tmp)
+            # 将更改保存在处理好的文件中
+            catalogue_df = pd.DataFrame(catalogue_data)
+            catalogue_df.to_csv(exec_catalog_path, encoding='utf-8_sig', index=False)
+
+            print(catalogue_data[-5:])
+            print(len(catalogue_data))
         except:
             return Response({"code": 200, "msg": "无该数据！", "data": ""})
         item = tmp.split(' ')
