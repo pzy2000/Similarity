@@ -4,14 +4,15 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from .word2vec_similarity_catalog import catalog_multiple_match, init_model_vector_catalog, \
-    increment_business_data_catalog, delete_business_data_catalog, \
-    increment_business_data_material, delete_business_data_material
+    increment_business_data_catalog, delete_business_data_catalog
 from rest_framework.response import Response
-from similarity.src.recommend.recommend_catalog import catalog_recommend
+from similarity.src.recommend.recommend_catalog import catalog_recommend, \
+    init_model_vector_material,increment_business_data_material, delete_business_data_material
 from similarity.src.process.data_to_model import init_model_vector_model, \
     increment_business_data_model, delete_business_data_model, data2model_recommend
 from similarity.src.process.model_to_data import init_model_vector_data, \
     increment_business_model_data, delete_business_model_data, model2data_recommend
+
 
 '''
 数据推荐总入口，实现内容包括：
@@ -55,7 +56,7 @@ def init_model_vector(request):
         return init_model_vector_catalog(request)
     # 需求2，政务目录数据推荐初始化
     elif business_type == 'item_material':
-        return init_model_vector_catalog(request)
+        return init_model_vector_material(request)
     # 需求3，根据数据表字段推荐模型属性
     elif business_type == 'data_model':
         return init_model_vector_model(request)
