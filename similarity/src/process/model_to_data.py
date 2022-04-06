@@ -149,10 +149,6 @@ def increment_business_model_data(request):
         match_str = single_data['matchStr']
         original_code = single_data['originalCode']
         original_data = single_data['originalData']
-        # match_str.replace('-', ' ')
-        # 加入缓存中
-        # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
-        #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
         if len(match_str.split('-')) != 5:
             return Response({"code": 200, "msg": "新增数据失败，有效数据字段不等于5", "data": ""})
@@ -168,8 +164,6 @@ def increment_business_model_data(request):
 
 
         item = match_str.split('-')
-        # model_data.append(item[0] + ' ' + item[1] + ' ' + item[3])
-        model_data.append(tmp)
 
 
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
@@ -266,9 +260,7 @@ def model2data_recommend(request):
     for i in range(len(full_data)):
         source_data.append(full_data[i]['matchStr'].replace('-', ' '))
     result = []
-    # print('匹配')
-    # print(len(model_data))
-    # print('-' * 50)
+
     for i in range(len(source_data)):
         res = {}
         data = source_data[i]
@@ -324,10 +316,6 @@ def model2data_recommend(request):
         # for index in range(len(str_tmp)):
         #     print(str_tmp[index] + ' : ' + str(str_sim_value[index]))
 
-        # for index in range(oringi_len):
-        #     if str_tmp[index] == str_tmp[0]:
-        #         str_tmp.pop(oringi_len)
-        #         str_sim_value.pop(oringi_len)
 
         for index in range(oringi_len):
             while str_tmp[index] in str_tmp[oringi_len:]:
@@ -336,9 +324,6 @@ def model2data_recommend(request):
                         str_tmp.pop(tmp_index)
                         str_sim_value.pop(tmp_index)
                         break
-            # if str_tmp[index] == str_tmp[0]:
-            #     str_tmp.pop(oringi_len)
-            #     str_sim_value.pop(oringi_len)
 
         # 保证增加后的数据不超过k个
         if len(str_tmp) > k:
@@ -373,7 +358,7 @@ def string_matching(demand_data, k):
 
     res = []
     # print('data_len：' + str(len(model_data)))
-
+    #
     # for i in range(len(model_data)):
     #     print(model_data[i])
 
@@ -456,9 +441,6 @@ def save_data(demand_data, k):
     for data in model_data:
         sim = 0
         item2 = data.split(' ')
-        # sim += bert_sim.predict(item1[0], item2[0])[0][1] * percent[0]
-        # sim += bert_sim.predict(item1[1], item2[1])[0][1] * percent[1]
-        # sim += bert_sim.predict(item1[2], item2[2])[0][1] * percent[2]
         # 部门名与机构名
         sim += bert_sim.predict(item1[0], item2[0])[0][1] * percent[0]
         # 模型表名与数据表名
