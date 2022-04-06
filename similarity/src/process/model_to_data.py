@@ -129,9 +129,9 @@ def prepare_model_data():
     for i in re:
         model_data.append(' '.join([i[0].replace('-', ' '), i[1], i[2]]))
 
-    print('model_data：' + str(len(model_data)))
-    for i in range(len(model_data)):
-        print(model_data[i])
+    # print('model_data：' + str(len(model_data)))
+    # for i in range(len(model_data)):
+    #     print(model_data[i])
 
 
 
@@ -161,19 +161,17 @@ def increment_business_model_data(request):
         tmp += (' ' + original_code + ' ' + original_data)
         model_data.append(tmp)
 
-        print('增加后：')
-        print('model_data：' + str(len(model_data)))
-        for i in range(len(model_data)):
-            print(model_data[i])
+        # print('增加后：')
+        # print('model_data：' + str(len(model_data)))
+        # for i in range(len(model_data)):
+        #     print(model_data[i])
 
 
         item = match_str.split('-')
         # model_data.append(item[0] + ' ' + item[1] + ' ' + item[3])
         model_data.append(tmp)
 
-        # print('insert：')
-        # print(model_data[-5:])
-        # print(len(model_data))
+
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         model_data_vector_department.append(s2)
@@ -212,27 +210,21 @@ def delete_business_model_data(request):
 
         tmp = ' '.join(match_str.split('-'))
         tmp += (' ' + original_code + ' ' + original_data)
-        print('待删除数据：')
-        print(tmp)
+        # print('待删除数据：')
+        # print(tmp)
 
 
         # 在目录列表中删除数据
         try:
-            # model_data.remove(str(item[0] + ' ' + item[1] + ' ' + item[3]))
             model_data.remove(tmp)
         except:
-            # print(str(item[0] + ' ' + item[1] + ' ' + item[3]))
-            # print('delete：')
-            # print(model_data[-5:])
             return Response({"code": 200, "msg": "无该数据！", "data": ""})
-        # print(str(item[0] + ' ' + item[1] + ' ' + item[3]))
-        # print('delete：')
-        # print(model_data[-5:])
 
-        print('删除后：')
-        print('model_data：' + str(len(model_data)))
-        for i in range(len(model_data)):
-            print(model_data[i])
+
+        # print('删除后：')
+        # print('model_data：' + str(len(model_data)))
+        # for i in range(len(model_data)):
+        #     print(model_data[i])
 
         item = match_str.split('-')
 
@@ -260,7 +252,7 @@ def model2data_recommend(request):
     parameter = request.data
     full_data = parameter['data']
     k = parameter['k']
-    weight_percent = parameter['precent']
+    weight_percent = parameter['percent']
     if len(weight_percent.split(',')) != 5:
         return Response({"code": 404, "msg": "权重配置错误！", "data": ''})
     percent = [float(x) for x in weight_percent.split(',')]
@@ -312,23 +304,23 @@ def model2data_recommend(request):
         # 词向量匹配
         tmp, sim_value = vector_matching(demand_data=data, k=k)
 
-        print('原来的str_tmp')
-        for index in range(len(str_tmp)):
-            print(str_tmp[index])
-
-        print('原来的tmp：')
-        for index in range(len(tmp)):
-            print(tmp[index] + ' : ' + str(sim_value[index]))
+        # print('原来的str_tmp')
+        # for index in range(len(str_tmp)):
+        #     print(str_tmp[index])
+        #
+        # print('原来的tmp：')
+        # for index in range(len(tmp)):
+        #     print(tmp[index] + ' : ' + str(sim_value[index]))
 
         oringi_len = len(str_tmp)
         str_tmp += tmp
         str_sim_value = ([1] * oringi_len) + sim_value
 
-        print()
-        print('增加后的长度：' + str(len(str_tmp)))
-        print('增长后的情况：')
-        for index in range(len(str_tmp)):
-            print(str_tmp[index] + ' : ' + str(str_sim_value[index]))
+        # print()
+        # print('增加后的长度：' + str(len(str_tmp)))
+        # print('增长后的情况：')
+        # for index in range(len(str_tmp)):
+        #     print(str_tmp[index] + ' : ' + str(str_sim_value[index]))
 
         # for index in range(oringi_len):
         #     if str_tmp[index] == str_tmp[0]:
@@ -336,11 +328,12 @@ def model2data_recommend(request):
         #         str_sim_value.pop(oringi_len)
 
         for index in range(oringi_len):
-            for tmp_index in range(oringi_len, len(str_tmp)):
-                if str_tmp[tmp_index] == str_tmp[0]:
-                    str_tmp.pop(tmp_index)
-                    str_sim_value.pop(tmp_index)
-                    break
+            while str_tmp[index] in str_tmp[oringi_len:]:
+                for tmp_index in range(oringi_len, len(str_tmp)):
+                    if str_tmp[tmp_index] == str_tmp[index]:
+                        str_tmp.pop(tmp_index)
+                        str_sim_value.pop(tmp_index)
+                        break
             # if str_tmp[index] == str_tmp[0]:
             #     str_tmp.pop(oringi_len)
             #     str_sim_value.pop(oringi_len)
@@ -350,11 +343,10 @@ def model2data_recommend(request):
             str_tmp = str_tmp[:k]
 
 
-        print()
-        print('删除后的情况：')
-        for tmp_index in range(len(str_tmp)):
-            print(str_tmp[tmp_index] + ' : ' + str(str_sim_value[tmp_index]))
-            # print(str_sim_value[tmp_index])
+        # print()
+        # print('删除后的情况：')
+        # for tmp_index in range(len(str_tmp)):
+        #     print(str_tmp[tmp_index] + ' : ' + str(str_sim_value[tmp_index]))
 
 
         # result.append(save_result(tmp, res, query_id, sim_value))
@@ -378,10 +370,10 @@ def string_matching(demand_data, k):
     # return res
 
     res = []
-    print('data_len：' + str(len(model_data)))
+    # print('data_len：' + str(len(model_data)))
 
-    for i in range(len(model_data)):
-        print(model_data[i])
+    # for i in range(len(model_data)):
+    #     print(model_data[i])
 
     for data in model_data:
         tmp_match_str = demand_data.split(' ')
@@ -391,7 +383,7 @@ def string_matching(demand_data, k):
         tmp_str = tmp_database_str[0] + ' ' + tmp_database_str[1] + ' ' + tmp_database_str[3]
 
         if match_str == tmp_str:
-            print(111111111)
+            # print(111111111)
             res.append(data)
             if len(res) == k:
                 break
@@ -439,9 +431,9 @@ def vector_matching(demand_data, k):
     res_sim_value = []
     for i in sim_index:
         res.append(model_data[i[0]])
-    print('计算出的匹配值：')
+    # print('计算出的匹配值：')
     for i in sim_value:
-        print(i[0])
+        # print(i[0])
         if i[0] > 1:
             i[0] = 1.0
         res_sim_value.append(i[0])
@@ -451,7 +443,7 @@ def load_data_data():
     global model_data
     data_df = pd.read_csv(exec_data_path, encoding='utf-8')
     model_data = [str(x[0]) for x in data_df.values]
-    # print(catalogue_data)
+
 
 def save_data(demand_data, k):
     sim_words = {}

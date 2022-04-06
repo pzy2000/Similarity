@@ -197,21 +197,13 @@ def increment_business_data_catalog(request):
         tmp += (' ' + original_code + ' ' + original_data)
 
         catalogue_data.append(tmp)
-        # print(catalogue_data[-5:])
-        # print(len(catalogue_data))
 
-        print('增加后：')
-        print('catalogue_data：' + str(len(catalogue_data)))
-        for i in range(len(catalogue_data)):
-            print(catalogue_data[i])
-        # print()
-        # print('database_original_code：' + str(len(database_original_code)))
-        # for i in range(len(database_original_code)):
-        #     print(database_original_code[i])
-        # print()
-        # print('database_original_data：' + str(len(database_original_data)))
-        # for i in range(len(database_original_data)):
-        #     print(database_original_data[i])
+
+        # print('增加后：')
+        # print('catalogue_data：' + str(len(catalogue_data)))
+        # for i in range(len(catalogue_data)):
+        #     print(catalogue_data[i])
+
 
 
         item = tmp.split(' ')
@@ -284,33 +276,19 @@ def delete_business_data_catalog(request):
 
         tmp = ' '.join(match_str.split('-'))
         tmp += (' ' + original_code + ' ' + original_data)
-        print('待删除数据：')
-        print(tmp)
+        # print('待删除数据：')
+        # print(tmp)
         # 在目录列表中删除数据
         try:
             catalogue_data.remove(tmp)
-            # database_original_code.remove(original_code)
-            # database_original_data.remove(original_data)
         except:
             return Response({"code": 200, "msg": "无该数据！", "data": ""})
 
-        # try:
-        #     database_original_code.remove(original_code)
-        # except:
-        #     catalogue_data.append(tmp)      # 重新装进去否则因为之前已经被删过了导致会一直抛出无该数据的提示
-        #     return Response({"code": 200, "msg": "无该original_code！", "data": ""})
-        #
-        # try:
-        #     database_original_data.remove(original_data)
-        # except:
-        #     catalogue_data.append(tmp)
-        #     database_original_code.append(original_code)
-        #     return Response({"code": 200, "msg": "无该original_data！", "data": ""})
 
-        print('删除后：')
-        print('catalogue_data：' + str(len(catalogue_data)))
-        for i in range(len(catalogue_data)):
-            print(catalogue_data[i])
+        # print('删除后：')
+        # print('catalogue_data：' + str(len(catalogue_data)))
+        # for i in range(len(catalogue_data)):
+        #     print(catalogue_data[i])
 
         item = tmp.split(' ')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
@@ -389,7 +367,7 @@ def catalog_multiple_match(request):
     parameter = request.data
     full_data = parameter['data']
     k = parameter['k']
-    weight_percent = parameter['precent']
+    weight_percent = parameter['percent']
     if len(weight_percent.split(',')) != 5:
         return Response({"code": 404, "msg": "权重配置错误！", "data": ''})
     percent = [float(x) for x in weight_percent.split(',')]
@@ -440,41 +418,32 @@ def catalog_multiple_match(request):
         # 词向量匹配
         tmp, sim_value = vector_matching(demand_data=data, k=k)
 
-        print('原来的str_tmp')
-        for index in range(len(str_tmp)):
-            print(str_tmp[index])
+        # print('原来的str_tmp')
+        # for index in range(len(str_tmp)):
+        #     print(str_tmp[index])
 
-        print('原来的tmp：')
-        for index in range(len(tmp)):
-            print(tmp[index] + ' : ' + str(sim_value[index]))
+        # print('原来的tmp：')
+        # for index in range(len(tmp)):
+        #     print(tmp[index] + ' : ' + str(sim_value[index]))
 
         oringi_len = len(str_tmp)
         str_tmp += tmp
         str_sim_value = ([1] * oringi_len) + sim_value
 
-        print()
-        print('增加后的长度：' + str(len(str_tmp)))
-        print('增长后的情况：')
-        for index in range(len(str_tmp)):
-            print(str_tmp[index] + ' : ' + str(str_sim_value[index]))
-
-
-
-        # for index in range(oringi_len):
-        #     if str_tmp[index] == str_tmp[0]:
-        #         str_tmp.pop(oringi_len)
-        #         str_sim_value.pop(oringi_len)
-
+        # print()
+        # print('增加后的长度：' + str(len(str_tmp)))
+        # print('增长后的情况：')
+        # for index in range(len(str_tmp)):
+        #     print(str_tmp[index] + ' : ' + str(str_sim_value[index]))
 
         for index in range(oringi_len):
-            for tmp_index in range(oringi_len, len(str_tmp)):
-                if str_tmp[tmp_index] == str_tmp[0]:
-                    str_tmp.pop(tmp_index)
-                    str_sim_value.pop(tmp_index)
-                    break
-            # if str_tmp[index] == str_tmp[0]:
-            #     str_tmp.pop(oringi_len)
-            #     str_sim_value.pop(oringi_len)
+            while str_tmp[index] in str_tmp[oringi_len:]:
+                for tmp_index in range(oringi_len, len(str_tmp)):
+                    if str_tmp[tmp_index] == str_tmp[index]:
+                        str_tmp.pop(tmp_index)
+                        str_sim_value.pop(tmp_index)
+                        break
+
 
         # 保证增加后的数据不超过k个
         if len(str_tmp) > k:
@@ -482,11 +451,11 @@ def catalog_multiple_match(request):
 
 
 
-        print()
-        print('删除后的情况：')
-        for tmp_index in range(len(str_tmp)):
-            print(str_tmp[tmp_index] + ' : ' + str(str_sim_value[tmp_index]))
-            # print(str_sim_value[tmp_index])
+        # print()
+        # print('删除后的情况：')
+        # for tmp_index in range(len(str_tmp)):
+        #     print(str_tmp[tmp_index] + ' : ' + str(str_sim_value[tmp_index]))
+        #     # print(str_sim_value[tmp_index])
 
         # result.append(save_result(tmp, res, query_id, sim_value))
         result.append(save_result(str_tmp, res, query_id, str_sim_value))
@@ -499,12 +468,12 @@ def catalog_multiple_match(request):
 
 def string_matching(demand_data, k):
     res = []
-    print('data_len：' + str(len(catalogue_data)))
+    # print('data_len：' + str(len(catalogue_data)))
     # print('original_code_len：' + str(len(database_original_code)))
     # print('original_data_len：' + str(len(database_original_data)))
 
-    for i in range(len(catalogue_data)):
-        print(catalogue_data[i])
+    # for i in range(len(catalogue_data)):
+    #     print(catalogue_data[i])
 
     for data in catalogue_data:
         # if demand_data == tmp_data[0] + ' ' + tmp_data[1] + ' ' + tmp_data[2]:
@@ -515,7 +484,7 @@ def string_matching(demand_data, k):
         tmp_str = tmp_database_str[0] + ' ' + tmp_database_str[1] + ' ' + tmp_database_str[3]
 
         if match_str == tmp_str:
-            print(111111111)
+            # print(111111111)
             res.append(data)
             if len(res) == k:
                 break
@@ -588,9 +557,9 @@ def vector_matching(demand_data, k):
     res_sim_value = []
     for i in sim_index:
         res.append(catalogue_data[i[0]])
-    print('计算出的匹配值：')
+    # print('计算出的匹配值：')
     for i in sim_value:
-        print(i[0])
+        # print(i[0])
         if i[0] > 1:
             i[0] = 1.0
         res_sim_value.append(i[0])
@@ -620,31 +589,13 @@ def prepare_catalogue_data():
     re = db.get_data_by_type_v2(data_col, business_type ,table_name)
 
     for i in re:
-        # catalogue_data.append(i[0].replace('-', ' '))
-        # database_original_code.append(i[1])
-        # database_original_data.append(i[2])
         catalogue_data.append(' '.join([i[0].replace('-', ' '), i[1], i[2]]))
-        # database_original_code.append(i[1])
-        # database_original_data.append(i[2])
-
-    # print(tmp)
-    # for i in tmp:
-    #     while (None in i):
-    #         i[i.index(None)] = '*'
-    #     catalogue_data.append(' '.join(i))
 
     # print(catalogue_data)
-    print('catalogue_data：' + str(len(catalogue_data)))
-    for i in range(len(catalogue_data)):
-        print(catalogue_data[i])
-    # print()
-    # print('database_original_code：' + str(len(database_original_code)))
-    # for i in range(len(database_original_code)):
-    #     print(database_original_code[i])
-    # print()
-    # print('database_original_data：' + str(len(database_original_data)))
-    # for i in range(len(database_original_data)):
-    #     print(database_original_data[i])
+    # print('catalogue_data：' + str(len(catalogue_data)))
+    # for i in range(len(catalogue_data)):
+    #     print(catalogue_data[i])
+
 
     catalogue_df = pd.DataFrame(catalogue_data)
     catalogue_df.to_csv(exec_catalog_path, encoding='utf-8_sig', index=False)
