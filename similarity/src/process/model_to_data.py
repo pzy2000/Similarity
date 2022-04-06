@@ -260,7 +260,7 @@ def model2data_recommend(request):
     percent = [float(x) for x in weight_percent.split(',')]
     # load_data_data()
     if len(model_data) == 0:
-        return Response({"code": 404, "msg": "模型和向量未初始化！", "data": ''})
+        return Response({"code": 404, "msg": "数据为空！", "data": ''})
     # 顺序是部门-模型名称-模型描述-属性名称-属性描述
     source_data = []
     for i in range(len(full_data)):

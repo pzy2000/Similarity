@@ -122,7 +122,7 @@ def catalog_recommend(request):
     percent = [float(x) for x in weight_percent.split(',')]
     # load_catalogue_data()
     if len(catalogue_data) == 0:
-        return Response({"code": 404, "msg": "模型和向量未初始化！", "data": ''})
+        return Response({"code": 404, "msg": "数据为空！", "data": ''})
     # 顺序是材料名称-材料描述-材料类型-材料来源部门
     source_data = []
     for i in range(len(full_data)):

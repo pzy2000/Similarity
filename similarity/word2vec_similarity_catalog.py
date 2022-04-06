@@ -375,7 +375,7 @@ def catalog_multiple_match(request):
     percent = [float(x) for x in weight_percent.split(',')]
 
     if len(catalogue_data) == 0:
-        return Response({"code": 404, "msg": "模型和向量未初始化！", "data": ''})
+        return Response({"code": 404, "msg": "数据为空！", "data": ''})
     source_data = []
     for i in range(len(full_data)):
         source_data.append(full_data[i]['matchStr'].replace('-', ' '))
