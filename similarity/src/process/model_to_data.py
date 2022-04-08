@@ -247,7 +247,7 @@ def model2data_recommend(request):
     full_data = parameter['data']
     k = parameter['k']
     if k > len(model_data):
-        return Response({"code": 404, "msg": "k大于现有数据数量", "data": ''})
+        k = len(model_data)
     weight_percent = parameter['percent']
     if len(weight_percent.split(',')) != 5:
         return Response({"code": 404, "msg": "权重配置错误！", "data": ''})
