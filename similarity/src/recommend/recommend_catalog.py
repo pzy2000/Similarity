@@ -196,7 +196,8 @@ def catalog_recommend(request):
         if len(str_tmp) > k:
             str_tmp = str_tmp[:k]
 
-
+        for sim_index in range(len(sim_value)):
+            str_sim_value[sim_index]=sim_value[sim_index]
         # print()
         # print('删除后的情况：')
         # for tmp_index in range(len(str_tmp)):
