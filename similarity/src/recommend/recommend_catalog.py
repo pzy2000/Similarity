@@ -20,10 +20,14 @@ query_data = {}
 catalogue_data = []
 catalogue_data_vector_department = []
 catalogue_data_vector_catalog = []
+catalogue_data_vector_catalog_disc = []
 catalogue_data_vector_item = []
+catalogue_data_vector_item_disc = []
 catalogue_data_tensor_department = None
 catalogue_data_tensor_catalog = None
+catalogue_data_tensor_catalog_disc = None
 catalogue_data_tensor_item = None
+catalogue_data_tensor_item_disc = None
 
 model_path = model_dir + 'current_model.bin'
 
@@ -45,10 +49,15 @@ def init_model_vector_material(request):
     global catalogue_data
     global catalogue_data_vector_department
     global catalogue_data_vector_catalog
+    global catalogue_data_vector_catalog_disc
     global catalogue_data_vector_item
+    global catalogue_data_vector_item_disc
+
     global catalogue_data_tensor_department
     global catalogue_data_tensor_catalog
+    global catalogue_data_tensor_catalog_disc
     global catalogue_data_tensor_item
+    global catalogue_data_tensor_item_disc
     global catalogue_data_path
     parameter = request.data
     # # 目录表路径
@@ -63,7 +72,9 @@ def init_model_vector_material(request):
     catalogue_data = []
     catalogue_data_vector_department = []
     catalogue_data_vector_catalog = []
+    catalogue_data_vector_catalog_disc = []
     catalogue_data_vector_item = []
+    catalogue_data_vector_item_disc = []
     # prepare_catalogue_data(path=catalogue_data_path)
     prepare_catalogue_data()
     process = 0.75
@@ -75,18 +86,28 @@ def init_model_vector_material(request):
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         catalogue_data_vector_department.append(s2)
+
         segment2_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         catalogue_data_vector_catalog.append(s2)
+
+        segment2_1 = jieba.lcut(item[2], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1)
+        catalogue_data_vector_catalog_disc.append(s2)
+
         segment2_1 = jieba.lcut(item[3], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         catalogue_data_vector_item.append(s2)
+
+        segment2_1 = jieba.lcut(item[4], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1)
+        catalogue_data_vector_item_disc.append(s2)
     catalogue_data_tensor_department = torch.Tensor(catalogue_data_vector_department).to(device)
     catalogue_data_tensor_catalog = torch.Tensor(catalogue_data_vector_catalog).to(device)
+    catalogue_data_tensor_catalog_disc = torch.Tensor(catalogue_data_vector_catalog_disc).to(device)
     catalogue_data_tensor_item = torch.Tensor(catalogue_data_vector_item).to(device)
-    # torch.save(catalogue_data_tensor_item, catalog_item_tensor_path)
-    # torch.save(catalogue_data_tensor_department, catalog_department_tensor_path)
-    # torch.save(catalogue_data_tensor_catalog, catalog_catalog_tensor_path)
+    catalogue_data_tensor_item_disc = torch.Tensor(catalogue_data_vector_item_disc).to(device)
+
 
     bert_data.clear()
     query_data.clear()
@@ -253,11 +274,11 @@ def vector_matching(demand_data, k):
     # sim_words = {}
     item = demand_data.split(' ')
 
+
     # 材料描述
     segment1_1 = jieba.lcut(item[3], cut_all=True, HMM=True)
     s1 = [word_avg(model, segment1_1)]
     x = torch.Tensor(s1).to(device)
-    # final_value = tensor_module(torch.load(catalog_department_tensor_path), x) * percent[0]
     final_value = tensor_module(catalogue_data_tensor_item, x) * percent[3]
 
     # 部门
@@ -265,7 +286,6 @@ def vector_matching(demand_data, k):
         segment1_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s1 = [word_avg(model, segment1_1)]
         x = torch.Tensor(s1).to(device)
-        # final_value += tensor_module(torch.load(catalog_department_tensor_path), x) * percent[1]
         final_value = tensor_module(catalogue_data_tensor_department, x) * percent[0]
 
     # 事项名称
@@ -273,15 +293,20 @@ def vector_matching(demand_data, k):
         segment1_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
         s1 = [word_avg(model, segment1_1)]
         x = torch.Tensor(s1).to(device)
-        # final_value += tensor_module(torch.load(catalog_department_tensor_path), x) * percent[3]
         final_value += tensor_module(catalogue_data_tensor_catalog, x) * percent[1]
 
-    # # 材料描述、材料类型
-    # if item[1] != '':
-    #     segment1_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
-    #     s1 = [word_avg(model, segment1_1)]
-    #     x = torch.Tensor(s1).to(device)
-    #     final_value += tensor_module(catalogue_data_tensor_catalog, x) * percent[1]
+    # 材料描述、材料类型
+    if item[2] != '':
+        segment1_1 = jieba.lcut(item[2], cut_all=True, HMM=True)
+        s1 = [word_avg(model, segment1_1)]
+        x = torch.Tensor(s1).to(device)
+        final_value += tensor_module(catalogue_data_tensor_catalog_disc, x) * percent[2]
+
+    if item[4] != '':
+        segment1_1 = jieba.lcut(item[4], cut_all=True, HMM=True)
+        s1 = [word_avg(model, segment1_1)]
+        x = torch.Tensor(s1).to(device)
+        final_value += tensor_module(catalogue_data_tensor_item_disc, x) * percent[4]
 
     # 输出排序并输出top-k的输出
     value, index = torch.topk(final_value, k, dim=0, largest=True, sorted=True)
@@ -309,7 +334,9 @@ def save_data(demand_data, k):
         item2 = data.split(' ')
         sim += bert_sim.predict(item1[0], item2[0])[0][1] * percent[0]
         sim += bert_sim.predict(item1[1], item2[1])[0][1] * percent[1]
+        sim += bert_sim.predict(item1[2], item2[2])[0][1] * percent[2]
         sim += bert_sim.predict(item1[3], item2[3])[0][1] * percent[3]
+        sim += bert_sim.predict(item1[4], item2[4])[0][1] * percent[4]
         # # 信息项
         # sim += bert_sim.predict(item1[0], item2[2])[0][1] * percent[0]
         # # 部门
@@ -353,7 +380,9 @@ def save_result(temp, res, query_id, sim_value):
 def increment_business_data_material(request):
     global catalogue_data_tensor_department
     global catalogue_data_tensor_catalog
+    global catalogue_data_tensor_catalog_disc
     global catalogue_data_tensor_item
+    global catalogue_data_tensor_item_disc
     parameter = request.data
     full_data = parameter['data']
     for single_data in full_data:
@@ -380,15 +409,27 @@ def increment_business_data_material(request):
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         catalogue_data_vector_department.append(s2)
+
         segment2_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         catalogue_data_vector_catalog.append(s2)
+
+        segment2_1 = jieba.lcut(item[2], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1)
+        catalogue_data_vector_catalog_disc.append(s2)
+
         segment2_1 = jieba.lcut(item[3], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         catalogue_data_vector_item.append(s2)
+
+        segment2_1 = jieba.lcut(item[4], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1)
+        catalogue_data_vector_item_disc.append(s2)
     catalogue_data_tensor_department = torch.Tensor(catalogue_data_vector_department).to(device)
     catalogue_data_tensor_catalog = torch.Tensor(catalogue_data_vector_catalog).to(device)
+    catalogue_data_tensor_catalog_disc = torch.Tensor(catalogue_data_vector_catalog).to(device)
     catalogue_data_tensor_item = torch.Tensor(catalogue_data_vector_item).to(device)
+    catalogue_data_tensor_item_disc = torch.Tensor(catalogue_data_vector_item).to(device)
     bert_data.clear()
     query_data.clear()
     return Response({"code": 200, "msg": "新增数据成功！", "data": ""})
@@ -396,7 +437,9 @@ def increment_business_data_material(request):
 def delete_business_data_material(request):
     global catalogue_data_tensor_department
     global catalogue_data_tensor_catalog
+    global catalogue_data_tensor_catalog_disc
     global catalogue_data_tensor_item
+    global catalogue_data_tensor_item_disc
     parameter = request.data
     full_data = parameter['data']
     for single_data in full_data:
@@ -428,20 +471,29 @@ def delete_business_data_material(request):
         item = tmp.split(' ')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
-
         delete_ndarray(catalogue_data_vector_department, s2)
-        # catalogue_data_vector_department.pop(catalogue_data_vector_department.index(s2))
+
         segment2_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         delete_ndarray(catalogue_data_vector_catalog, s2)
-        # catalogue_data_vector_catalog.pop(catalogue_data_vector_catalog.index(s2))
+
+        segment2_1 = jieba.lcut(item[2], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1)
+        delete_ndarray(catalogue_data_vector_catalog_disc, s2)
+
         segment2_1 = jieba.lcut(item[3], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         delete_ndarray(catalogue_data_vector_item, s2)
-        # catalogue_data_vector_item.pop(catalogue_data_vector_item.index(s2))
+
+        segment2_1 = jieba.lcut(item[4], cut_all=True, HMM=True)
+        s2 = word_avg(model, segment2_1)
+        delete_ndarray(catalogue_data_vector_item_disc, s2)
+
     catalogue_data_tensor_department = torch.Tensor(catalogue_data_vector_department).to(device)
     catalogue_data_tensor_catalog = torch.Tensor(catalogue_data_vector_catalog).to(device)
+    catalogue_data_tensor_catalog_disc = torch.Tensor(catalogue_data_vector_catalog_disc).to(device)
     catalogue_data_tensor_item = torch.Tensor(catalogue_data_vector_item).to(device)
+    catalogue_data_tensor_item_disc = torch.Tensor(catalogue_data_vector_item_disc).to(device)
     bert_data.clear()
     query_data.clear()
     return Response({"code": 200, "msg": "删除数据成功！", "data": ""})
