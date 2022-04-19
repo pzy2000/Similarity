@@ -329,6 +329,7 @@ def data2model_recommend(request):
     for i in range(len(full_data)):
         source_data.append(full_data[i]['matchStr'].replace('-', ' '))
     result = []
+    tick = 0
     for i in range(len(source_data)):
         res = {}
         data = source_data[i]
@@ -337,6 +338,7 @@ def data2model_recommend(request):
         str_tmp = string_matching(demand_data=data, k=k)
         if len(str_tmp) >= k:
             sim_value = [1] * len(str_tmp)
+            # print("用了字符串匹配")
             result.append(save_result(str_tmp, res, query_id, sim_value))
             continue
 
@@ -346,6 +348,7 @@ def data2model_recommend(request):
             if len(tmp) == 2 * k and weight_data[data] == percent:
                 sim_value = tmp[int(len(tmp) / 2):]
                 tmp = tmp[0: int(len(tmp) / 2)]
+                # print("用了查询缓存")
                 result.append(save_result(tmp, res, query_id, sim_value))
                 continue
 
@@ -354,6 +357,7 @@ def data2model_recommend(request):
         if len(tmp) != 0 and weight_data[data] == percent:
             sim_value = tmp[int(len(tmp) / 2):]
             tmp = tmp[0: int(len(tmp) / 2)]
+            print("用了BERT缓存")
             result.append(save_result(tmp, res, query_id, sim_value))
             continue
 
@@ -367,7 +371,7 @@ def data2model_recommend(request):
 
         # 词向量匹配
         tmp, sim_value = vector_matching(demand_data=data, k=k)
-
+        # print("用了词向量匹配")
         # print('原来的str_tmp')
         # for index in range(len(str_tmp)):
         #     print(str_tmp[index])
@@ -418,6 +422,8 @@ def data2model_recommend(request):
 
         # 缓存中不存在, 后台线程缓存
         executor.submit(save_data, data, k)
+        tick = 1
+        return data2model_recommend(request)
 
     return Response({"code": 200, "msg": "查询成功！", "data": result})
 
@@ -481,6 +487,12 @@ def vector_matching(demand_data, k):
         s1 = [word_avg(model, segment1_1)]
         x = torch.Tensor(s1).to(device)
         final_value += tensor_module(data_model_tensor_modelName_disc, x) * percent[2]
+
+    '''if item[3] != '':
+        segment1_1 = jieba.lcut(item[3], cut_all=True, HMM=True)
+        s1 = [word_avg(model, segment1_1)]
+        x = torch.Tensor(s1).to(device)
+        final_value += tensor_module(data_model_tensor_modelName_disc, x) * percent[3]'''
 
     if item[4] != '':
         segment1_1 = jieba.lcut(item[4], cut_all=True, HMM=True)
