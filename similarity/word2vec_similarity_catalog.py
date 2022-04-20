@@ -11,6 +11,8 @@ import torch
 import xlrd
 import configparser
 import pandas as pd
+
+from demo.settings import DEBUG
 from similarity.tools import root_path
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions
@@ -19,6 +21,7 @@ from rest_framework.response import Response
 from similarity.tools import model_dir, data_dir
 from similarity.bert_src.similarity_count import BertSim
 from .database_get import db
+
 
 # 默认模型
 # model_dir = os.getcwd() + '/similarity/model/'
@@ -222,12 +225,11 @@ def increment_business_data_catalog(request):
 
         catalogue_data.append(tmp)
 
-
-        # print('增加后：')
-        # print('catalogue_data：' + str(len(catalogue_data)))
-        # for i in range(len(catalogue_data)):
-        #     print(catalogue_data[i])
-
+        if DEBUG:
+            print('增加后：')
+            print('catalogue_data：' + str(len(catalogue_data)))
+            for i in range(len(catalogue_data)):
+                print(catalogue_data[i])
 
 
         item = tmp.split(' ')
@@ -279,19 +281,21 @@ def delete_business_data_catalog(request):
 
         tmp = ' '.join(match_str.split('-'))
         tmp += (' ' + original_code + ' ' + original_data)
-        # print('待删除数据：')
-        # print(tmp)
+
+        if DEBUG:
+            print('待删除数据：')
+            print(tmp)
         # 在目录列表中删除数据
         try:
             catalogue_data.remove(tmp)
         except:
             return Response({"code": 200, "msg": "无该数据！", "data": ""})
 
-
-        # print('删除后：')
-        # print('catalogue_data：' + str(len(catalogue_data)))
-        # for i in range(len(catalogue_data)):
-        #     print(catalogue_data[i])
+        if DEBUG:
+            print('删除后：')
+            print('catalogue_data：' + str(len(catalogue_data)))
+            for i in range(len(catalogue_data)):
+                print(catalogue_data[i])
 
         item = tmp.split(' ')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
@@ -388,23 +392,25 @@ def catalog_multiple_match(request):
         # 词向量匹配
         tmp, sim_value = vector_matching(demand_data=data, k=k)
 
-        # print('原来的str_tmp')
-        # for index in range(len(str_tmp)):
-        #     print(str_tmp[index])
+        if DEBUG:
+            print('原来的str_tmp')
+            for index in range(len(str_tmp)):
+                print(str_tmp[index])
 
-        # print('原来的tmp：')
-        # for index in range(len(tmp)):
-        #     print(tmp[index] + ' : ' + str(sim_value[index]))
+            print('原来的tmp：')
+            for index in range(len(tmp)):
+                print(tmp[index] + ' : ' + str(sim_value[index]))
 
         oringi_len = len(str_tmp)
         str_tmp += tmp
         str_sim_value = ([1] * oringi_len) + sim_value
 
-        # print()
-        # print('增加后的长度：' + str(len(str_tmp)))
-        # print('增长后的情况：')
-        # for index in range(len(str_tmp)):
-        #     print(str_tmp[index] + ' : ' + str(str_sim_value[index]))
+        if DEBUG:
+            print()
+            print('增加后的长度：' + str(len(str_tmp)))
+            print('增长后的情况：')
+            for index in range(len(str_tmp)):
+                print(str_tmp[index] + ' : ' + str(str_sim_value[index]))
 
         for index in range(oringi_len):
             while str_tmp[index] in str_tmp[oringi_len:]:
@@ -420,12 +426,12 @@ def catalog_multiple_match(request):
             str_tmp = str_tmp[:k]
 
 
-
-        # print()
-        # print('删除后的情况：')
-        # for tmp_index in range(len(str_tmp)):
-        #     print(str_tmp[tmp_index] + ' : ' + str(str_sim_value[tmp_index]))
-        #     # print(str_sim_value[tmp_index])
+        if DEBUG:
+            print()
+            print('删除后的情况：')
+            for tmp_index in range(len(str_tmp)):
+                print(str_tmp[tmp_index] + ' : ' + str(str_sim_value[tmp_index]))
+                # print(str_sim_value[tmp_index])
 
         # result.append(save_result(tmp, res, query_id, sim_value))
         result.append(save_result(str_tmp, res, query_id, str_sim_value))
@@ -438,23 +444,22 @@ def catalog_multiple_match(request):
 
 def string_matching(demand_data, k):
     res = []
-    # print('data_len：' + str(len(catalogue_data)))
-    # print('original_code_len：' + str(len(database_original_code)))
-    # print('original_data_len：' + str(len(database_original_data)))
-
-    # for i in range(len(catalogue_data)):
-    #     print(catalogue_data[i])
 
     for data in catalogue_data:
         # if demand_data == tmp_data[0] + ' ' + tmp_data[1] + ' ' + tmp_data[2]:
         tmp_match_str = demand_data.split(' ')
+        if tmp_match_str[0] == '' and tmp_match_str[1] == '' and tmp_match_str[3] == '':
+            continue
         match_str = tmp_match_str[0] + ' ' + tmp_match_str[1] + ' ' + tmp_match_str[3]
 
         tmp_database_str = data.split(' ')
+        if tmp_database_str[0] == '' and tmp_database_str[1] == '' and tmp_database_str[3] == '':
+            continue
         tmp_str = tmp_database_str[0] + ' ' + tmp_database_str[1] + ' ' + tmp_database_str[3]
 
         if match_str == tmp_str:
-            # print(111111111)
+            if DEBUG:
+                print(111111111)
             res.append(data)
             if len(res) == k:
                 break
@@ -496,6 +501,8 @@ def save_data(demand_data, k):
     for sim_word in sim_words:
         if sim_word[1] > 1:
             sim_word[1] = 1.0
+        elif sim_word[1] < 0:
+            sim_word[1] = abs(sim_word[1])
         res.append(sim_word[1])
     bert_data[demand_data] = res
 
@@ -558,43 +565,29 @@ def vector_matching(demand_data, k):
         # print(i[0])
         if i[0] > 1:
             i[0] = 1.0
+        elif i[0] < 0:
+            i[0] = abs(i[0])
         res_sim_value.append(i[0])
     return res, res_sim_value
 
 def prepare_catalogue_data():
     global catalogue_data
     global table_name
-    # # 打开excel
-    # wb = xlrd.open_workbook(path)
-    # # 按工作簿定位工作表
-    # sh = wb.sheet_by_name('信息资源导入模板')
-    # row_number = sh.nrows
-    # for i in range(2, row_number):
-    #     catalogue_data.append(sh.cell(i, 0).value + ' ' + sh.cell(i, 3).value + ' ' + sh.cell(i, 11).value + ' ' +
-    #                           sh.cell(i, 6).value + ' ' + sh.cell(i, 15).value)
-
-    # re = db.get_colum_by_num(data_col, table_name)
-    # for i in re:
-    #     while (None in i):
-    #         i[i.index(None)] = '*'
-    #     catalogue_data.append(' '.join(i))
-    #
-    # catalogue_df = pd.DataFrame(catalogue_data)
-    # catalogue_df.to_csv(exec_catalog_path, encoding='utf-8_sig', index=False)
 
     re = db.get_data_by_type_v2(data_col, business_type ,table_name)
 
     for i in re:
         catalogue_data.append(' '.join([i[0].replace('-', ' '), i[1], i[2]]))
 
-    # print(catalogue_data)
-    # print('catalogue_data：' + str(len(catalogue_data)))
-    # for i in range(len(catalogue_data)):
-    #     print(catalogue_data[i])
+    if DEBUG:
+        print(catalogue_data)
+        print('catalogue_data：' + str(len(catalogue_data)))
+        for i in range(len(catalogue_data)):
+            print(catalogue_data[i])
 
 
-    catalogue_df = pd.DataFrame(catalogue_data)
-    catalogue_df.to_csv(exec_catalog_path, encoding='utf-8_sig', index=False)
+    # catalogue_df = pd.DataFrame(catalogue_data)
+    # catalogue_df.to_csv(exec_catalog_path, encoding='utf-8_sig', index=False)
 
 def word_avg(word_model, words):  # 对句子中的每个词的词向量简单做平均 作为句子的向量表示
     if len(words) == 0:
