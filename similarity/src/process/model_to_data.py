@@ -81,7 +81,7 @@ def init_model_vector_data(request):
     #     return Response({"code": 404, "msg": "数据表路径不存在", "data": ""})
     process = 0
     # 重新加载模型
-    model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
+    # model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
     process = 0.5
     # 重新缓存向量
     model_data = []
@@ -153,7 +153,7 @@ def prepare_model_data():
 
     re = db.get_data_by_type_v2(data_col, business_type, table_name)
     for i in re:
-        model_data.append(' '.join([i[0].replace('-', ' '), i[1], i[2]]))
+        model_data.append(' '.join([i[0].replace('^', ' '), i[1], i[2]]))
 
     if DEBUG:
         print('model_data：' + str(len(model_data)))
@@ -181,10 +181,10 @@ def increment_business_model_data(request):
         original_code = single_data['originalCode']
         original_data = single_data['originalData']
 
-        if len(match_str.split('-')) != 5:
+        if len(match_str.split('^')) != 5:
             return Response({"code": 200, "msg": "新增数据失败，有效数据字段不等于5", "data": ""})
 
-        tmp = ' '.join(match_str.split('-'))
+        tmp = ' '.join(match_str.split('^'))
         tmp += (' ' + original_code + ' ' + original_data)
         model_data.append(tmp)
 
@@ -194,7 +194,7 @@ def increment_business_model_data(request):
             for i in range(len(model_data)):
                 print(model_data[i])
 
-        item = match_str.split('-')
+        item = match_str.split('^')
 
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
@@ -249,7 +249,7 @@ def delete_business_model_data(request):
         # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
         #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
-        tmp = ' '.join(match_str.split('-'))
+        tmp = ' '.join(match_str.split('^'))
         tmp += (' ' + original_code + ' ' + original_data)
         if DEBUG:
             print('待删除数据：')
@@ -267,7 +267,7 @@ def delete_business_model_data(request):
             for i in range(len(model_data)):
                 print(model_data[i])
 
-        item = match_str.split('-')
+        item = match_str.split('^')
 
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
@@ -318,7 +318,7 @@ def model2data_recommend(request):
     # 顺序是部门-模型名称-模型描述-属性名称-属性描述
     source_data = []
     for i in range(len(full_data)):
-        source_data.append(full_data[i]['matchStr'].replace('-', ' '))
+        source_data.append(full_data[i]['matchStr'].replace('^', ' '))
     result = []
 
     for i in range(len(source_data)):

@@ -86,7 +86,7 @@ def init_model_vector_model(request):
     #     return Response({"code": 404, "msg": "模型表路径不存在", "data": ""})
     process = 0
     # 重新加载模型
-    model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
+    # model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
     process = 0.5
     # 重新缓存向量
     data_model = []
@@ -158,7 +158,7 @@ def prepare_data_model():
 
     re = db.get_data_by_type_v2(data_col, business_type, table_name)
     for i in re:
-        data_model.append(' '.join([i[0].replace('-', ' '), i[1], i[2]]))
+        data_model.append(' '.join([i[0].replace('^', ' '), i[1], i[2]]))
 
     if DEBUG:
         print('data_model：' + str(len(data_model)))
@@ -191,13 +191,13 @@ def increment_business_data_model(request):
         # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
         #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
-        # item = match_str.split('-')
+        # item = match_str.split('^')
         # data_model.append(item[1] + ' ' + item[3])
 
-        if len(match_str.split('-')) != 5:
+        if len(match_str.split('^')) != 5:
             return Response({"code": 200, "msg": "新增数据失败，有效数据字段不等于5", "data": ""})
 
-        tmp = ' '.join(match_str.split('-'))
+        tmp = ' '.join(match_str.split('^'))
 
         tmp += (' ' + original_code + ' ' + original_data)
         data_model.append(tmp)
@@ -263,7 +263,7 @@ def delete_business_data_model(request):
         #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
         # match_str = match_str.replace('-', ' ')
 
-        tmp = ' '.join(match_str.split('-'))
+        tmp = ' '.join(match_str.split('^'))
         tmp += (' ' + original_code + ' ' + original_data)
         if DEBUG:
             print('待删除数据：')
@@ -281,7 +281,7 @@ def delete_business_data_model(request):
             for i in range(len(data_model)):
                 print(data_model[i])
 
-        item = match_str.split('-')
+        item = match_str.split('^')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         delete_ndarray(data_model_vector_department, s2)
@@ -333,7 +333,7 @@ def data2model_recommend(request):
     # 顺序是模型表名-字段名
     source_data = []
     for i in range(len(full_data)):
-        source_data.append(full_data[i]['matchStr'].replace('-', ' '))
+        source_data.append(full_data[i]['matchStr'].replace('^', ' '))
     result = []
     tick = 0
     for i in range(len(source_data)):

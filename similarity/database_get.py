@@ -108,8 +108,8 @@ if __name__ == '__main__':
     print('-'*50)
     t = []
     for i in m:
-        t.append(i[0].replace('-', ' '))
-        print(i[0].replace('-', ' '))
+        t.append(i[0].replace('^', ' '))
+        print(i[0].replace('^', ' '))
     print(t)
 
     # tmp = []

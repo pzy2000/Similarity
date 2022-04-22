@@ -22,11 +22,14 @@ from similarity.tools import model_dir, data_dir
 from similarity.bert_src.similarity_count import BertSim
 from .database_get import db
 
-
 # 默认模型
 # model_dir = os.getcwd() + '/similarity/model/'
 model_path = model_dir + 'current_model.bin'
-model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
+
+# [DEBUG ONLY] 使用limit参数进行快速测试，减少加载时间，减少内存消耗
+GENSIM_MODELS_WORD_LIMIT = 10000 if DEBUG and True else None
+
+model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True, limit=GENSIM_MODELS_WORD_LIMIT)
 dim = len(model.vectors[0])
 catalogue_data_path = os.getcwd() + '/similarity/data/政务数据目录编制数据.xlsx'
 # 处理完后的目录表路径
@@ -61,11 +64,13 @@ catalogue_data_tensor_item_disc = None
 # 数据库读取相关数据
 keyword = 'common_data'
 read_ini = configparser.ConfigParser()
-read_ini.read(os.path.join(root_path,'config.ini'), encoding='utf-8')
+read_ini.read(os.path.join(root_path, 'config.ini'), encoding='utf-8')
 
 data_col = [int(x) for x in read_ini.get(keyword, 'data_col').split(',')]
 table_name = read_ini.get(keyword, 'table_name')
 business_type = 'catalog_data'
+
+
 # database_original_code = []
 # database_original_data = []
 
@@ -147,7 +152,7 @@ def init_model_vector_catalog(request):
     #     return Response({"code": 404, "msg": "目录表路径不存在", "data": ""})
     process = 0
     # 重新加载模型
-    model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
+    # model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
     process = 0.5
     # 重新缓存向量
     catalogue_data = []
@@ -190,10 +195,10 @@ def init_model_vector_catalog(request):
     catalogue_data_tensor_item = torch.Tensor(catalogue_data_vector_item).to(device)
     catalogue_data_tensor_item_disc = torch.Tensor(catalogue_data_vector_item_disc).to(device)
 
-
     bert_data.clear()
     query_data.clear()
     return Response({"code": 200, "msg": "词模型初始化完成；词向量缓存完成！", "data": ""})
+
 
 def increment_business_data_catalog(request):
     global catalogue_data_tensor_department
@@ -211,13 +216,13 @@ def increment_business_data_catalog(request):
         # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
         #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
-        # item = match_str.split('-')
+        # item = match_str.split('^')
         # item.append(original_code)
         # item.append(str(original_data).replace(' ', ''))
         # tmp = ' '.join(item)
-        if len(match_str.split('-')) != 5:
+        if len(match_str.split('^')) != 5:
             return Response({"code": 200, "msg": "新增数据失败，有效数据字段不等于5", "data": ""})
-        tmp = ' '.join(match_str.split('-'))
+        tmp = ' '.join(match_str.split('^'))
         # database_original_code.append(original_code)
         # database_original_data.append(original_data)
 
@@ -230,7 +235,6 @@ def increment_business_data_catalog(request):
             print('catalogue_data：' + str(len(catalogue_data)))
             for i in range(len(catalogue_data)):
                 print(catalogue_data[i])
-
 
         item = tmp.split(' ')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
@@ -263,6 +267,7 @@ def increment_business_data_catalog(request):
     query_data.clear()
     return Response({"code": 200, "msg": "新增数据成功！", "data": ""})
 
+
 def delete_business_data_catalog(request):
     global catalogue_data_tensor_department
     global catalogue_data_tensor_catalog
@@ -279,7 +284,7 @@ def delete_business_data_catalog(request):
         # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
         #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
-        tmp = ' '.join(match_str.split('-'))
+        tmp = ' '.join(match_str.split('^'))
         tmp += (' ' + original_code + ' ' + original_data)
 
         if DEBUG:
@@ -327,11 +332,13 @@ def delete_business_data_catalog(request):
     query_data.clear()
     return Response({"code": 200, "msg": "删除数据成功！", "data": ""})
 
+
 def delete_ndarray(with_array_list, array):
     for i in range(len(with_array_list)):
         if all(with_array_list[i] == np.array(array)) == True:
             with_array_list.pop(i)
             break
+
 
 def catalog_multiple_match(request):
     global percent
@@ -350,7 +357,7 @@ def catalog_multiple_match(request):
         return Response({"code": 404, "msg": "数据为空！", "data": ''})
     source_data = []
     for i in range(len(full_data)):
-        source_data.append(full_data[i]['matchStr'].replace('-', ' '))
+        source_data.append(full_data[i]['matchStr'].replace('^', ' '))
     result = []
     for i in range(len(source_data)):
         res = {}
@@ -420,11 +427,9 @@ def catalog_multiple_match(request):
                         str_sim_value.pop(tmp_index)
                         break
 
-
         # 保证增加后的数据不超过k个
         if len(str_tmp) > k:
             str_tmp = str_tmp[:k]
-
 
         if DEBUG:
             print()
@@ -441,6 +446,7 @@ def catalog_multiple_match(request):
         executor.submit(save_data, data, k)
 
     return Response({"code": 200, "msg": "查询成功！", "data": result})
+
 
 def string_matching(demand_data, k):
     res = []
@@ -465,12 +471,14 @@ def string_matching(demand_data, k):
                 break
     return res
 
+
 def find_data(demand_data, k):
     if demand_data in bert_data.keys():
         tmp = bert_data.get(demand_data)
         if len(tmp) == 2 * k:
             return tmp
     return []
+
 
 def save_data(demand_data, k):
     sim_words = {}
@@ -505,6 +513,7 @@ def save_data(demand_data, k):
             sim_word[1] = abs(sim_word[1])
         res.append(sim_word[1])
     bert_data[demand_data] = res
+
 
 def vector_matching(demand_data, k):
     global catalogue_data_vector_department
@@ -551,7 +560,6 @@ def vector_matching(demand_data, k):
         x = torch.Tensor(s1).to(device)
         final_value += tensor_module(catalogue_data_tensor_item_disc, x) * percent[4]
 
-
     # 输出排序并输出top-k的输出
     value, index = torch.topk(final_value, k, dim=0, largest=True, sorted=True)
     sim_index = index.numpy().tolist()
@@ -570,14 +578,15 @@ def vector_matching(demand_data, k):
         res_sim_value.append(i[0])
     return res, res_sim_value
 
+
 def prepare_catalogue_data():
     global catalogue_data
     global table_name
 
-    re = db.get_data_by_type_v2(data_col, business_type ,table_name)
+    re = db.get_data_by_type_v2(data_col, business_type, table_name)
 
     for i in re:
-        catalogue_data.append(' '.join([i[0].replace('-', ' '), i[1], i[2]]))
+        catalogue_data.append(' '.join([i[0].replace('^', ' '), i[1], i[2]]))
 
     if DEBUG:
         print(catalogue_data)
@@ -585,9 +594,9 @@ def prepare_catalogue_data():
         for i in range(len(catalogue_data)):
             print(catalogue_data[i])
 
-
     # catalogue_df = pd.DataFrame(catalogue_data)
     # catalogue_df.to_csv(exec_catalog_path, encoding='utf-8_sig', index=False)
+
 
 def word_avg(word_model, words):  # 对句子中的每个词的词向量简单做平均 作为句子的向量表示
     if len(words) == 0:
@@ -602,6 +611,7 @@ def word_avg(word_model, words):  # 对句子中的每个词的词向量简单�
             continue
     return np.mean(vectors, axis=0)
 
+
 def save_result(temp, res, query_id, sim_value):
     single_res = []
     for i in range(len(temp)):
@@ -612,7 +622,7 @@ def save_result(temp, res, query_id, sim_value):
         #                                                             'departmentID': tmp[3], 'catalogID': tmp[4]},
         #                    'similarity': sim_value[i]})
 
-        single_res.append({'str':' '.join(tmp[:5]),
+        single_res.append({'str': ' '.join(tmp[:5]),
                            'originalCode': tmp[5],
                            'originalData': tmp[6],
                            'similarity': sim_value[i]})

@@ -16,7 +16,6 @@ from similarity.word2vec_similarity_catalog import model, device, tensor_module,
 from similarity.tools import model_dir, root_path
 from similarity.database_get import db
 
-
 percent = [0.4, 0.3, 0, 0.2, 0]
 bert_data = {}
 query_data = {}
@@ -34,16 +33,14 @@ catalogue_data_tensor_item_disc = None
 
 model_path = model_dir + 'current_model.bin'
 
-
 # 数据库读取相关数据
 keyword = 'common_data'
 read_ini = configparser.ConfigParser()
-read_ini.read(os.path.join(root_path,'config.ini'), encoding='utf-8')
+read_ini.read(os.path.join(root_path, 'config.ini'), encoding='utf-8')
 
 data_col = [int(x) for x in read_ini.get(keyword, 'data_col').split(',')]
 table_name = read_ini.get(keyword, 'table_name')
 business_type = 'item_material'
-
 
 
 def init_model_vector_material(request):
@@ -69,7 +66,7 @@ def init_model_vector_material(request):
     #     return Response({"code": 404, "msg": "目录表路径不存在", "data": ""})
     process = 0
     # 重新加载模型
-    model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
+    # model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
     process = 0.5
     # 重新缓存向量
     catalogue_data = []
@@ -111,7 +108,6 @@ def init_model_vector_material(request):
     catalogue_data_tensor_item = torch.Tensor(catalogue_data_vector_item).to(device)
     catalogue_data_tensor_item_disc = torch.Tensor(catalogue_data_vector_item_disc).to(device)
 
-
     bert_data.clear()
     query_data.clear()
     return Response({"code": 200, "msg": "词模型初始化完成；词向量缓存完成！", "data": ""})
@@ -121,9 +117,9 @@ def prepare_catalogue_data():
     global catalogue_data
     global table_name
 
-    re = db.get_data_by_type_v2(data_col, business_type ,table_name)
+    re = db.get_data_by_type_v2(data_col, business_type, table_name)
     for i in re:
-        catalogue_data.append(' '.join([i[0].replace('-', ' '), i[1], i[2]]))
+        catalogue_data.append(' '.join([i[0].replace('^', ' '), i[1], i[2]]))
     if DEBUG:
         print('item_material：' + str(len(catalogue_data)))
         for i in range(len(catalogue_data)):
@@ -131,6 +127,7 @@ def prepare_catalogue_data():
 
     # catalogue_df = pd.DataFrame(catalogue_data)
     # catalogue_df.to_csv(exec_catalog_path, encoding='utf-8_sig', index=False)
+
 
 def catalog_recommend(request):
     global catalogue_data
@@ -150,7 +147,7 @@ def catalog_recommend(request):
     # 顺序是材料名称-材料描述-材料类型-材料来源部门
     source_data = []
     for i in range(len(full_data)):
-        source_data.append(full_data[i]['matchStr'].replace('-', ' '))
+        source_data.append(full_data[i]['matchStr'].replace('^', ' '))
     result = []
     for i in range(len(source_data)):
         res = {}
@@ -217,20 +214,18 @@ def catalog_recommend(request):
                         str_sim_value.pop(tmp_index)
                         break
 
-
         # 保证增加后的数据不超过k个
         if len(str_tmp) > k:
             str_tmp = str_tmp[:k]
 
         for sim_index in range(len(sim_value)):
-            str_sim_value[sim_index]=sim_value[sim_index]
+            str_sim_value[sim_index] = sim_value[sim_index]
 
         if DEBUG:
             print()
             print('删除后的情况：')
             for tmp_index in range(len(str_tmp)):
                 print(str_tmp[tmp_index] + ' : ' + str(str_sim_value[tmp_index]))
-
 
         # result.append(save_result(tmp, res, query_id, sim_value))
         result.append(save_result(str_tmp, res, query_id, str_sim_value))
@@ -241,10 +236,12 @@ def catalog_recommend(request):
 
     return Response({"code": 200, "msg": "查询成功！", "data": result})
 
+
 def load_catalogue_data():
     global catalogue_data
     catalogue_df = pd.read_csv(exec_catalog_path, encoding='utf-8')
     catalogue_data = [str(x[0]) for x in catalogue_df.values]
+
 
 def string_matching(demand_data, k):
     # res = []
@@ -282,44 +279,49 @@ def string_matching(demand_data, k):
                 break
     return res
 
+
 def vector_matching(demand_data, k):
     # 字符串没有匹配项，则会进行向量相似度匹配，筛选前k个
     # sim_words = {}
     item = demand_data.split(' ')
 
-
-    # 材料描述
-    segment1_1 = jieba.lcut(item[3], cut_all=True, HMM=True)
-    s1 = [word_avg(model, segment1_1)]
-    x = torch.Tensor(s1).to(device)
-    final_value = tensor_module(catalogue_data_tensor_item, x) * percent[3]
+    final_value = []
 
     # 部门
     if item[0] != '':
         segment1_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s1 = [word_avg(model, segment1_1)]
         x = torch.Tensor(s1).to(device)
-        final_value = tensor_module(catalogue_data_tensor_department, x) * percent[0]
+        final_value.append(tensor_module(catalogue_data_tensor_department, x) * percent[0])
 
     # 事项名称
     if item[1] != '':
         segment1_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
         s1 = [word_avg(model, segment1_1)]
         x = torch.Tensor(s1).to(device)
-        final_value += tensor_module(catalogue_data_tensor_catalog, x) * percent[1]
+        final_value.append(tensor_module(catalogue_data_tensor_catalog, x) * percent[1])
 
     # 材料描述、材料类型
     if item[2] != '':
         segment1_1 = jieba.lcut(item[2], cut_all=True, HMM=True)
         s1 = [word_avg(model, segment1_1)]
         x = torch.Tensor(s1).to(device)
-        final_value += tensor_module(catalogue_data_tensor_catalog_disc, x) * percent[2]
+        final_value.append(tensor_module(catalogue_data_tensor_catalog_disc, x) * percent[2])
+
+    # 材料描述
+    if item[3] != '':
+        segment1_1 = jieba.lcut(item[3], cut_all=True, HMM=True)
+        s1 = [word_avg(model, segment1_1)]
+        x = torch.Tensor(s1).to(device)
+        final_value.append(tensor_module(catalogue_data_tensor_item, x) * percent[3])
 
     if item[4] != '':
         segment1_1 = jieba.lcut(item[4], cut_all=True, HMM=True)
         s1 = [word_avg(model, segment1_1)]
         x = torch.Tensor(s1).to(device)
-        final_value += tensor_module(catalogue_data_tensor_item_disc, x) * percent[4]
+        final_value.append(tensor_module(catalogue_data_tensor_item_disc, x) * percent[4])
+
+    final_value = torch.sum(torch.stack(final_value),dim=0)
 
     # 输出排序并输出top-k的输出
     value, index = torch.topk(final_value, k, dim=0, largest=True, sorted=True)
@@ -338,6 +340,7 @@ def vector_matching(demand_data, k):
             i[0] = abs(i[0])
         res_sim_value.append(i[0])
     return res, res_sim_value
+
 
 def save_data(demand_data, k):
     sim_words = {}
@@ -380,12 +383,13 @@ def save_data(demand_data, k):
         res.append(sim_word[1])
     bert_data[demand_data] = res
 
+
 def save_result(temp, res, query_id, sim_value):
     single_res = []
     for i in range(len(temp)):
         d = temp[i]
         tmp = d.split(' ')
-        single_res.append({'str':' '.join(tmp[:5]),
+        single_res.append({'str': ' '.join(tmp[:5]),
                            'originalCode': tmp[5],
                            'originalData': tmp[6],
                            'similarity': sim_value[i]})
@@ -393,6 +397,7 @@ def save_result(temp, res, query_id, sim_value):
     res['key'] = query_id
     res['result'] = single_res
     return res
+
 
 def increment_business_data_material(request):
     global catalogue_data_tensor_department
@@ -410,10 +415,10 @@ def increment_business_data_material(request):
         # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
         #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
-        if len(match_str.split('-')) != 5:
+        if len(match_str.split('^')) != 5:
             return Response({"code": 200, "msg": "新增数据失败，有效数据字段不等于5", "data": ""})
 
-        tmp = ' '.join(match_str.split('-'))
+        tmp = ' '.join(match_str.split('^'))
         tmp += (' ' + original_code + ' ' + original_data)
 
         catalogue_data.append(tmp)
@@ -452,6 +457,7 @@ def increment_business_data_material(request):
     query_data.clear()
     return Response({"code": 200, "msg": "新增数据成功！", "data": ""})
 
+
 def delete_business_data_material(request):
     global catalogue_data_tensor_department
     global catalogue_data_tensor_catalog
@@ -468,13 +474,12 @@ def delete_business_data_material(request):
         # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
         #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
-        tmp = ' '.join(match_str.split('-'))
+        tmp = ' '.join(match_str.split('^'))
         tmp += (' ' + original_code + ' ' + original_data)
 
         if DEBUG:
             print('待删除数据：')
             print(tmp)
-
 
         # 在目录列表中删除数据
         try:
@@ -487,7 +492,6 @@ def delete_business_data_material(request):
             print('catalogue_data：' + str(len(catalogue_data)))
             for i in range(len(catalogue_data)):
                 print(catalogue_data[i])
-
 
         item = tmp.split(' ')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
