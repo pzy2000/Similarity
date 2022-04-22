@@ -60,7 +60,7 @@ catalogue_data_tensor_catalog = None
 catalogue_data_tensor_catalog_disc = None
 catalogue_data_tensor_item = None
 catalogue_data_tensor_item_disc = None
-
+weight_data = {}
 # 数据库读取相关数据
 keyword = 'common_data'
 read_ini = configparser.ConfigParser()
@@ -197,6 +197,7 @@ def init_model_vector_catalog(request):
 
     bert_data.clear()
     query_data.clear()
+    weight_data.clear()
     return Response({"code": 200, "msg": "词模型初始化完成；词向量缓存完成！", "data": ""})
 
 
@@ -265,6 +266,7 @@ def increment_business_data_catalog(request):
 
     bert_data.clear()
     query_data.clear()
+    weight_data.clear()
     return Response({"code": 200, "msg": "新增数据成功！", "data": ""})
 
 
@@ -330,6 +332,7 @@ def delete_business_data_catalog(request):
     catalogue_data_tensor_item_disc = torch.Tensor(catalogue_data_vector_item_disc).to(device)
     bert_data.clear()
     query_data.clear()
+    weight_data.clear()
     return Response({"code": 200, "msg": "删除数据成功！", "data": ""})
 
 
@@ -374,7 +377,7 @@ def catalog_multiple_match(request):
         #     result.append(save_result(str_tmp, res, query_id, sim_value))
 
         # 查看查询缓存
-        if data in query_data.keys():
+        if data in query_data.keys() and weight_data[data] == percent:
             tmp = query_data.get(data)
             if len(tmp) == 2 * k:
                 sim_value = tmp[int(len(tmp) / 2):]
@@ -384,7 +387,7 @@ def catalog_multiple_match(request):
 
         # 查看BERT缓存
         tmp = find_data(demand_data=data, k=k)
-        if len(tmp) != 0:
+        if len(tmp) != 0 and weight_data[data] == percent:
             sim_value = tmp[int(len(tmp) / 2):]
             tmp = tmp[0: int(len(tmp) / 2)]
             result.append(save_result(tmp, res, query_id, sim_value))
@@ -395,6 +398,8 @@ def catalog_multiple_match(request):
             bert_data.clear()
         if len(query_data.keys()) >= 10000:
             query_data.clear()
+        if len(weight_data.keys()) >= 10000:
+            weight_data.clear()
 
         # 词向量匹配
         tmp, sim_value = vector_matching(demand_data=data, k=k)
@@ -441,6 +446,7 @@ def catalog_multiple_match(request):
         # result.append(save_result(tmp, res, query_id, sim_value))
         result.append(save_result(str_tmp, res, query_id, str_sim_value))
         query_data[data] = tmp + sim_value
+        weight_data[data] = percent
 
         # 缓存中不存在, 后台线程缓存
         executor.submit(save_data, data, k)
