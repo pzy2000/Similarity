@@ -191,13 +191,13 @@ def increment_business_data_model(request):
         # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
         #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
-        # item = match_str.split('^')
+        # item = [x.strip() for x in match_str.split('^')]
         # data_model.append(item[1] + ' ' + item[3])
 
         if len(match_str.split('^')) != 5:
             return Response({"code": 200, "msg": "新增数据失败，有效数据字段不等于5", "data": ""})
 
-        tmp = ' '.join(match_str.split('^'))
+        tmp = ' '.join([x.strip() for x in match_str.split('^')])
 
         tmp += (' ' + original_code + ' ' + original_data)
         data_model.append(tmp)
@@ -263,7 +263,7 @@ def delete_business_data_model(request):
         #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
         # match_str = match_str.replace('-', ' ')
 
-        tmp = ' '.join(match_str.split('^'))
+        tmp = ' '.join([x.strip() for x in match_str.split('^')])
         tmp += (' ' + original_code + ' ' + original_data)
         if DEBUG:
             print('待删除数据：')
@@ -281,7 +281,7 @@ def delete_business_data_model(request):
             for i in range(len(data_model)):
                 print(data_model[i])
 
-        item = match_str.split('^')
+        item = [x.strip() for x in match_str.split('^')]
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
         delete_ndarray(data_model_vector_department, s2)

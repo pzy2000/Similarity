@@ -217,13 +217,13 @@ def increment_business_data_catalog(request):
         # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
         #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
-        # item = match_str.split('^')
+        # item = [x.strip() for x in match_str.split('^')]
         # item.append(original_code)
         # item.append(str(original_data).replace(' ', ''))
         # tmp = ' '.join(item)
         if len(match_str.split('^')) != 5:
             return Response({"code": 200, "msg": "新增数据失败，有效数据字段不等于5", "data": ""})
-        tmp = ' '.join(match_str.split('^'))
+        tmp = ' '.join([x.strip() for x in match_str.split('^')])
         # database_original_code.append(original_code)
         # database_original_data.append(original_data)
 
@@ -286,7 +286,7 @@ def delete_business_data_catalog(request):
         # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
         #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
-        tmp = ' '.join(match_str.split('^'))
+        tmp = ' '.join([x.strip() for x in match_str.split('^')])
         tmp += (' ' + original_code + ' ' + original_data)
 
         if DEBUG:
@@ -592,7 +592,7 @@ def prepare_catalogue_data():
     re = db.get_data_by_type_v2(data_col, business_type, table_name)
 
     for i in re:
-        catalogue_data.append(' '.join([i[0].replace('^', ' '), i[1], i[2]]))
+        catalogue_data.append(' '.join([' '.join([x.strip() for x in i[0].split('^')]), i[1], i[2]]))
 
     if DEBUG:
         print(catalogue_data)
