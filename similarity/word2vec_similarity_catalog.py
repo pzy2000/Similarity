@@ -1,6 +1,6 @@
 # coding=utf-8
 import os
-from concurrent.futures import ThreadPoolExecutor
+
 from concurrent import futures
 import queue
 import gensim
@@ -8,9 +8,9 @@ import jieba
 import numpy as np
 import tensorflow as tf
 import torch
-import xlrd
+
 import configparser
-import pandas as pd
+
 
 from demo.settings import DEBUG
 from similarity.tools import root_path
@@ -27,7 +27,7 @@ from .database_get import db
 model_path = model_dir + 'current_model.bin'
 
 # [DEBUG ONLY] 使用limit参数进行快速测试，减少加载时间，减少内存消耗
-GENSIM_MODELS_WORD_LIMIT = 10000 if DEBUG and True else None
+GENSIM_MODELS_WORD_LIMIT = 20000 if DEBUG and True else None
 
 model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True, limit=GENSIM_MODELS_WORD_LIMIT)
 dim = len(model.vectors[0])
@@ -84,7 +84,6 @@ class RejectQueue(queue.Queue):
             if self.maxsize > 0:
                 if not block:
                     if self._qsize() >= self.maxsize:
-                        # 不阻塞
                         pass
                     else:
                         self._put(item)
@@ -413,9 +412,9 @@ def catalog_multiple_match(request):
             for index in range(len(tmp)):
                 print(tmp[index] + ' : ' + str(sim_value[index]))
 
-        oringi_len = len(str_tmp)
+        origin_len = len(str_tmp)
         str_tmp += tmp
-        str_sim_value = ([1] * oringi_len) + sim_value
+        str_sim_value = ([1] * origin_len) + sim_value
 
         if DEBUG:
             print()
@@ -424,9 +423,9 @@ def catalog_multiple_match(request):
             for index in range(len(str_tmp)):
                 print(str_tmp[index] + ' : ' + str(str_sim_value[index]))
 
-        for index in range(oringi_len):
-            while str_tmp[index] in str_tmp[oringi_len:]:
-                for tmp_index in range(oringi_len, len(str_tmp)):
+        for index in range(origin_len):
+            while str_tmp[index] in str_tmp[origin_len:]:
+                for tmp_index in range(origin_len, len(str_tmp)):
                     if str_tmp[tmp_index] == str_tmp[index]:
                         str_tmp.pop(tmp_index)
                         str_sim_value.pop(tmp_index)
@@ -538,7 +537,7 @@ def vector_matching(demand_data, k):
     item = demand_data.split(' ')
 
     segment1_1 = jieba.lcut(item[3], cut_all=True, HMM=True)
-    s1 = [word_avg(model, segment1_1)]
+    s1 = [word_avg(model,  segment1_1)]
     x = torch.Tensor(s1).to(device)
     final_value = tensor_module(catalogue_data_tensor_item, x) * percent[3]
 
