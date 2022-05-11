@@ -11,7 +11,10 @@ import configparser
 MODEL = similarity1_model
 # 是否启用GPU设备
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+if torch.cuda.is_available():
+    print("正在使用独立GPU")
+else:
+    print("正在使用CPU")
 # 路径
 ROOT_PATH = str(pathlib.Path(os.path.abspath(__file__)).parent.parent)  # 路径为 E:\PythonProject\Similarity
 CONFIG_PATH = os.path.join(ROOT_PATH, 'config.ini')
@@ -21,4 +24,4 @@ MODEL_PATH = os.path.join(ROOT_PATH, 'similarity/model/')
 
 # config.ini 设置
 CONFIG = configparser.ConfigParser()
-CONFIG.read(CONFIG_PATH,encoding='utf8')
+CONFIG.read(CONFIG_PATH, encoding='utf8')

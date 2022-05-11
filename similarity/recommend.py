@@ -13,7 +13,7 @@ from similarity.src.process.data_to_model import init_model_vector_model, \
 from similarity.src.process.model_to_data import init_model_vector_data, \
     increment_business_model_data, delete_business_model_data, model2data_recommend
 # =============similarity2===============
-from similarity2.src import column_meta
+from similarity2.src import column_meta, column_terminology, resource_resource
 
 '''
 数据推荐总入口，实现内容包括：
@@ -43,7 +43,13 @@ def multiple_match(request):
         # 需求四，根据模型表属性推荐数据字段
         return model2data_recommend(request)
     elif business_type == "column_meta":
+        # 需求五，推荐数据元
         return column_meta.multiple_match(request)
+    elif business_type == "column_terminology":
+        # 需求五，推荐数据元
+        return column_terminology.multiple_match(request)
+    elif business_type == "resource_resource":
+        return resource_resource.multiple_match(request)
     else:
         return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
 
@@ -73,6 +79,10 @@ def init_model_vector(request):
         return init_model_vector_data(request)
     elif business_type == "column_meta":
         return column_meta.init_model_vector(request)
+    elif business_type == "column_terminology":
+        return column_terminology.init_model_vector(request)
+    elif business_type == "resource_resource":
+        return resource_resource.init_model_vector(request)
     else:
         return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
 

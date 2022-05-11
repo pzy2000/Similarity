@@ -6,7 +6,7 @@ from typing import *
 import torch
 
 # 业务类型
-BUSINESS_TYPE = "column_meta"
+BUSINESS_TYPE = "resource_resource"
 # 数据库信息
 db_data: Tuple[Tuple[Any]] = None
 # 数据库match_str
