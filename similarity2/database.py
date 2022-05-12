@@ -11,11 +11,13 @@ user = CONFIG.get("database", "db_user")
 password = CONFIG.get("database", "db_password")
 db_name = CONFIG.get("database", "db_name")
 
+
 class Database:
     common_database = None
     """
     请保证values_list、values_dict方法，最后调用！
     """
+
     @classmethod
     def get_common_database(cls):
         """
@@ -63,7 +65,6 @@ class Database:
         self.order_by_sql = ""
         self.projection = None
 
-
     def filter(self, **params):
         """
         :param params: 过滤参数，多个参数以and连接
@@ -96,13 +97,13 @@ class Database:
         )
         return self
 
-    def values_list(self, *projection, flat=False) ->  Union[Tuple[Tuple[Any]],List[str]]:
+    def values_list(self, *projection, flat=False) -> Union[List[Tuple[Any,Any,Any]], List[str]]:
         """
         :param projection: 选择查询的列名
         :param flat: 是否以列表返回，当且仅当选择一列时有效
-        :return: Tuple[Tuple[Any]]
+        :return: Union[List[Tuple[Any,Any,Any]], List[str]]
 
-        查询，并以二维元组返回结果
+        查询，并以二维列表返回结果
 
         >>> db = Database.get_common_database()
         >>> r = db.values_list("match_str","original_code","original_data")
@@ -119,7 +120,8 @@ class Database:
         """
         if len(projection) == 0:
             self.projection = "*"
-        else: self.projection = ",".join(projection)
+        else:
+            self.projection = ",".join(projection)
         if flat and len(projection) > 1:
             raise ValueError(f"flat=True requires len(projection) == 1,but got len(projection) == {len(projection)}")
         self.cursor = self.connection.cursor()
@@ -127,13 +129,13 @@ class Database:
         self.reset()
         if flat:
             result = [x[0] for x in result]
-        return result
+        return list(result)
 
     def values_dict(self, *projection, flat=False) -> List[Dict[str, Any]]:
         """
         :param projection: 选择查询的列名
         :param flat: 是否以列表返回，当且仅当选择一列时有效
-        :return: Tuple[Tuple[Any]]
+        :return: List[Dict[str, Any]]
 
         查询，以字典格式返回数据
 

@@ -408,6 +408,7 @@ class MetaData(object):
         data_multimeta_dic[index] = top_k_metadata_list
 
     def save_data(self, metadata_list, item_data):
+        return
         sim_words = {}
         for data in metadata_list:
             sim = bert_sim.predict(data, item_data)[0][1]

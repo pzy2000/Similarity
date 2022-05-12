@@ -486,6 +486,7 @@ def find_data(demand_data, k):
 
 
 def save_data(demand_data, k):
+    return
     sim_words = {}
     item1 = demand_data.split(' ')
     for data in catalogue_data:

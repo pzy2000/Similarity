@@ -8,7 +8,7 @@ import torch
 # 业务类型
 BUSINESS_TYPE = "column_terminology"
 # 数据库信息
-db_data: Tuple[Tuple[Any]] = None
+db_data: List[Tuple[Any,Any,Any]] = None
 # 数据库match_str
 db_match_str: List[str] = None
 # 数据库词向量 (n_items, n_samples, n_features)
@@ -66,7 +66,7 @@ def multiple_match(request):
         # 查看缓存
         if f"{match_str}{str(percent)}" in cache:
             # 从缓存中读取数据添加至结果
-            response_data.append({"key": request_id, "result": cache.get(match_str)})
+            response_data.append({"key": request_id, "result": cache.get(f"{match_str}{str(percent)}")})
             continue
 
         # 处理请求match_str
@@ -99,3 +99,54 @@ def multiple_match(request):
         "code": 200,
         "msg": "查询成功！",
         "data": response_data})
+def increment_data(request):
+    global db_data
+    global db_match_str
+    global db_matrix
+    parameter = request.data
+    full_data = parameter['data']
+    for single_data in full_data:
+        match_str = single_data['matchStr']
+        original_code = single_data['originalCode']
+        original_data = single_data['originalData']
+        if len(match_str.split('^')) != 5:
+            return Response({"code": 200, "msg": "新增数据失败，有效数据字段不等于5", "data": ""})
+
+        # 加入数据集
+        db_data.append((match_str, original_code, original_data))
+        # 加入match_str集合
+        db_match_str.append(match_str)
+        # 计算词向量
+        vec = match_str2matrix(match_str)
+        # 加入词向量集合
+        db_matrix = torch.cat((db_matrix, vec),dim=1)
+    # 清除缓存
+    cache.clear()
+    return Response({"code": 200, "msg": "新增数据成功！", "data": ""})
+
+
+def delete_data(request):
+    global db_data
+    global db_match_str
+    global db_matrix
+    parameter = request.data
+    full_data = parameter['data']
+    for single_data in full_data:
+        match_str = single_data['matchStr']
+        original_code = single_data['originalCode']
+        original_data = single_data['originalData']
+        data = (match_str, original_code, original_data)
+
+        # 时间复杂度O(n)，字典啥的再说
+        try:
+            index = db_data.index(data)
+        except ValueError as e:
+            return Response({"code": 200, "msg": "无该数据！", "data": ""})
+
+        # 删除数据
+        del db_data[index]
+        del db_match_str[index]
+        db_matrix = db_matrix[:,torch.arange(db_matrix.size(1)) != index,:]
+        # 清除缓存
+        cache.clear()
+        return Response({"code": 200, "msg": "删除数据成功！", "data": ""})

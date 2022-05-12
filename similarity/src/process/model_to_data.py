@@ -510,6 +510,7 @@ def load_data_data():
 
 
 def save_data(demand_data, k):
+    return
     sim_words = {}
 
     # item1(输入): 部门-模型名称-模型描述-属性名称-属性描述

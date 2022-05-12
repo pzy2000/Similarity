@@ -24,6 +24,22 @@ from similarity2.src import column_meta, column_terminology, resource_resource
 '''
 
 
+# 启动项目时自动初始化
+class FakeRequest:
+    def __init__(self):
+        self.data = None
+
+
+fake_request = FakeRequest()
+init_model_vector_catalog(fake_request)
+init_model_vector_material(fake_request)
+init_model_vector_model(fake_request)
+init_model_vector_data(fake_request)
+column_meta.init_model_vector(fake_request)
+column_terminology.init_model_vector(fake_request)
+resource_resource.init_model_vector(fake_request)
+
+
 @csrf_exempt
 @api_view(http_method_names=['post'])
 @permission_classes((permissions.AllowAny,))
@@ -110,6 +126,12 @@ def increment_business_data(request):
     # 需求4，数据表数据增加
     elif business_type == 'model_data':
         return increment_business_model_data(request)
+    elif business_type == "column_meta":
+        return column_meta.increment_data(request)
+    elif business_type == "column_terminology":
+        return column_terminology.increment_data(request)
+    elif business_type == "resource_resource":
+        return resource_resource.increment_data(request)
     return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
 
 
@@ -136,4 +158,10 @@ def delete_business_data(request):
     # 需求4，数据表数据删除
     elif business_type == 'model_data':
         return delete_business_model_data(request)
+    elif business_type == "column_meta":
+        return column_meta.delete_data(request)
+    elif business_type == "column_terminology":
+        return column_terminology.delete_data(request)
+    elif business_type == "resource_resource":
+        return resource_resource.delete_data(request)
     return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})

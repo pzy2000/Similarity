@@ -347,6 +347,7 @@ def vector_matching(demand_data, k):
 
 
 def save_data(demand_data, k):
+    return
     sim_words = {}
     # 部门-目录-信息项
     # 输入字符：材料名称-材料描述-材料类型-材料来源部门
