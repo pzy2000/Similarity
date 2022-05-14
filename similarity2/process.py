@@ -87,4 +87,8 @@ def vector_match(X: torch.Tensor, y: torch.Tensor, weight: List[float], k: int) 
     value = value.numpy().ravel().tolist()
     index = index.numpy().ravel().tolist()
 
+
+    # 对value进行限制
+    value = [1 if v > 1 else (0 if v < 0 else v) for v in value]
+
     return index, value

@@ -64,9 +64,9 @@ def multiple_match(request):
         request_id = rd['id']
 
         # 查看缓存
-        if f"{match_str}{str(percent)}" in cache:
+        if f"{match_str}{str(percent)}{k}" in cache:
             # 从缓存中读取数据添加至结果
-            response_data.append({"key": request_id, "result": cache.get(f"{match_str}{str(percent)}")})
+            response_data.append({"key": request_id, "result": cache.get(f"{match_str}{str(percent)}{k}")})
             continue
 
         # 处理请求match_str
@@ -92,7 +92,7 @@ def multiple_match(request):
             "result": result,
         }
         # 写入Cache
-        cache.put(f"{match_str}{str(percent)}", result)
+        cache.put(f"{match_str}{str(percent)}{k}", result)
         response_data.append(res)
 
     return Response({
