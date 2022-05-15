@@ -13,7 +13,7 @@ from similarity.src.process.data_to_model import init_model_vector_model, \
 from similarity.src.process.model_to_data import init_model_vector_data, \
     increment_business_model_data, delete_business_model_data, model2data_recommend
 # =============similarity2===============
-from similarity2.src import column_meta, column_terminology, resource_resource
+from similarity2.src import column_meta, column_terminology, resource_resource,resource_terminology
 
 '''
 数据推荐总入口，实现内容包括：
@@ -38,6 +38,7 @@ init_model_vector_data(fake_request)
 column_meta.init_model_vector(fake_request)
 column_terminology.init_model_vector(fake_request)
 resource_resource.init_model_vector(fake_request)
+resource_terminology.init_model_vector(fake_request)
 
 
 @csrf_exempt
@@ -66,8 +67,9 @@ def multiple_match(request):
         return column_terminology.multiple_match(request)
     elif business_type == "resource_resource":
         return resource_resource.multiple_match(request)
-    else:
-        return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
+    elif business_type == "resource_terminology":
+        return resource_terminology.multiple_match(request)
+    return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
 
 
 '''
@@ -99,8 +101,9 @@ def init_model_vector(request):
         return column_terminology.init_model_vector(request)
     elif business_type == "resource_resource":
         return resource_resource.init_model_vector(request)
-    else:
-        return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
+    elif business_type == "resource_terminology":
+        return resource_terminology.init_model_vector(request)
+    return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
 
 
 '''
@@ -132,6 +135,8 @@ def increment_business_data(request):
         return column_terminology.increment_data(request)
     elif business_type == "resource_resource":
         return resource_resource.increment_data(request)
+    elif business_type == "resource_terminology":
+        return resource_terminology.increment_data(request)
     return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
 
 
@@ -164,4 +169,6 @@ def delete_business_data(request):
         return column_terminology.delete_data(request)
     elif business_type == "resource_resource":
         return resource_resource.delete_data(request)
+    elif business_type == "resource_terminology":
+        return resource_terminology.delete_data(request)
     return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
