@@ -2,6 +2,8 @@
 数据库读取相关代码
 """
 from typing import List, Tuple, Any, Dict, Union
+
+from demo.settings import DEBUG
 from similarity2.globals import CONFIG
 import pymysql
 
@@ -46,12 +48,13 @@ class Database:
         self.order_by_sql = ""
 
     def _execute(self):
-        self.cursor.execute(
-            (f" select {self.projection}" if self.projection else "") +
-            (f" from {self.tablename}" if self.tablename else "") +
-            (f" where {self.filter_sql}" if self.filter_sql else "") +
-            (f" order by {self.order_by_sql}" if self.order_by_sql else "")
-        )
+        sql = (f" select {self.projection}" if self.projection else "") + \
+              (f" from {self.tablename}" if self.tablename else "") + \
+              (f" where {self.filter_sql}" if self.filter_sql else "") + \
+              (f" order by {self.order_by_sql}" if self.order_by_sql else "")
+        self.cursor.execute(sql)
+        if DEBUG:
+            print(f"执行sql:{sql}")
         result = self.cursor.fetchall()
         return result
 
@@ -97,7 +100,7 @@ class Database:
         )
         return self
 
-    def values_list(self, *projection, flat=False) -> Union[List[Tuple[Any,Any,Any]], List[str]]:
+    def values_list(self, *projection, flat=False) -> Union[List[Tuple[Any, Any, Any]], List[str]]:
         """
         :param projection: 选择查询的列名
         :param flat: 是否以列表返回，当且仅当选择一列时有效

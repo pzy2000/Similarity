@@ -60,14 +60,16 @@ def multiple_match(request):
         # 需求四，根据模型表属性推荐数据字段
         return model2data_recommend(request)
     elif business_type == "column_meta":
-        # 需求五，推荐数据元
+        # 需求五 数据元推荐
         return column_meta.multiple_match(request)
     elif business_type == "column_terminology":
-        # 需求五，推荐数据元
+        # 需求六 业务术语推荐（字段）
         return column_terminology.multiple_match(request)
     elif business_type == "resource_resource":
+        # 需求七 相关资产推荐
         return resource_resource.multiple_match(request)
     elif business_type == "resource_terminology":
+        # 需求八 业务术语推荐（资产）
         return resource_terminology.multiple_match(request)
     return Response({"code": 404, "msg": "该类型数据推荐正在开发中", "data": ""})
 
