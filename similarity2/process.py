@@ -54,13 +54,26 @@ def match_str2matrix(data: Union[List[str], str], sep='^', word2vec=word2vec_avg
     return data
 
 
-def vector_match(X: torch.Tensor, y: torch.Tensor, weight: List[float], k: int) -> Tuple[List[int], List[float]]:
+def vector_match(X: torch.Tensor, y: torch.Tensor, weight: List[float], k: int) \
+        -> Tuple[List[int], List[float], List[List[float]]]:
     """
     :param X: (n_items, n_samples, n_features) 数据集match_str词向量
     :param y: (n_items, 1, n_features) 待匹配match_str的词向量
     :param weight: 权重列表
     :param k: 返回的匹配个数
-    :return: 元组，内容为：(索引列表，匹配值列表)
+    :return: index: List[int],索引列表
+             value: List[int],匹配值列表
+             items_value: List[List[float]], 匹配值列表(元素为列表，表示每个item的匹配值)
+
+    例子:
+
+    >>> index, value, item_value = vector_match(X,y,weight,k)
+    >>> print(index)
+    >>> [18,12,60,47]
+    >>> print(value)
+    >>> [0.8,0.6,0.5,0.2]
+    >>> print(item_value[0],sum(item_value[0]) == value[0])
+    >>> [0.1,0.2,0.2,0.3,0.1], True
 
     """
     n_items, _, _ = X.shape
@@ -72,23 +85,21 @@ def vector_match(X: torch.Tensor, y: torch.Tensor, weight: List[float], k: int) 
         for i in range(n_items)
     ]
 
+    # (n_items,n_samples,1)
+    sim_value: torch.Tensor = torch.stack(sim_value)
 
-    # 按照n_items维度求和
-    # (n_samples, 1)
-    sim_value: torch.Tensor = torch.sum(torch.stack(sim_value), dim=0)
-
-    # 替换nan值，可能会有0向量出现（某一方字符串为空）
-    sim_value: torch.Tensor = torch.where(torch.isnan(sim_value), torch.full_like(sim_value, 0), sim_value)
+    # (n_samples,1) 按照n_items维度求和
+    samples_sim_value: torch.Tensor = torch.sum(sim_value, dim=0)
 
     # 按照n_samples维度排序，选择topk
-    value, index = torch.topk(sim_value, k, dim=0, largest=True, sorted=True)
+    value, index = torch.topk(samples_sim_value, k, dim=0, largest=True, sorted=True)
 
     # 转为列表，便于数据处理
     value = value.numpy().ravel().tolist()
     index = index.numpy().ravel().tolist()
 
-
     # 对value进行限制
     value = [1 if v > 1 else (0 if v < 0 else v) for v in value]
+    items_value = [v.numpy().ravel().tolist() for v in sim_value[:, index, :].transpose(0,1)]
 
-    return index, value
+    return index, value, items_value

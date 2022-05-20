@@ -26,10 +26,9 @@ from .database_get import db
 # model_dir = os.getcwd() + '/similarity/model/'
 model_path = model_dir + 'current_model.bin'
 
-# [DEBUG ONLY] 使用limit参数进行快速测试，减少加载时间，减少内存消耗
-GENSIM_MODELS_WORD_LIMIT = 10000 if DEBUG and False else None
 
-model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True, limit=GENSIM_MODELS_WORD_LIMIT)
+# [NO USE]
+model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True, limit=1e6)
 dim = len(model.vectors[0])
 catalogue_data_path = os.getcwd() + '/similarity/data/政务数据目录编制数据.xlsx'
 # 处理完后的目录表路径

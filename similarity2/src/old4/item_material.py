@@ -1,4 +1,5 @@
 from rest_framework.response import Response
+
 from demo.settings import DEBUG
 from similarity2.database import Database
 from similarity2.process import match_str2matrix, vector_match
@@ -7,7 +8,7 @@ from typing import *
 import torch
 
 # 业务类型
-BUSINESS_TYPE = "resource_terminology"
+BUSINESS_TYPE = "item_material"
 # 数据库信息
 db_data: List[Tuple[Any, Any, Any]] = None
 # 数据库match_str
@@ -77,7 +78,7 @@ def multiple_match(request):
         request_data_matrix = match_str2matrix(match_str)
 
         # 词向量匹配
-        index, value = vector_match(X=db_matrix,
+        index, value, items_value = vector_match(X=db_matrix,
                                     y=request_data_matrix,
                                     weight=percent,
                                     k=k)
@@ -86,9 +87,10 @@ def multiple_match(request):
                 "str": db_data[i][0],
                 "originalCode": db_data[i][1],
                 "originalData": db_data[i][2],
-                "similarity": v
+                "similarity": v,
+                "items_similarity":item_v,
             }
-            for i, v in zip(index, value)
+            for i, v, item_v in zip(index, value,items_value)
         ]
         res = {
             "key": request_id,
