@@ -38,9 +38,13 @@ def init_model_vector(request):
     db_match_str = db.filter(business_type=BUSINESS_TYPE).values_list("match_str", flat=True)
     if DEBUG:
         print(f"初始化:\nbusiness_type: {BUSINESS_TYPE}\n数据库信息：{db_data}\n\n")
+        
     # 计算数据库词向量
     if len(db_data) != 0:
         db_matrix = match_str2matrix(db_match_str)
+    # 清除缓存
+    cache.clear()
+
     return Response(dict(code=200, data="", msg="初始化成功"))
 
 

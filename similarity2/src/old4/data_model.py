@@ -41,6 +41,8 @@ def init_model_vector(request):
     # 计算数据库词向量
     if len(db_data) != 0:
         db_matrix = match_str2matrix(db_match_str)
+    # 清除缓存
+    cache.clear()
     return Response(dict(code=200, data="", msg="初始化成功"))
 
 

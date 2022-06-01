@@ -15,22 +15,13 @@ db_name = CONFIG.get("database", "db_name")
 
 
 class Database:
-    common_database = None
     """
     请保证values_list、values_dict方法，最后调用！
     """
 
     @classmethod
     def get_common_database(cls):
-        """
-        :param business_type: 业务类型
-        :return: 返回单例模式Database对象
-
-        读取ai_original_data表
-        """
-        if not Database.common_database:
-            Database.common_database = Database("ai_original_data")
-        return Database.common_database
+        return Database("ai_original_data")
 
     def __init__(self, tablename):
         self.host = host
@@ -40,6 +31,10 @@ class Database:
         self.charset = 'utf8'
         self.tablename = tablename
         self.projection = None
+        if DEBUG:
+            print(dict(host=self.host, user=self.user, password=self.password,
+                       database=self.database,
+                       charset=self.charset))
         self.connection = pymysql.connect(host=self.host, user=self.user, password=self.password,
                                           database=self.database,
                                           charset=self.charset)
