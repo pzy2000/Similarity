@@ -14,6 +14,7 @@ password = CONFIG.get("database", "db_password")
 db_name = CONFIG.get("database", "db_name")
 db_port = int(CONFIG.get("database", "db_port"))
 
+
 class Database:
     """
     请保证values_list、values_dict方法，最后调用！
@@ -33,7 +34,7 @@ class Database:
         self.tablename = tablename
         self.projection = None
         if DEBUG:
-            print(dict(host=self.host, user=self.user, password=self.password,
+            print(dict(host=self.host, port=self.port, user=self.user, password=self.password,
                        database=self.database,
                        charset=self.charset))
         self.connection = pymysql.connect(host=self.host, port=self.port, user=self.user, password=self.password,
