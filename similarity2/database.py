@@ -12,7 +12,7 @@ host = CONFIG.get("database", "db_host")
 user = CONFIG.get("database", "db_user")
 password = CONFIG.get("database", "db_password")
 db_name = CONFIG.get("database", "db_name")
-
+db_port = int(CONFIG.get("database", "db_port"))
 
 class Database:
     """
@@ -28,6 +28,7 @@ class Database:
         self.user = user
         self.password = password
         self.database = db_name
+        self.port = db_port
         self.charset = 'utf8'
         self.tablename = tablename
         self.projection = None
@@ -35,7 +36,7 @@ class Database:
             print(dict(host=self.host, user=self.user, password=self.password,
                        database=self.database,
                        charset=self.charset))
-        self.connection = pymysql.connect(host=self.host, user=self.user, password=self.password,
+        self.connection = pymysql.connect(host=self.host, port=self.port, user=self.user, password=self.password,
                                           database=self.database,
                                           charset=self.charset)
         self.cursor = None
