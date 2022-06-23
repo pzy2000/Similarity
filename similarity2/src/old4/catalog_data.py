@@ -46,13 +46,53 @@ def init_model_vector(request):
     return Response(dict(code=200, data="", msg="初始化成功"))
 
 
+def __get_filter_data(department_id: str, style: int):
+    """
+    获取经过筛选后的db_data,db_matrix,db_match_str
+    catalog_data这个推荐接口加两个入参
+    departmentId  部门id
+    style 方式
+    当style为1时   只推荐本部门的数据
+    当style为2时   只推荐其他部门的数据
+    """
+
+    filter_db_data = db_data
+    filter_db_matrix = db_matrix
+    filter_db_match_str = db_match_str
+    import json
+    if department_id and style:
+        style = int(style)
+        assert (style == 1 or style == 2), "参数style必须为1或2"
+
+        index = [i for i, v in enumerate(db_data) if
+                 (json.loads(v[2])['departmentId'] == department_id) ^ (style - 1) # 使用style异或即可
+                 ]
+        if len(index) == 0:
+            raise ValueError(f"departmentId:{department_id},数据为空！")
+
+        filter_db_data = [db_data[i] for i in index]
+        filter_db_matrix = db_matrix[:, index, :]
+        filter_db_match_str = [db_match_str[i] for i in index]
+
+    return filter_db_data, filter_db_matrix, filter_db_match_str
+
+
 def multiple_match(request):
     parameter = request.data
     # 读取请求参数
     request_data = parameter['data']
     k = parameter['k']
     percent = parameter['percent']
+    department_id = request.data.get('departmentId', '')
+    style = request.data.get('style', '')
 
+    # department_id && style 相关筛选：
+    if department_id and not style:
+        return Response({"code": 400, "msg": "未提供style参数", "data": ''})
+    try:
+        db_data, db_matrix, db_match_str = __get_filter_data(department_id=department_id, style=style)
+    except Exception as e:
+        return Response({"code": 404, "msg": str(e), "data": ''})
     # 处理请求参数k
     k = len(db_data) if k > len(db_data) else k
 
@@ -70,9 +110,10 @@ def multiple_match(request):
         request_id = rd['id']
 
         # 查看缓存
-        if f"{match_str}{str(percent)}{k}" in cache:
+        if f"{match_str}{str(percent)}{k}{department_id}{style}" in cache:
             # 从缓存中读取数据添加至结果
-            response_data.append({"key": request_id, "result": cache.get(f"{match_str}{str(percent)}{k}")})
+            response_data.append(
+                {"key": request_id, "result": cache.get(f"{match_str}{str(percent)}{k}{department_id}{style}")})
             continue
 
         # 处理请求match_str
@@ -81,25 +122,25 @@ def multiple_match(request):
 
         # 词向量匹配
         index, value, items_value = vector_match(X=db_matrix,
-                                    y=request_data_matrix,
-                                    weight=percent,
-                                    k=k)
+                                                 y=request_data_matrix,
+                                                 weight=percent,
+                                                 k=k)
         result = [
             {
                 "str": db_data[i][0],
                 "originalCode": db_data[i][1],
                 "originalData": db_data[i][2],
                 "similarity": v,
-                "items_similarity":item_v,
+                "items_similarity": item_v,
             }
-            for i, v, item_v in zip(index, value,items_value)
+            for i, v, item_v in zip(index, value, items_value)
         ]
         res = {
             "key": request_id,
             "result": result,
         }
         # 写入Cache
-        cache.put(f"{match_str}{str(percent)}{k}", result)
+        cache.put(f"{match_str}{str(percent)}{k}{department_id}{style}", result)
         response_data.append(res)
 
     return Response({
@@ -128,7 +169,7 @@ def increment_data(request):
         # 计算词向量
         vec = match_str2matrix(match_str)
         # 加入词向量集合
-        db_matrix = torch.cat((db_matrix, vec),dim=1)
+        db_matrix = torch.cat((db_matrix, vec), dim=1)
     # 清除缓存
     cache.clear()
     return Response({"code": 200, "msg": "新增数据成功！", "data": ""})
@@ -155,7 +196,7 @@ def delete_data(request):
         # 删除数据
         del db_data[index]
         del db_match_str[index]
-        db_matrix = db_matrix[:,torch.arange(db_matrix.size(1)) != index,:]
+        db_matrix = db_matrix[:, torch.arange(db_matrix.size(1)) != index, :]
         # 清除缓存
         cache.clear()
         return Response({"code": 200, "msg": "删除数据成功！", "data": ""})
