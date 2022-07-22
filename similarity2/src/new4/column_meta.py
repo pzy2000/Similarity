@@ -56,7 +56,7 @@ def __get_filter_data(tenant_id:str):
     filter_db_match_str = db_match_str
 
     if tenant_id:
-        index = [i for i, v in enumerate(db_data) if v[3] == tenant_id]
+        index = [i for i, v in enumerate(db_data) if v[3] == str(tenant_id)]
         if len(index) == 0:
             raise ValueError(f"tenant_id:{tenant_id},数据为空！")
 
