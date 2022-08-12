@@ -480,45 +480,6 @@ def load_data_data():
 
 def save_data(demand_data, k):
     return
-    sim_words = {}
-
-    # item1(输入): 部门-模型名称-模型描述-属性名称-属性描述
-    # item2(加入内存的数据格式): 机构名-数据表名-数据表字段名
-    item1 = demand_data.split(' ')
-    for data in model_data:
-        sim = 0
-        item2 = data.split(' ')
-        # 部门名与机构名
-        sim += bert_sim.predict(item1[0], item2[0])[0][1] * percent[0]
-        # 模型表名与数据表名
-        sim += bert_sim.predict(item1[1], item2[1])[0][1] * percent[1]
-        # 模型属性名与数据字段
-        sim += bert_sim.predict(item1[3], item2[3])[0][1] * percent[3]
-
-        sim += bert_sim.predict(item1[2], item2[2])[0][1] * percent[2]
-        sim += bert_sim.predict(item1[4], item2[4])[0][1] * percent[4]
-        if len(sim_words) < k:
-            sim_words[data] = sim
-        else:
-            min_sim = min(sim_words.values())
-            if sim > min_sim:
-                for key in list(sim_words.keys()):
-                    if sim_words.get(key) == min_sim:
-                        # 替换
-                        del sim_words[key]
-                        sim_words[data] = sim
-                        break
-    res = []
-    sim_words = sorted(sim_words.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
-    for sim_word in sim_words:
-        res.append(sim_word[0])
-    for sim_word in sim_words:
-        if sim_word[1] > 1:
-            sim_word[1] = 1.0
-        elif sim_word[1] < 0:
-            sim_word[1] = abs(sim_word[1])
-        res.append(sim_word[1])
-    bert_data[demand_data] = res
 
 
 def save_result(temp, res, query_id, sim_value):

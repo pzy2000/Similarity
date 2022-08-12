@@ -335,42 +335,6 @@ def vector_matching(demand_data, k):
 
 def save_data(demand_data, k):
     return
-    sim_words = {}
-    # 部门-目录-信息项
-    # 输入字符：材料名称-材料描述-材料类型-材料来源部门
-    item1 = demand_data.split(' ')
-    for data in catalogue_data:
-        sim = 0
-        item2 = data.split(' ')
-        sim += bert_sim.predict(item1[0], item2[0])[0][1] * percent[0]
-        sim += bert_sim.predict(item1[1], item2[1])[0][1] * percent[1]
-        sim += bert_sim.predict(item1[2], item2[2])[0][1] * percent[2]
-        sim += bert_sim.predict(item1[3], item2[3])[0][1] * percent[3]
-        sim += bert_sim.predict(item1[4], item2[4])[0][1] * percent[4]
-        # # 信息项
-
-        if len(sim_words) < k:
-            sim_words[data] = sim
-        else:
-            min_sim = min(sim_words.values())
-            if sim > min_sim:
-                for key in list(sim_words.keys()):
-                    if sim_words.get(key) == min_sim:
-                        # 替换
-                        del sim_words[key]
-                        sim_words[data] = sim
-                        break
-    res = []
-    sim_words = sorted(sim_words.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
-    for sim_word in sim_words:
-        res.append(sim_word[0])
-    for sim_word in sim_words:
-        if sim_word[1] > 1:
-            sim_word[1] = 1.0
-        elif sim_word[1] < 0:
-            sim_word[1] = abs(sim_word[1])
-        res.append(sim_word[1])
-    bert_data[demand_data] = res
 
 
 def save_result(temp, res, query_id, sim_value):
