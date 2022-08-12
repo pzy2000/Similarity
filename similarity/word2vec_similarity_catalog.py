@@ -163,9 +163,8 @@ def init_model_vector_catalog(request):
     prepare_catalogue_data()
     process = 0.75
     catalogue_data_number = len(catalogue_data)
-    for i in range(len(catalogue_data)):
+    for i, data in enumerate(catalogue_data):
         process = 0.75 + i / (catalogue_data_number * 4)
-        data = catalogue_data[i]
         item = data.split(' ')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
@@ -232,8 +231,8 @@ def increment_business_data_catalog(request):
         if DEBUG:
             print('增加后：')
             print('catalogue_data：' + str(len(catalogue_data)))
-            for i in range(len(catalogue_data)):
-                print(catalogue_data[i])
+            for i, item in enumerate(catalogue_data):
+                print(item)
 
         item = tmp.split(' ')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
@@ -299,8 +298,8 @@ def delete_business_data_catalog(request):
         if DEBUG:
             print('删除后：')
             print('catalogue_data：' + str(len(catalogue_data)))
-            for i in range(len(catalogue_data)):
-                print(catalogue_data[i])
+            for i, item in enumerate(catalogue_data):
+                print(item)
 
         item = tmp.split(' ')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
@@ -335,8 +334,8 @@ def delete_business_data_catalog(request):
 
 
 def delete_ndarray(with_array_list, array):
-    for i in range(len(with_array_list)):
-        if all(with_array_list[i] == np.array(array)) == True:
+    for i, item in enumerate(with_array_list):
+        if all(item == np.array(array)) == True:
             with_array_list.pop(i)
             break
 
@@ -357,12 +356,11 @@ def catalog_multiple_match(request):
     if len(catalogue_data) == 0:
         return Response({"code": 404, "msg": "数据为空！", "data": ''})
     source_data = []
-    for i in range(len(full_data)):
-        source_data.append(full_data[i]['matchStr'].replace('^', ' '))
+    for i, item in enumerate(full_data):
+        source_data.append(item['matchStr'].replace('^', ' '))
     result = []
-    for i in range(len(source_data)):
+    for i, data in enumerate(source_data):
         res = {}
-        data = source_data[i]
         query_id = full_data[i]['id']
         # 字符串匹配
         str_tmp = string_matching(demand_data=data, k=k)
@@ -404,12 +402,12 @@ def catalog_multiple_match(request):
 
         if DEBUG:
             print('原来的str_tmp')
-            for index in range(len(str_tmp)):
-                print(str_tmp[index])
+            for index, item in enumerate(str_tmp):
+                print(item)
 
             print('原来的tmp：')
-            for index in range(len(tmp)):
-                print(tmp[index] + ' : ' + str(sim_value[index]))
+            for index, item in enumerate(tmp):
+                print(item + ' : ' + str(sim_value[index]))
 
         origin_len = len(str_tmp)
         str_tmp += tmp
@@ -419,8 +417,8 @@ def catalog_multiple_match(request):
             print()
             print('增加后的长度：' + str(len(str_tmp)))
             print('增长后的情况：')
-            for index in range(len(str_tmp)):
-                print(str_tmp[index] + ' : ' + str(str_sim_value[index]))
+            for index, item in enumerate(str_tmp):
+                print(item + ' : ' + str(str_sim_value[index]))
 
         for index in range(origin_len):
             while str_tmp[index] in str_tmp[origin_len:]:
@@ -437,8 +435,8 @@ def catalog_multiple_match(request):
         if DEBUG:
             print()
             print('删除后的情况：')
-            for tmp_index in range(len(str_tmp)):
-                print(str_tmp[tmp_index] + ' : ' + str(str_sim_value[tmp_index]))
+            for tmp_index, item in enumerate(str_tmp):
+                print(item + ' : ' + str(str_sim_value[tmp_index]))
                 # print(str_sim_value[tmp_index])
 
         # result.append(save_result(tmp, res, query_id, sim_value))
@@ -596,8 +594,8 @@ def prepare_catalogue_data():
     if DEBUG:
         print(catalogue_data)
         print('catalogue_data：' + str(len(catalogue_data)))
-        for i in range(len(catalogue_data)):
-            print(catalogue_data[i])
+        for i, item in enumerate(catalogue_data):
+            print(item)
 
     # catalogue_df = pd.DataFrame(catalogue_data)
     # catalogue_df.to_csv(exec_catalog_path, encoding='utf-8_sig', index=False)
@@ -619,8 +617,7 @@ def word_avg(word_model, words):  # 对句子中的每个词的词向量简单�
 
 def save_result(temp, res, query_id, sim_value):
     single_res = []
-    for i in range(len(temp)):
-        d = temp[i]
+    for i, d in enumerate(temp):
         tmp = d.split(' ')
         # single_res.append({'originalCode': tmp[4], 'originalData': {'departmentName': tmp[0], 'catalogName': tmp[1],
         #                                                             'infoItemName': tmp[2],
