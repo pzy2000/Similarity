@@ -1,6 +1,4 @@
-"""
-机器学习算法有关代码，和业务逻辑无关
-"""
+"""机器学习算法有关代码，和业务逻辑无关"""
 import numpy as np
 from typing import List
 from similarity2.globals import MODEL, DEVICE

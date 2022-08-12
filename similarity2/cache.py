@@ -1,13 +1,9 @@
-"""
-系统缓存相关代码
-"""
+"""系统缓存相关代码"""
 from collections import OrderedDict
 
 
 class Cache:
-    """
-    通过有序字典实现FIFO缓存
-    """
+    """通过有序字典实现FIFO缓存"""
 
     def __init__(self, maxsize=10000):
         self.cache = OrderedDict()
