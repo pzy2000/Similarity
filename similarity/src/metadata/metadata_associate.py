@@ -130,7 +130,8 @@ class MetaData(object):
         print('现存关联数据量：' + str(len(self.exist_asso_df)))
         print('-' * 25 + '已存在关联数据加载完成' + '-' * 25)
 
-    def model_addition_info(self, metadata, ins_info, table_info, scale=0.5):
+    @staticmethod
+    def model_addition_info(metadata, ins_info, table_info, scale=0.5):
         '''
         在模型表中计算除字段外其他信息的权重
         :param metadata: 数据元
@@ -342,7 +343,8 @@ class MetaData(object):
 
         return self.asso_catalogue_multimeta
 
-    def build_metadata_map(self, index, item_list,
+    @staticmethod
+    def build_metadata_map(index, item_list,
                            metadata_list, data_multimeta_dic):
         top_k_metadata_list = [item_list]
         top_k_metadata_list.append(metadata_list)
@@ -621,7 +623,8 @@ class MetaData(object):
                 # 缓存中不存在, 后台线程缓存
                 executor.submit(self.save_data, metadata_list, model_list[i])
 
-    def sim_common_str(self, test_data, metadata):
+    @staticmethod
+    def sim_common_str(test_data, metadata):
         '''
         使用公共子序列比较两字符串是否相同
         :param test_data: 表中字段
@@ -670,7 +673,8 @@ class MetaData(object):
         asso_txt_file.close()
         print('-' * 25 + '写入文件成功' + '-' * 25)
 
-    def remap_index(self, model_list, exist_asso_list):
+    @staticmethod
+    def remap_index(model_list, exist_asso_list):
         '''
         在已存在的关联关系中重定向模型表中的下标
         :param model_list: 模型表一维列表

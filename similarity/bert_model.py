@@ -339,7 +339,8 @@ class SimProcessor(DataProcessor):
             test_data.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return test_data
 
-    def get_sentence_examples(self, questions):
+    @staticmethod
+    def get_sentence_examples(questions):
         for index, data in enumerate(questions):
             guid = 'test-%d' % index
             text_a = bert_src.tokenization.convert_to_unicode(str(data[0]))
@@ -412,7 +413,8 @@ class BertSim():
 
             return (loss, per_example_loss, logits, probabilities)
 
-    def model_fn_builder(self, bert_config, num_labels, init_checkpoint, learning_rate,
+    @staticmethod
+    def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
                          num_train_steps, num_warmup_steps,
                          use_one_hot_embeddings):
         """Returns `model_fn` closurimport_tfe for TPUEstimator."""
@@ -622,7 +624,8 @@ class BertSim():
                 'label_ids': [f.label_id for f in features]
             }
 
-    def _truncate_seq_pair(self, tokens_a, tokens_b, max_length):
+    @staticmethod
+    def _truncate_seq_pair(tokens_a, tokens_b, max_length):
         """Truncates a sequence pair in place to the maximum length."""
         # This is a simple heuristic which will always truncate the longer sequence
         # one token at a time. This makes more sense than truncating an equal percent
@@ -740,7 +743,8 @@ class BertSim():
             tf_example = tf.train.Example(features=tf.train.Features(feature=features))
             writer.write(tf_example.SerializeToString())
 
-    def file_based_input_fn_builder(self, input_file, seq_length, is_training, drop_remainder):
+    @staticmethod
+    def file_based_input_fn_builder(input_file, seq_length, is_training, drop_remainder):
         """Creates an `input_fn` closure to be passed to TPUEstimator."""
         name_to_features = {
             "input_ids": tf.FixedLenFeature([seq_length], tf.int64),
