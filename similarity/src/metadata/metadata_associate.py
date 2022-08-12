@@ -213,9 +213,7 @@ class MetaData:
                 if similarity <= 0:
                     continue
                 # 构造临时存储结构sim_index：[[sim1,meta_index1],[sim2,meta_index2]]
-                tmp = []
-                tmp.append(similarity)
-                tmp.append(j)
+                tmp = [similarity, j]
                 sim_index.append(tmp)
             # 当筛选出的数据元不足待选数量时进行补全
             if len(sim_index) < self.top_k:
@@ -231,8 +229,7 @@ class MetaData:
             self.asso_meta_model[max_sim_metadata].append(model_list[i][:3])
             # 完成模型表到数据元的映射,index为与数据元匹配的模型表字段的下标，避免模型表字段重复的情况
             # {index1:[[ins1,table1,word1],meta1],index2:[[ins2,table2,word2],meta2]}
-            top_one_metadata_list = [model_list[i][:3]]
-            top_one_metadata_list.append(max_sim_metadata)
+            top_one_metadata_list = [model_list[i][:3], max_sim_metadata]
             self.asso_model_meta[i] = top_one_metadata_list
 
             top_k_metadata_list = [model_list[i][:3]]
@@ -283,9 +280,7 @@ class MetaData:
                 if similarity <= 0:
                     continue
                 # 构造临时存储结构sim_index：[[sim1,meta_index1],[sim2,meta_index2]]
-                tmp = []
-                tmp.append(similarity)
-                tmp.append(j)
+                tmp = [similarity, j]
 
                 sim_index.append(tmp)
             # 当筛选出的数据元不足待选数量时进行补全
@@ -301,8 +296,7 @@ class MetaData:
             self.asso_meta_catalogue[max_sim_metadata].append(catalogue_list[i][:3])
             # 完成目录表到数据元的映射,index为与数据元匹配的目录表信息项的下标，避免目录表信息项重复的情况
             # {index1:[[catalogue_name1,word1,ins1],meta1],index2:[[catalogue_name2,word2,ins2],meta2]}
-            top_one_metadata_list = [catalogue_list[i][:3]]
-            top_one_metadata_list.append(max_sim_metadata)
+            top_one_metadata_list = [catalogue_list[i][:3], max_sim_metadata]
             self.asso_catalogue_meta[i] = top_one_metadata_list
 
             top_k_metadata_list = [catalogue_list[i][:3]]
@@ -346,8 +340,7 @@ class MetaData:
     @staticmethod
     def build_metadata_map(index, item_list,
                            metadata_list, data_multimeta_dic):
-        top_k_metadata_list = [item_list]
-        top_k_metadata_list.append(metadata_list)
+        top_k_metadata_list = [item_list, metadata_list]
         data_multimeta_dic[index] = top_k_metadata_list
 
     def save_data(self, metadata_list, item_data):
