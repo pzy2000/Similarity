@@ -48,7 +48,7 @@ def init_model_vector(request):
 def __get_filter_data(tenant_id: str):
     """
     获取经过筛选后的db_data,db_matrix,db_match_str \n
-    
+
     """
     filter_db_data = db_data
     filter_db_matrix = db_matrix
