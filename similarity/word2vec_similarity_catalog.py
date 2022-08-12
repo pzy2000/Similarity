@@ -375,7 +375,7 @@ def catalog_multiple_match(request):
         #     result.append(save_result(str_tmp, res, query_id, sim_value))
 
         # 查看查询缓存
-        if data in query_data.keys() and weight_data[data] == percent:
+        if data in query_data and weight_data[data] == percent:
             tmp = query_data.get(data)
             if len(tmp) == 2 * k:
                 sim_value = tmp[int(len(tmp) / 2):]
@@ -477,7 +477,7 @@ def string_matching(demand_data, k):
 
 
 def find_data(demand_data, k):
-    if demand_data in bert_data.keys():
+    if demand_data in bert_data:
         tmp = bert_data.get(demand_data)
         if len(tmp) == 2 * k:
             return tmp
