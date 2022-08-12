@@ -9,7 +9,6 @@ import os
 curPath = os.path.abspath(os.path.dirname(__file__))
 # print(curPath)
 rootPath = os.path.split(curPath)[0]
-# rootPath = os.path.split(rootPath)[0]
 sys.path.append(rootPath)
 import similarity.bert_src.optimization
 import similarity.bert_src.tokenization
@@ -28,10 +27,8 @@ from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
-# os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.WARN)
-# tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
 file_path = os.path.dirname(__file__)
 
@@ -112,7 +109,6 @@ def add_model_data(request):
             f.write(files)
         f.close()
         df = pd.read_csv(os.path.join(file_path, 'data/data.csv'), encoding='utf-8')
-        # df.drop_duplicates(keep='first', inplace=True)  # 去重，只保留第一次出现的样本
         df = df.sample(frac=1.0)  # 全部打乱
         cut_idx = int(round(0.1 * df.shape[0]))
         df_test, df_train = df.iloc[:cut_idx], df.iloc[cut_idx:]
@@ -284,7 +280,6 @@ def train_bert_cmd(batch_size,learningrate,seqlen,epochs):
     if seqlen != None:
         args_max_seq_len=seqlen
     df = pd.read_csv(os.path.join(file_path, 'data/data.csv'), encoding='utf-8')
-    # df.drop_duplicates(keep='first', inplace=True)  # 去重，只保留第一次出现的样本
     df = df.sample(frac=1.0)  # 全部打乱
     cut_idx = int(round(0.1 * df.shape[0]))
     df_test, df_train = df.iloc[:cut_idx], df.iloc[cut_idx:]
@@ -374,7 +369,6 @@ class BertSim():
         self.batch_size = batch_size
         self.estimator = None
         self.processor = SimProcessor()    # 加载训练、测试数据class
-        # tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
         tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
     def set_mode(self, mode):
@@ -435,10 +429,6 @@ class BertSim():
             from tensorflow.python.estimator.model_fn import EstimatorSpec
 
             # # tf.compat.v1.logging.info("*** Features ***")
-            # tf.logging.info("*** Features ***")
-            # for name in sorted(features.keys()):
-            #     # tf.compat.v1.logging.info("  name = %s, shape = %s" % (name, features[name].shape))
-            #     tf.logging.info("  name = %s, shape = %s" % (name, features[name].shape))
 
             input_ids = features["input_ids"]
             input_mask = features["input_mask"]
@@ -451,23 +441,14 @@ class BertSim():
                 bert_config, is_training, input_ids, input_mask, segment_ids, label_ids,
                 num_labels, use_one_hot_embeddings)
 
-            # tvars = tf.compat.v1.trainable_variables()
             tvars = tf.compat.v1.trainable_variables()
             initialized_variable_names = {}
 
             if init_checkpoint:
                 (assignment_map, initialized_variable_names) = bert_src.modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
-                # tf.compat.v1.train.init_from_checkpoint(init_checkpoint, assignment_map)
                 tf.compat.v1.train.init_from_checkpoint(init_checkpoint, assignment_map)
 
             # # tf.compat.v1.logging.info("**** Trainable Variables ****")
-            # tf.logging.info("**** Trainable Variables ****")
-            # for var in tvars:
-            #     init_string = ""
-            #     if var.name in initialized_variable_names:
-            #         init_string = ", *INIT_FROM_CKPT*"
-            #     # tf.compat.v1.logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
-            #     tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
 
             if mode == tf.estimator.ModeKeys.TRAIN:
 
@@ -528,7 +509,6 @@ class BertSim():
             num_warmup_steps=num_warmup_steps,
             use_one_hot_embeddings=False)
 
-        # config = tf.compat.v1.ConfigProto()
         config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
         config.gpu_options.per_process_gpu_memory_fraction = args_gpu_memory_fraction
@@ -630,23 +610,6 @@ class BertSim():
             assert len(segment_ids) == max_seq_len
 
             label_id = label_map[example.label]
-            # if ex_index < 5:
-            #     # tf.compat.v1.logging.info("*** Example ***")
-            #     # tf.compat.v1.logging.info("guid: %s" % (example.guid))
-            #     # tf.compat.v1.logging.info("tokens: %s" % " ".join(
-            #     #     [tokenization.printable_text(x) for x in tokens]))
-            #     # tf.compat.v1.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-            #     # tf.compat.v1.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
-            #     # tf.compat.v1.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
-            #     # tf.compat.v1.logging.info("label: %s (id = %d)" % (example.label, label_id))
-            #     tf.logging.info("*** Example ***")
-            #     tf.logging.info("guid: %s" % (example.guid))
-            #     tf.logging.info("tokens: %s" % " ".join(
-            #         [bert_src.tokenization.printable_text(x) for x in tokens]))
-            #     tf.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-            #     tf.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
-            #     tf.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
-            #     tf.logging.info("label: %s (id = %d)" % (example.label, label_id))
 
             feature = InputFeatures(
                 input_ids=input_ids,
@@ -757,23 +720,6 @@ class BertSim():
         assert len(segment_ids) == max_seq_len
 
         label_id = label_map[example.label]
-        # if ex_index < 5:
-        #     # tf.compat.v1.logging.info("*** Example ***")
-        #     # tf.compat.v1.logging.info("guid: %s" % (example.guid))
-        #     # tf.compat.v1.logging.info("tokens: %s" % " ".join(
-        #     #     [tokenization.printable_text(x) for x in tokens]))
-        #     # tf.compat.v1.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-        #     # tf.compat.v1.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
-        #     # tf.compat.v1.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
-        #     # tf.compat.v1.logging.info("label: %s (id = %d)" % (example.label, label_id))
-        #     tf.logging.info("*** Example ***")
-        #     tf.logging.info("guid: %s" % (example.guid))
-        #     tf.logging.info("tokens: %s" % " ".join(
-        #         [bert_src.tokenization.printable_text(x) for x in tokens]))
-        #     tf.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-        #     tf.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
-        #     tf.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
-        #     tf.logging.info("label: %s (id = %d)" % (example.label, label_id))
 
         feature = InputFeatures(
             input_ids=input_ids,
@@ -788,9 +734,6 @@ class BertSim():
         writer = tf.python_io.TFRecordWriter(output_file)
 
         for (ex_index, example) in enumerate(examples):
-            # if ex_index % 10000 == 0:
-            #     # tf.compat.v1.logging.info("Writing example %d of %d" % (ex_index, len(examples)))
-            #     tf.logging.info("Writing example %d of %d" % (ex_index, len(examples)))
 
             feature = self.convert_single_example(ex_index, example, label_list,
                                                   max_seq_len, tokenizer)
@@ -881,21 +824,11 @@ class BertSim():
         # # tf.compat.v1.logging.info("  Num examples = %d", len(train_examples))
         # # tf.compat.v1.logging.info("  Batch size = %d", args_batch_size)
         # # tf.compat.v1.logging.info("  Num steps = %d", num_train_steps)
-        # tf.logging.info("***** Running training *****")
-        # tf.logging.info("  Num examples = %d", len(train_examples))
-        # tf.logging.info("  Batch size = %d", args_batch_size)
-        # tf.logging.info("  Num steps = %d", num_train_steps)
         train_input_fn = self.file_based_input_fn_builder(input_file=train_file, seq_length=args_max_seq_len,
                                                           is_training=True,
                                                           drop_remainder=True)
 
-        # early_stopping = tf.contrib.estimator.stop_if_no_decrease_hook(
-        #     estimator,
-        #     metric_name='loss',
-        #     max_steps_without_decrease=10,
-        #     min_steps=num_train_steps)
 
-        # estimator.train(input_fn=train_input_fn, hooks=[early_stopping])
         estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
 
     def eval(self):
@@ -910,9 +843,6 @@ class BertSim():
         # # tf.compat.v1.logging.info("***** Running evaluation *****")
         # # tf.compat.v1.logging.info("  Num examples = %d", len(eval_examples))
         # # tf.compat.v1.logging.info("  Batch size = %d", self.batch_size)
-        # tf.logging.info("***** Running evaluation *****")
-        # tf.logging.info("  Num examples = %d", len(eval_examples))
-        # tf.logging.info("  Batch size = %d", self.batch_size)
 
         eval_input_fn = self.file_based_input_fn_builder(
             input_file=eval_file,
@@ -925,11 +855,7 @@ class BertSim():
 
         output_eval_file = os.path.join(args_output_dir, "eval_results.txt")
         with tf.gfile.GFile(output_eval_file, "w") as writer:
-            # tf.compat.v1.logging.info("***** Eval results *****")
-            # tf.logging.info("***** Eval results *****")
             for key in sorted(result.keys()):
-                # tf.compat.v1.logging.info("  %s = %s", key, str(result[key]))
-                # tf.logging.info("  %s = %s", key, str(result[key]))
                 writer.write("%s = %s\n" % (key, str(result[key])))
 
     def predict(self, sentence1, sentence2):

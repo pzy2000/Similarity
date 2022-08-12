@@ -13,7 +13,6 @@ BUSINESS_TYPE = "catalog_data"
 db_data: List[Tuple[Any, Any, Any]] = None
 # 数据库match_str
 db_match_str: List[str] = None
-# 数据库词向量 (n_items, n_samples, n_features)
 db_matrix: torch.Tensor = None
 # 缓存对象
 cache = Cache()
@@ -116,8 +115,6 @@ def multiple_match(request):
                 {"key": request_id, "result": cache.get(f"{match_str}{str(percent)}{k}{department_id}{style}")})
             continue
 
-        # 处理请求match_str
-        # (n_items,1,n_features)
         request_data_matrix = match_str2matrix(match_str)
 
         # 词向量匹配

@@ -1,4 +1,3 @@
-# coding=utf-8
 
 import os
 
@@ -45,12 +44,6 @@ query_data = {}
 weight_data = {}
 percent = [0.4, 0.1, 0, 0.3, 0]
 
-# keyword = 'data_model'
-# read_ini = configparser.ConfigParser()
-# read_ini.read(os.path.join(root_path,'config.ini'), encoding='utf-8')
-#
-# data_col = [int(x) for x in read_ini.get(keyword, 'data_col').split(',')]
-# table_name = read_ini.get(keyword, 'table_name')
 
 # 数据库读取相关数据
 keyword = 'common_data'
@@ -85,8 +78,6 @@ def init_model_vector_model(request):
     # if not os.path.exists(data_model_path):
     #     return Response({"code": 404, "msg": "模型表路径不存在", "data": ""})
     process = 0
-    # 重新加载模型
-    # model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
     process = 0.5
     # 重新缓存向量
     data_model = []
@@ -95,7 +86,6 @@ def init_model_vector_model(request):
     data_model_vector_modelName_disc = []
     data_model_vector_valueName = []
     data_model_vector_valueName_disc = []
-    # prepare_data_model(path=data_model_path)
     prepare_data_model()
     process = 0.75
     data_model_number = len(data_model)
@@ -138,22 +128,7 @@ def prepare_data_model():
     global data_model
     global table_name
     # # 打开excel
-    # wb = xlrd.open_workbook(path)
-    # # 按工作簿定位工作表
-    # sh = wb.sheet_by_name('业务层模型结构')
-    # row_number = sh.nrows
-    # for i in range(1, row_number):
-    #     data_model.append(sh.cell(i, 2).value + ' ' + sh.cell(i, 5).value)
-    # # print(model_data)
 
-    # re = db.get_colum_by_num(data_col, table_name)
-    # for i in re:
-    #     while (None in i):
-    #         i[i.index(None)] = '*'
-    #     data_model.append(' '.join(i))
-    #
-    # model_df = pd.DataFrame(data_model)
-    # model_df.to_csv(exec_model_path, encoding='utf-8_sig', index=False)
 
     re = db.get_data_by_type_v2(data_col, business_type, table_name)
     for i in re:
@@ -185,13 +160,7 @@ def increment_business_data_model(request):
         match_str = single_data['matchStr']
         original_code = single_data['originalCode']
         original_data = single_data['originalData']
-        # match_str = match_str.replace('-', ' ')
-        # 加入缓存中
-        # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
-        #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
-        # item = [x.strip() for x in match_str.split('^')]
-        # data_model.append(item[1] + ' ' + item[3])
 
         if len(match_str.split('^')) != 5:
             return Response({"code": 200, "msg": "新增数据失败，有效数据字段不等于5", "data": ""})
@@ -257,10 +226,6 @@ def delete_business_data_model(request):
         match_str = single_data['matchStr']
         original_code = single_data['originalCode']
         original_data = single_data['originalData']
-        # 加入缓存中
-        # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
-        #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
-        # match_str = match_str.replace('-', ' ')
 
         tmp = ' '.join([x.strip() for x in match_str.split('^')])
         tmp += (' ' + original_code + ' ' + original_data)
@@ -326,7 +291,6 @@ def data2model_recommend(request):
     if len(weight_percent.split(',')) != 5:
         return Response({"code": 404, "msg": "权重配置错误！", "data": ''})
     percent = [float(x) for x in weight_percent.split(',')]
-    # load_model_data()
     if len(data_model) == 0:
         return Response({"code": 404, "msg": "数据为空！", "data": ''})
     # 顺序是模型表名-字段名
@@ -342,7 +306,6 @@ def data2model_recommend(request):
         str_tmp = string_matching(demand_data=data, k=k)
         if len(str_tmp) >= k:
             sim_value = [1] * len(str_tmp)
-            # print("用了字符串匹配")
             result.append(save_result(str_tmp, res, query_id, sim_value))
             continue
 
@@ -352,7 +315,6 @@ def data2model_recommend(request):
             if len(tmp) == 2 * k and weight_data[data] == percent:
                 sim_value = tmp[int(len(tmp) / 2):]
                 tmp = tmp[0: int(len(tmp) / 2)]
-                # print("用了查询缓存")
                 result.append(save_result(tmp, res, query_id, sim_value))
                 continue
 
@@ -396,10 +358,6 @@ def data2model_recommend(request):
             for index, item in enumerate(str_tmp):
                 print(item + ' : ' + str(str_sim_value[index]))
 
-        # for index in range(oringi_len):
-        #     if str_tmp[index] == str_tmp[0]:
-        #         str_tmp.pop(oringi_len)
-        #         str_sim_value.pop(oringi_len)
 
         for index in range(oringi_len):
             while str_tmp[index] in str_tmp[oringi_len:]:
@@ -408,9 +366,6 @@ def data2model_recommend(request):
                         str_tmp.pop(tmp_index)
                         str_sim_value.pop(tmp_index)
                         break
-            # if str_tmp[index] == str_tmp[0]:
-            #     str_tmp.pop(oringi_len)
-            #     str_sim_value.pop(oringi_len)
 
         # 保证增加后的数据不超过k个
         if len(str_tmp) > k:
@@ -422,7 +377,6 @@ def data2model_recommend(request):
             for tmp_index, item in enumerate(str_tmp):
                 print(item + ' : ' + str(str_sim_value[tmp_index]))
 
-        # result.append(save_result(tmp, res, query_id, sim_value))
         result.append(save_result(str_tmp, res, query_id, str_sim_value))
         query_data[data] = tmp + sim_value
         weight_data[data] = percent
@@ -513,18 +467,8 @@ def vector_matching(demand_data, k):
         final_value += tensor_module(data_model_tensor_valueName_disc, x) * percent[4]
 
     # # 输入的数据表表名
-    # if item[1] != '':
-    #     segment1_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
-    #     s1 = [word_avg(model, segment1_1)]
-    #     x = torch.Tensor(s1).to(device)
-    #     final_value += tensor_module(torch.load(model_modelName_tensor_path), x) * percent[1]
 
     # # 材料描述、材料类型
-    # if item[1] != '':
-    #     segment1_1 = jieba.lcut(item[1], cut_all=True, HMM=True)
-    #     s1 = [word_avg(model, segment1_1)]
-    #     x = torch.Tensor(s1).to(device)
-    #     final_value += tensor_module(catalogue_data_tensor_catalog, x) * percent[1]
 
     # 输出排序并输出top-k的输出
     value, index = torch.topk(final_value, k, dim=0, largest=True, sorted=True)
@@ -534,9 +478,7 @@ def vector_matching(demand_data, k):
     res_sim_value = []
     for i in sim_index:
         res.append(data_model[i[0]])
-    # print('计算出的匹配值：')
     for i in sim_value:
-        # print(i[0])
         if i[0] > 1:
             i[0] = 1.0
         elif i[0] < 0:
@@ -561,10 +503,6 @@ def save_data(demand_data, k):
     for data in data_model:
         sim = 0
         item2 = data.split(' ')
-        # sim += bert_sim.predict(item1[0], item2[0])[0][1] * percent[0]
-        # sim += bert_sim.predict(item1[1], item2[1])[0][1] * percent[1]
-        # sim += bert_sim.predict(item1[2], item2[2])[0][1] * percent[2]
-        # 数据表部门名与模型表部门名
         sim += bert_sim.predict(item1[0], item2[0])[0][1] * percent[0]
         # 数据表表名与模型表表名
         sim += bert_sim.predict(item1[1], item2[1])[0][1] * percent[1]
