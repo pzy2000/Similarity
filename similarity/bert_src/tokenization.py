@@ -81,14 +81,13 @@ def convert_to_unicode(text):
     if isinstance(text, bytes):
       return text.decode("utf-8", "ignore")
     raise ValueError("Unsupported string type: %s" % (type(text)))
-  elif six.PY2:
+  if six.PY2:
     if isinstance(text, str):
       return text.decode("utf-8", "ignore")
     if isinstance(text, unicode):
       return text
     raise ValueError("Unsupported string type: %s" % (type(text)))
-  else:
-    raise ValueError("Not running on Python2 or Python 3?")
+  raise ValueError("Not running on Python2 or Python 3?")
 
 
 def printable_text(text):
@@ -101,14 +100,13 @@ def printable_text(text):
     if isinstance(text, bytes):
       return text.decode("utf-8", "ignore")
     raise ValueError("Unsupported string type: %s" % (type(text)))
-  elif six.PY2:
+  if six.PY2:
     if isinstance(text, str):
       return text
     if isinstance(text, unicode):
       return text.encode("utf-8")
     raise ValueError("Unsupported string type: %s" % (type(text)))
-  else:
-    raise ValueError("Not running on Python2 or Python 3?")
+  raise ValueError("Not running on Python2 or Python 3?")
 
 
 def load_vocab(vocab_file):
