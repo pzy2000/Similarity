@@ -168,9 +168,8 @@ def get_pretrain_state(request):
         return Response({"code": 200, "msg": "没有预训练", "data": ""})
     if process_status_now == None:
         return Response({"code": 200, "msg": "正在预训练", "data": ""})
-    else:
-        do_pretrain = None
-        return Response({"code": 200, "msg": "完成预训练", "data": ""})
+    do_pretrain = None
+    return Response({"code": 200, "msg": "完成预训练", "data": ""})
 
 # 训练模型
 @csrf_exempt
@@ -219,9 +218,8 @@ def get_train_state(request):
     process_train_now = process_train.is_alive()
     if process_train_now == True:
         return Response({"code": 200, "msg": "正在训练!", "data": ""})
-    else:
-        process_train = None
-        return Response({"code": 200, "msg": "完成训练!", "data": ""})
+    process_train = None
+    return Response({"code": 200, "msg": "完成训练!", "data": ""})
 
 #获取追加训练状态
 @csrf_exempt
@@ -237,9 +235,8 @@ def get_retrain_state(request):
     process_re_train_now = process_re_train.is_alive()
     if process_re_train_now == True:
         return Response({"code": 200, "msg": "正在追加训练!", "data": ""})
-    else:
-        do_retrain = False
-        return Response({"code": 200, "msg": "完成追加训练!", "data": ""})
+    do_retrain = False
+    return Response({"code": 200, "msg": "完成追加训练!", "data": ""})
 
 def train_bert():
     sim = BertSim()

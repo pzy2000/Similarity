@@ -333,14 +333,13 @@ def get_activation(activation_string):
   act = activation_string.lower()
   if act == "linear":
     return None
-  elif act == "relu":
+  if act == "relu":
     return tf.nn.relu
-  elif act == "gelu":
+  if act == "gelu":
     return gelu
-  elif act == "tanh":
+  if act == "tanh":
     return tf.tanh
-  else:
-    raise ValueError("Unsupported activation: %s" % act)
+  raise ValueError("Unsupported activation: %s" % act)
 
 
 def get_assignment_map_from_checkpoint(tvars, init_checkpoint):
@@ -980,9 +979,8 @@ def transformer_model(input_tensor,
       final_output = reshape_from_matrix(layer_output, input_shape)
       final_outputs.append(final_output)
     return final_outputs
-  else:
-    final_output = reshape_from_matrix(prev_output, input_shape)
-    return final_output
+  final_output = reshape_from_matrix(prev_output, input_shape)
+  return final_output
 
 
 def get_shape_list(tensor, expected_rank=None, name=None):
@@ -1264,6 +1262,5 @@ def prelln_transformer_model(input_tensor,
 			final_output = similarity.bert_src.bert_utils.reshape_from_matrix(layer_output, input_shape)
 			final_outputs.append(final_output)
 		return final_outputs
-	else:
-		final_output = similarity.bert_src.bert_utils.reshape_from_matrix(prev_output, input_shape)
-		return final_output
+	final_output = similarity.bert_src.bert_utils.reshape_from_matrix(prev_output, input_shape)
+	return final_output
