@@ -492,7 +492,7 @@ def create_masked_lm_predictions(tokens, masked_lm_prob,
   """Creates the predictions for the masked LM objective."""
   cand_indexes = []
   for (i, token) in enumerate(tokens):
-    if token == "[CLS]" or token == "[SEP]":
+    if token in ("[CLS]", "[SEP]"):
       continue
     # Whole Word Masking means that if we mask all of the wordpieces
     # corresponding to an original word. When a word has been split into
@@ -572,7 +572,7 @@ def create_masked_lm_predictions_original(tokens, masked_lm_prob,
   """Creates the predictions for the masked LM objective."""
   cand_indexes = []
   for (i, token) in enumerate(tokens):
-    if token == "[CLS]" or token == "[SEP]":
+    if token in ("[CLS]", "[SEP]"):
       continue
     # Whole Word Masking means that if we mask all of the wordpieces
     # corresponding to an original word. When a word has been split into

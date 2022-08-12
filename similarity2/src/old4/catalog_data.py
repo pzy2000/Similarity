@@ -60,7 +60,7 @@ def __get_filter_data(department_id: str, style: int):
     import json
     if department_id and style:
         style = int(style)
-        assert (style == 1 or style == 2), "参数style必须为1或2"
+        assert style in (1, 2), "参数style必须为1或2"
 
         index = [i for i, v in enumerate(db_data) if
                  (json.loads(v[2])['departmentId'] == department_id) ^ (style - 1) # 使用style异或即可

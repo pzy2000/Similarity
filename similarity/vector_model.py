@@ -21,7 +21,7 @@ def train_model(i_window, i_min_count, i_dim):
     seg_list = []
     print("------------------------训练模型--------------------------")
     while line:
-        if line != '\n' and line != '':
+        if line not in ('\n', ''):
             segment = jieba.lcut(line, cut_all=True, HMM=True)
             for s in segment:
                 for i in range(0, len(s)):
@@ -52,7 +52,7 @@ def retrain_model():
     seg_list = []
     print("-----------------------开始追加训练模型------------------------")
     while line:
-        if line != '\n' and line != '':
+        if line not in ('\n', ''):
             segment = jieba.lcut(line, cut_all=True, HMM=True)
             for s in segment:
                 for i in range(0, len(s)):
