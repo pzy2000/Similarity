@@ -69,10 +69,7 @@ def retrain_model():
 
 # 判断是否为中文
 def is_all_chinese(strs):
-    for _char in strs:
-        if not '\u4e00' <= _char <= '\u9fa5':
-            return False
-    return True
+    return all('\u4e00' <= _char <= '\u9fa5' for _char in strs)
 
 
 if __name__ == '__main__':
