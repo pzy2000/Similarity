@@ -6,8 +6,6 @@ import torch
 
 
 class CosineSimilarity(torch.nn.Module):
-    def __init__(self):
-        super(CosineSimilarity, self).__init__()
 
     @staticmethod
     def forward(x1, x2):
