@@ -462,7 +462,8 @@ class BertSim():
             writer.write(tf_example.SerializeToString())
 
     @staticmethod
-    def file_based_input_fn_builder(input_file, seq_length, is_training, drop_remainder):
+    def file_based_input_fn_builder(input_file, seq_length,
+                                    is_training, drop_remainder):
         """Creates an `input_fn` closure to be passed to TPUEstimator."""
         name_to_features = {
             "input_ids": tf.FixedLenFeature([seq_length], tf.int64),
