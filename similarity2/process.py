@@ -1,6 +1,4 @@
-"""
-数据处理相关代码，和业务逻辑相关
-"""
+"""数据处理相关代码，和业务逻辑相关"""
 from typing import List, Union, Dict, Any, Tuple
 from similarity2.algorithm import word2vec_avg_matrix, cosine_similarity
 from similarity2.globals import DEVICE

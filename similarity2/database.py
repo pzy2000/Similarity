@@ -1,6 +1,4 @@
-"""
-数据库读取相关代码
-"""
+"""数据库读取相关代码"""
 from typing import List, Tuple, Any, Dict, Union
 import dmPython
 from demo.settings import DEBUG
@@ -20,9 +18,7 @@ db_type = CONFIG.get("database", 'db_type')
 
 
 class Database:
-    """
-    请保证values_list、values_dict方法，最后调用！
-    """
+    """请保证values_list、values_dict方法，最后调用！"""
 
     @classmethod
     def get_common_database(cls):
@@ -63,9 +59,7 @@ class Database:
         return result
 
     def reset(self):
-        """
-        重置数据库游标和数据
-        """
+        """重置数据库游标和数据"""
         self.cursor.close()
         self.cursor = None
         self.filter_sql = ""

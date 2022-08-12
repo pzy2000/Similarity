@@ -1,6 +1,4 @@
-"""
-多线程有关代码
-"""
+"""多线程有关代码"""
 from concurrent import futures
 
 
