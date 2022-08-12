@@ -345,24 +345,6 @@ class MetaData:
 
     def save_data(self, metadata_list, item_data):
         return
-        sim_words = {}
-        for data in metadata_list:
-            sim = bert_sim.predict(data, item_data)[0][1]
-            if len(sim_words) < self.top_k:
-                sim_words[data] = sim
-            else:
-                min_sim = min(sim_words.values())
-                if sim > min_sim:
-                    for key in list(sim_words.keys()):
-                        if sim_words.get(key) == min_sim:
-                            # 替换
-                            del sim_words[key]
-                            sim_words[data] = sim
-                            break
-        res = []
-        for sim_word in sim_words:
-            res.append(sim_word)
-        bert_data[item_data] = res
 
     def string_matching(self, index, item_list, metadata_list, key_index,
                         res_metadata_list, item_multimeta_dic):
