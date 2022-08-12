@@ -103,3 +103,4 @@ yarl==1.7.2
 zipp==3.5.0
 
 pymysql~=1.0.2
+dmpython~=2.4.4

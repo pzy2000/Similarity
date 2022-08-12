@@ -1,7 +1,6 @@
 from django.urls import path
 from . import recommend
 
-
 urlpatterns = [
     path('init_model_vector/', recommend.init_model_vector, name='init_model_vector'),
     path('multiple_match/', recommend.multiple_match, name='multiple_match'),
