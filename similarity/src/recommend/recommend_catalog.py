@@ -163,7 +163,7 @@ def catalog_recommend(request):
             continue
 
         # 查看查询缓存
-        if data in query_data.keys():
+        if data in query_data:
             tmp = query_data.get(data)
             if len(tmp) == 2 * k and weight_data[data] == percent:
                 sim_value = tmp[int(len(tmp) / 2):]

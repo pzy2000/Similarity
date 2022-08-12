@@ -305,7 +305,7 @@ class MetaData(object):
                 similarity = self.sim_common_str(catalogue_list[i][1], metadata_list[j])
                 # similarity = self.catalogue_bert(catalogue_list[i][1], metadata_list[j], isBert)
                 # 在现存关联关系表中是否存在，若存在则权重增加
-                if (catalogue_list[i][1] in self.exist_asso_dic.keys()) and \
+                if (catalogue_list[i][1] in self.exist_asso_dic) and \
                         self.exist_asso_dic[catalogue_list[i][1]] == metadata_list[j]:
                     similarity += 1
 
@@ -500,7 +500,7 @@ class MetaData(object):
         '''
         # 查看BERT缓存
         tmp = []
-        if item_list[key_index] in bert_data.keys():
+        if item_list[key_index] in bert_data:
             tmp = bert_data.get(item_list[key_index])
         if len(tmp) != 0:
             res_metadata_list.append(tmp)
@@ -525,7 +525,7 @@ class MetaData(object):
         '''
         # 查看查询缓存
         tmp = []
-        if item_list[key_index] in query_data.keys():
+        if item_list[key_index] in query_data:
             tmp = query_data.get(item_list[key_index])
         if len(tmp) == self.top_k:
             # 构建模型表字段与数据元的映射
@@ -642,7 +642,7 @@ class MetaData(object):
                                             self.asso_model_multimeta)
                     break
                 # 查看BERT缓存
-                if model_list[i][2] in bert_data.keys():
+                if model_list[i][2] in bert_data:
                     tmp = bert_data.get(model_list[i][2])
                     res_metadata_list.append(tmp)
                 if len(res_metadata_list) != 0:
@@ -652,7 +652,7 @@ class MetaData(object):
                     break
 
                 # 查看查询缓存
-                if model_list[i][2] in query_data.keys():
+                if model_list[i][2] in query_data:
                     tmp = query_data.get(model_list[i][2])
                     res_metadata_list.append(tmp)
                 if len(res_metadata_list) != 0:
