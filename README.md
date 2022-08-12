@@ -1,6 +1,6 @@
 # Similarity
 
-[![CI](https://github.com/pzy2000/Auto_coding/actions/workflows/main.yml/badge.svg)](https://github.com/pzy2000/Auto_coding/actions/workflows/main.yml)[![DeepSource](https://deepsource.io/gh/pzy2000/Auto_coding.svg/?label=resolved+issues&show_trend=true&token=JmxpqvGwzeIt7g-Y8GZMWyWi)](https://deepsource.io/gh/pzy2000/Auto_coding/?ref=repository-badge)
+[![CI](https://github.com/pzy2000/Auto_coding/actions/workflows/main.yml/badge.svg)](https://github.com/pzy2000/Auto_coding/actions/workflows/main.yml)[![DeepSource](https://deepsource.io/gh/pzy2000/Similarity.svg/?label=resolved+issues&show_trend=true&token=bnY7X-80nS9jLbNe0BfRmjUa)](https://deepsource.io/gh/pzy2000/Similarity/?ref=repository-badge)
 <p align="left">
   <a href="https://raw.githubusercontent.com/nonebot/nonebot2/master/LICENSE">
     <img src="https://img.shields.io/github/license/nonebot/nonebot2" alt="license">
