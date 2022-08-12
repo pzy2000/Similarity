@@ -807,7 +807,7 @@ def main(_):
       assert len(eval_examples) % FLAGS.eval_batch_size == 0
       eval_steps = int(len(eval_examples) // FLAGS.eval_batch_size)
 
-    eval_drop_remainder = True if FLAGS.use_tpu else False
+    eval_drop_remainder = bool(FLAGS.use_tpu)
     eval_input_fn = file_based_input_fn_builder(
         input_file=eval_file,
         seq_length=FLAGS.max_seq_length,
@@ -855,7 +855,7 @@ def main(_):
                                             predict_file)
 
 
-    predict_drop_remainder = True if FLAGS.use_tpu else False
+    predict_drop_remainder = bool(FLAGS.use_tpu)
     predict_input_fn = file_based_input_fn_builder(
         input_file=predict_file,
         seq_length=FLAGS.max_seq_length,

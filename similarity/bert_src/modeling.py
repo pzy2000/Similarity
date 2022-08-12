@@ -914,7 +914,7 @@ def transformer_model(input_tensor,
     else:
         name_variable_scope="layer_%d" % layer_idx
     # share all parameters across layers. add by brightmart, 2019-09-28. previous it is like this: "layer_%d" % layer_idx
-    with tf.compat.v1.variable_scope(name_variable_scope, reuse=True if (share_parameter_across_layers and layer_idx>0) else False):
+    with tf.compat.v1.variable_scope(name_variable_scope, reuse=bool((share_parameter_across_layers and layer_idx>0))):
 
       layer_input = prev_output
 
