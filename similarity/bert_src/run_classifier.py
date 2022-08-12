@@ -130,7 +130,7 @@ flags.DEFINE_integer(
     "Only used if `use_tpu` is True. Total number of TPU cores to use.")
 
 
-class InputExample(object):
+class InputExample:
   """A single training/test example for simple sequence classification."""
 
   def __init__(self, guid, text_a, text_b=None, label=None):
@@ -150,7 +150,7 @@ class InputExample(object):
     self.label = label
 
 
-class PaddingInputExample(object):
+class PaddingInputExample:
   """Fake example so the num input examples is a multiple of the batch size.
   When running eval/predict on the TPU, we need to pad the number of examples
   to be a multiple of the batch size, because the TPU requires a fixed batch
@@ -161,7 +161,7 @@ class PaddingInputExample(object):
   """
 
 
-class InputFeatures(object):
+class InputFeatures:
   """A single set of features of data."""
 
   def __init__(self,
@@ -177,7 +177,7 @@ class InputFeatures(object):
     self.is_real_example = is_real_example
 
 
-class DataProcessor(object):
+class DataProcessor:
   """Base class for data converters for sequence classification data sets."""
 
   def get_train_examples(self, data_dir):

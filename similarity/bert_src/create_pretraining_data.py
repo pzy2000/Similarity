@@ -75,7 +75,7 @@ flags.DEFINE_float(
 flags.DEFINE_bool("non_chinese", False,"manually set this to True if you are not doing chinese pre-train task.")
 
 
-class TrainingInstance(object):
+class TrainingInstance:
   """A single training instance (sentence pair)."""
 
   def __init__(self, tokens, segment_ids, masked_lm_positions, masked_lm_labels,
