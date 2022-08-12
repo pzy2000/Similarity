@@ -35,7 +35,7 @@ rootPath = os.path.split(rootPath)[0]
 sys.path.append(rootPath)
 import similarity.bert_src.bert_utils
 
-class BertConfig(object):
+class BertConfig:
   """Configuration for `BertModel`."""
 
   def __init__(self,
@@ -111,7 +111,7 @@ class BertConfig(object):
     return json.dumps(self.to_dict(), indent=2, sort_keys=True) + "\n"
 
 
-class BertModel(object):
+class BertModel:
   """BERT model ("Bidirectional Encoder Representations from Transformers").
 
   Example usage:

@@ -30,7 +30,7 @@ bert_data = {}
 query_data = {}
 
 
-class MetaData(object):
+class MetaData:
 
     def __init__(self, config):
         self.config = config
