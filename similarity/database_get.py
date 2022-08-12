@@ -48,8 +48,8 @@ class database:
         cursor.execute(sql)
         name = cursor.fetchall()
         selectname = ''
-        for a in range(len(num)):
-            selectname = selectname + ',' + name[num[a]][0]
+        for a, item in enumerate(num):
+            selectname = selectname + ',' + name[item][0]
         newsql = "select %s from %s" % (selectname.lstrip(','), tablename)
         cursor.execute(newsql)
         matrix = cursor.fetchall()
@@ -99,8 +99,8 @@ class database:
         name = cursor.fetchall()
         # sql = "select match_str,original_code,original_data from ai_original_data where business_type = '%s' " % type
         selectname = ''
-        for a in range(len(num)):
-            selectname = selectname + ',' + name[num[a]][0]
+        for a, item in enumerate(num):
+            selectname = selectname + ',' + name[item][0]
         # newsql = "select %s from %s" % (selectname.lstrip(','), tablename)
         sql = "select %s from %s where business_type = '%s' " % (selectname.lstrip(','), tablename, type)
         cursor.execute(sql)

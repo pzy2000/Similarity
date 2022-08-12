@@ -215,9 +215,9 @@ class MetaData(object):
         for i in tqdm(range(len(model_list))):
             # 相似度与数据元下标映射表
             sim_index = []
-            for j in range(len(metadata_list)):
+            for j, item in enumerate(metadata_list):
                 # 计算每个模型表中的字段与数据元字段的相似度
-                similarity = self.sim_common_str(model_list[i][2], metadata_list[j])
+                similarity = self.sim_common_str(model_list[i][2], item)
                 # 将其他的信息纳入考虑，计算相似度
                 # addition_sim = self.model_addition_info(metadata_list[j], model_list[i][0], model_list[i][1])
                 # print('额外信息：' + str(addition_sim))
@@ -299,14 +299,14 @@ class MetaData(object):
         for i in tqdm(range(len(catalogue_list))):
             # 相似度与数据元下标映射表
             sim_index = []
-            for j in range(len(metadata_list)):
+            for j, item in enumerate(metadata_list):
                 # 计算每个目录表信息项中的字段与数据元字段的相似度
                 similarity = 0
-                similarity = self.sim_common_str(catalogue_list[i][1], metadata_list[j])
+                similarity = self.sim_common_str(catalogue_list[i][1], item)
                 # similarity = self.catalogue_bert(catalogue_list[i][1], metadata_list[j], isBert)
                 # 在现存关联关系表中是否存在，若存在则权重增加
                 if (catalogue_list[i][1] in self.exist_asso_dic) and \
-                        self.exist_asso_dic[catalogue_list[i][1]] == metadata_list[j]:
+                        self.exist_asso_dic[catalogue_list[i][1]] == item:
                     similarity += 1
 
                 if similarity <= 0:
@@ -630,10 +630,10 @@ class MetaData(object):
         model_list = model_data.values.tolist()
         for i in tqdm(range(len(model_list))):
             res_metadata_list = []
-            for j in range(len(metadata_list)):
+            for j, item in enumerate(metadata_list):
                 # 字符串匹配
-                if model_list[i][2] == metadata_list[j]:
-                    res_metadata_list.append(metadata_list[j])
+                if model_list[i][2] == item:
+                    res_metadata_list.append(item)
                 # 匹配到的数据元列表不为空，则说明找到最相似的，退出循环
                 # 继续寻找下一个字段关联的数据元
                 if len(res_metadata_list) != 0:
@@ -751,8 +751,8 @@ class MetaData(object):
         :return: 返回模型表元素在现存关联关系表中的下标
         '''
         index = 0
-        for i in range(len(exist_asso_list)):
-            if operator.eq(model_list, exist_asso_list[i][:3]) is True:
+        for i, item in enumerate(exist_asso_list):
+            if operator.eq(model_list, item[:3]) is True:
                 index = i
                 break
         return index

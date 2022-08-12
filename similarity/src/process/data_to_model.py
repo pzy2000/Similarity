@@ -99,9 +99,8 @@ def init_model_vector_model(request):
     prepare_data_model()
     process = 0.75
     data_model_number = len(data_model)
-    for i in range(len(data_model)):
+    for i, data in enumerate(data_model):
         process = 0.75 + i / (data_model_number * 4)
-        data = data_model[i]
         item = data.split(' ')
 
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
@@ -162,8 +161,8 @@ def prepare_data_model():
 
     if DEBUG:
         print('data_model：' + str(len(data_model)))
-        for i in range(len(data_model)):
-            print(data_model[i])
+        for i, item in enumerate(data_model):
+            print(item)
 
 
 
@@ -205,8 +204,8 @@ def increment_business_data_model(request):
         if DEBUG:
             print('增加后：')
             print('data_model：' + str(len(data_model)))
-            for i in range(len(data_model)):
-                print(data_model[i])
+            for i, item in enumerate(data_model):
+                print(item)
 
         item = tmp.split(' ')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
@@ -278,8 +277,8 @@ def delete_business_data_model(request):
         if DEBUG:
             print('删除后：')
             print('data_model：' + str(len(data_model)))
-            for i in range(len(data_model)):
-                print(data_model[i])
+            for i, item in enumerate(data_model):
+                print(item)
 
         item = [x.strip() for x in match_str.split('^')]
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
@@ -332,13 +331,12 @@ def data2model_recommend(request):
         return Response({"code": 404, "msg": "数据为空！", "data": ''})
     # 顺序是模型表名-字段名
     source_data = []
-    for i in range(len(full_data)):
-        source_data.append(full_data[i]['matchStr'].replace('^', ' '))
+    for i, item in enumerate(full_data):
+        source_data.append(item['matchStr'].replace('^', ' '))
     result = []
     tick = 0
-    for i in range(len(source_data)):
+    for i, data in enumerate(source_data):
         res = {}
-        data = source_data[i]
         query_id = full_data[i]['id']
         # 字符串匹配
         str_tmp = string_matching(demand_data=data, k=k)
@@ -380,12 +378,12 @@ def data2model_recommend(request):
         if DEBUG:
             print("用了词向量匹配")
             print('原来的str_tmp')
-            for index in range(len(str_tmp)):
-                print(str_tmp[index])
+            for index, item in enumerate(str_tmp):
+                print(item)
 
             print('原来的tmp：')
-            for index in range(len(tmp)):
-                print(tmp[index] + ' : ' + str(sim_value[index]))
+            for index, item in enumerate(tmp):
+                print(item + ' : ' + str(sim_value[index]))
 
         oringi_len = len(str_tmp)
         str_tmp += tmp
@@ -395,8 +393,8 @@ def data2model_recommend(request):
             print()
             print('增加后的长度：' + str(len(str_tmp)))
             print('增长后的情况：')
-            for index in range(len(str_tmp)):
-                print(str_tmp[index] + ' : ' + str(str_sim_value[index]))
+            for index, item in enumerate(str_tmp):
+                print(item + ' : ' + str(str_sim_value[index]))
 
         # for index in range(oringi_len):
         #     if str_tmp[index] == str_tmp[0]:
@@ -421,8 +419,8 @@ def data2model_recommend(request):
         if DEBUG:
             print()
             print('删除后的情况：')
-            for tmp_index in range(len(str_tmp)):
-                print(str_tmp[tmp_index] + ' : ' + str(str_sim_value[tmp_index]))
+            for tmp_index, item in enumerate(str_tmp):
+                print(item + ' : ' + str(str_sim_value[tmp_index]))
 
         # result.append(save_result(tmp, res, query_id, sim_value))
         result.append(save_result(str_tmp, res, query_id, str_sim_value))
@@ -451,8 +449,8 @@ def string_matching(demand_data, k):
     res = []
     if DEBUG:
         print('data_len：' + str(len(data_model)))
-        for i in range(len(data_model)):
-            print(data_model[i])
+        for i, item in enumerate(data_model):
+            print(item)
 
     for data in data_model:
         tmp_match_str = demand_data.split(' ')
@@ -613,8 +611,7 @@ def save_result(temp, res, query_id, sim_value):
     # return res
 
     single_res = []
-    for i in range(len(temp)):
-        d = temp[i]
+    for i, d in enumerate(temp):
         tmp = d.split(' ')
 
         single_res.append({'str': ' '.join(tmp[:5]),
