@@ -166,7 +166,8 @@ class AdamWeightDecayOptimizer(tf.compat.v1.train.Optimizer):
           return False
     return True
 
-  def _get_variable_name(self, param_name):
+  @staticmethod
+  def _get_variable_name(param_name):
     """Get the variable name from the tensor name."""
     m = re.match("^(.*):\\d+$", param_name)
     if m is not None:

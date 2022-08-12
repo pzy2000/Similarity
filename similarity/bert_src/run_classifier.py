@@ -604,7 +604,8 @@ class LCQMCPairClassificationProcessor(DataProcessor): # TODO NEED CHANGE2
     return ["0", "1"]
     #return ["-1","0", "1"]
 
-  def _create_examples(self, lines, set_type):
+  @staticmethod
+  def _create_examples(lines, set_type):
     """Creates examples for the training and dev sets."""
     examples = []
     print("length of lines:",len(lines))
@@ -648,7 +649,8 @@ class SentencePairClassificationProcessor(DataProcessor):
     return ["0", "1"]
     #return ["-1","0", "1"]
 
-  def _create_examples(self, lines, set_type):
+  @staticmethod
+  def _create_examples(lines, set_type):
     """Creates examples for the training and dev sets."""
     examples = []
     print("length of lines:",len(lines))

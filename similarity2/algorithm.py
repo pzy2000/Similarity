@@ -11,7 +11,8 @@ class CosineSimilarity(torch.nn.Module):
     def __init__(self):
         super(CosineSimilarity, self).__init__()
 
-    def forward(self, x1, x2):
+    @staticmethod
+    def forward(x1, x2):
         x2 = x2.t()
         x = x1.mm(x2)
 
