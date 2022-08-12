@@ -1,4 +1,3 @@
-# coding=utf-8
 import argparse
 import multiprocessing
 
@@ -19,7 +18,6 @@ more_sentences_path = './corpus/more_sentences.txt'
 def train_model(i_window, i_min_count, i_dim):
     f = open(origin_corpus_path, encoding='utf-8')
     line = f.readline()
-    # stopwords = [line.strip() for line in open(r'./stopwords/cn_stopwords.txt', 'r', encoding='utf-8')]
     seg_list = []
     print("------------------------训练模型--------------------------")
     while line:
@@ -51,7 +49,6 @@ def retrain_model():
     tmp_model = gensim.models.Word2Vec.load(model_dir + 'word2vec.model')
     f = open(more_sentences_path, encoding='utf-8')
     line = f.readline()
-    # stopwords = [line.strip() for line in open(r'./stopwords/cn_stopwords.txt', 'r', encoding='utf-8')]
     seg_list = []
     print("-----------------------开始追加训练模型------------------------")
     while line:

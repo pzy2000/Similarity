@@ -12,10 +12,6 @@ keyword = 'database'
 read_ini = configparser.ConfigParser()
 read_ini.read(os.path.join(root_path, 'config.ini'), encoding='utf-8')
 
-# host = 'localhost'
-# user = 'root'
-# password = 'ycy225314'
-# db_name = 'sim_table'
 
 host = read_ini.get(keyword, 'db_host')
 user = read_ini.get(keyword, 'db_user')
@@ -97,11 +93,9 @@ class database:
         sql = 'SHOW COLUMNS FROM %s;' % tablename
         cursor.execute(sql)
         name = cursor.fetchall()
-        # sql = "select match_str,original_code,original_data from ai_original_data where business_type = '%s' " % type
         selectname = ''
         for a, item in enumerate(num):
             selectname = selectname + ',' + name[item][0]
-        # newsql = "select %s from %s" % (selectname.lstrip(','), tablename)
         sql = "select %s from %s where business_type = '%s' " % (selectname.lstrip(','), tablename, type)
         cursor.execute(sql)
         matrix = cursor.fetchall()
@@ -115,14 +109,8 @@ class database:
 db = database(host=host, user=user, password=password, database=db_name, charset='utf8')
 
 if __name__ == '__main__':
-    # sql = "select * from 信息资源导入"
-    # # db = database(host=host, user=user, password=password, database=db_name, charset='utf8')
-    # idx = [int(x) for x in read_ini.get('data_model', 'data_col').split(',')]
-    # tablename = read_ini.get('data_model', 'table_name')
-    # m = db.get_colum_by_num(idx, tablename)
     idx = [2, 3, 4]
     m = db.get_data_by_type_v2(idx, 'model_data', 'ai_original_data')
-    # m.append(['测试',None, None])
     print(m)
 
     for i in m:
@@ -134,12 +122,3 @@ if __name__ == '__main__':
         print(i[0].replace('^', ' '))
     print(t)
 
-    # tmp = []
-    # for i in m:
-    #     while(None in i):
-    #         i[i.index(None)] = '*'
-    #     # print(i)
-    #     # print(' '.join(i))
-    #     tmp.append(' '.join(i))
-    # for i in tmp:
-    #     print(i)

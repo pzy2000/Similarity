@@ -1,4 +1,3 @@
-# coding=utf-8
 
 import os
 
@@ -80,8 +79,6 @@ def init_model_vector_data(request):
     # if not os.path.exists(model_data_path):
     #     return Response({"code": 404, "msg": "数据表路径不存在", "data": ""})
     process = 0
-    # 重新加载模型
-    # model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
     process = 0.5
     # 重新缓存向量
     model_data = []
@@ -90,7 +87,6 @@ def init_model_vector_data(request):
     model_data_vector_table_disc = []
     model_data_vector_item = []
     model_data_vector_item_disc = []
-    # prepare_model_data(path=model_data_path)
     prepare_model_data()
     process = 0.75
     model_data_number = len(model_data)
@@ -132,23 +128,7 @@ def prepare_model_data():
     global model_data
     global table_name
     # # 打开excel
-    # wb = xlrd.open_workbook(path)
-    # # 按工作簿定位工作表
-    # sh = wb.sheet_by_name('业务层表结构分析')
-    # row_number = sh.nrows
-    # for i in range(1, row_number):
-    #     model_data.append(sh.cell(i, 0).value + ' ' + sh.cell(i, 1).value + ' ' + sh.cell(i, 2).value)
-    # # print(model_data)
 
-    # re = db.get_colum_by_num(data_col, table_name)
-    # for i in re:
-    #     while (None in i):
-    #         i[i.index(None)] = '*'
-    #     model_data.append(' '.join(i))
-    #
-    #
-    # data_df = pd.DataFrame(model_data)
-    # data_df.to_csv(exec_data_path, encoding='utf-8_sig', index=False)
 
     re = db.get_data_by_type_v2(data_col, business_type, table_name)
     for i in re:
@@ -244,9 +224,6 @@ def delete_business_model_data(request):
         match_str = single_data['matchStr']
         original_code = single_data['originalCode']
         original_data = single_data['originalData']
-        # 加入缓存中
-        # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
-        #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
         tmp = ' '.join([x.strip() for x in match_str.split('^')])
         tmp += (' ' + original_code + ' ' + original_data)
@@ -311,7 +288,6 @@ def model2data_recommend(request):
     if len(weight_percent.split(',')) != 5:
         return Response({"code": 404, "msg": "权重配置错误！", "data": ''})
     percent = [float(x) for x in weight_percent.split(',')]
-    # load_data_data()
     if len(model_data) == 0:
         return Response({"code": 404, "msg": "数据为空！", "data": ''})
     # 顺序是部门-模型名称-模型描述-属性名称-属性描述
@@ -396,7 +372,6 @@ def model2data_recommend(request):
             for tmp_index, item in enumerate(str_tmp):
                 print(item + ' : ' + str(str_sim_value[tmp_index]))
 
-        # result.append(save_result(tmp, res, query_id, sim_value))
         result.append(save_result(str_tmp, res, query_id, str_sim_value))
         query_data[data] = tmp + sim_value
         weight_data[data] = percent
@@ -490,9 +465,7 @@ def vector_matching(demand_data, k):
     res_sim_value = []
     for i in sim_index:
         res.append(model_data[i[0]])
-    # print('计算出的匹配值：')
     for i in sim_value:
-        # print(i[0])
         if i[0] > 1:
             i[0] = 1.0
         elif i[0] < 0:

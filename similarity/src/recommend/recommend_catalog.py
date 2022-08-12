@@ -66,8 +66,6 @@ def init_model_vector_material(request):
     # if not os.path.exists(catalogue_data_path):
     #     return Response({"code": 404, "msg": "目录表路径不存在", "data": ""})
     process = 0
-    # 重新加载模型
-    # model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
     process = 0.5
     # 重新缓存向量
     catalogue_data = []
@@ -76,7 +74,6 @@ def init_model_vector_material(request):
     catalogue_data_vector_catalog_disc = []
     catalogue_data_vector_item = []
     catalogue_data_vector_item_disc = []
-    # prepare_catalogue_data(path=catalogue_data_path)
     prepare_catalogue_data()
     process = 0.75
     catalogue_data_number = len(catalogue_data)
@@ -126,8 +123,6 @@ def prepare_catalogue_data():
         for i, item in enumerate(catalogue_data):
             print(item)
 
-    # catalogue_df = pd.DataFrame(catalogue_data)
-    # catalogue_df.to_csv(exec_catalog_path, encoding='utf-8_sig', index=False)
 
 
 def catalog_recommend(request):
@@ -142,7 +137,6 @@ def catalog_recommend(request):
     if len(weight_percent.split(',')) != 5:
         return Response({"code": 404, "msg": "权重配置错误！", "data": ''})
     percent = [float(x) for x in weight_percent.split(',')]
-    # load_catalogue_data()
     if len(catalogue_data) == 0:
         return Response({"code": 404, "msg": "数据为空！", "data": ''})
     # 顺序是材料名称-材料描述-材料类型-材料来源部门
@@ -228,7 +222,6 @@ def catalog_recommend(request):
             for tmp_index, item in enumerate(str_tmp):
                 print(item + ' : ' + str(str_sim_value[tmp_index]))
 
-        # result.append(save_result(tmp, res, query_id, sim_value))
         result.append(save_result(str_tmp, res, query_id, str_sim_value))
         query_data[data] = tmp + sim_value
         weight_data[data] = percent
@@ -333,9 +326,7 @@ def vector_matching(demand_data, k):
     res_sim_value = []
     for i in sim_index:
         res.append(catalogue_data[i[0]])
-    # print('计算出的匹配值：')
     for i in sim_value:
-        # print(i[0])
         if i[0] > 1:
             i[0] = 1.0
         elif i[0] < 0:
@@ -359,9 +350,6 @@ def save_data(demand_data, k):
         sim += bert_sim.predict(item1[3], item2[3])[0][1] * percent[3]
         sim += bert_sim.predict(item1[4], item2[4])[0][1] * percent[4]
         # # 信息项
-        # sim += bert_sim.predict(item1[0], item2[2])[0][1] * percent[0]
-        # # 部门
-        # sim += bert_sim.predict(item1[3], item2[0])[0][1] * percent[3]
 
         if len(sim_words) < k:
             sim_words[data] = sim
@@ -413,9 +401,6 @@ def increment_business_data_material(request):
         match_str = single_data['matchStr']
         original_code = single_data['originalCode']
         original_data = single_data['originalData']
-        # 加入缓存中
-        # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
-        #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
         if len(match_str.split('^')) != 5:
             return Response({"code": 200, "msg": "新增数据失败，有效数据字段不等于5", "data": ""})
@@ -474,8 +459,6 @@ def delete_business_data_material(request):
         original_code = single_data['originalCode']
         original_data = single_data['originalData']
         # # 加入缓存中
-        # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
-        #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
         tmp = ' '.join([x.strip() for x in match_str.split('^')])
         tmp += (' ' + original_code + ' ' + original_data)

@@ -8,8 +8,6 @@ result_dir = os.path.join(root_path, 'similarity/result/')
 model_dir = os.path.join(root_path, 'similarity/model/')
 basedir2 = str(pathlib.Path(os.path.abspath(__file__)).parent.parent)  # 路径为 E:\PythonProject\demo\similarity\src
 
-# print(root_path)
-# print(basedir2)
 
 
 
@@ -19,22 +17,9 @@ class Config():
     def __init__(self):
         # 数据元路径
         self.metadata_path = os.path.join(data_dir, 'metadata.csv')
-        # 新增数据元路径
-        # self.add_metadata_path = os.path.join(data_path, '某区目录-信息项数据2.0.xlsx')
         self.add_metadata_path = None
-        # 新增数据元表单名称
-        # self.add_metadata_sheet = None
-        # 新增数据元表列名称
-        # self.add_metadata_col = None
-        # 模型表单表路径
         self.model_path = os.path.join(data_dir, 'single_model.csv')
-        # 模型表多表路径
-        # self.model_path = os.path.join(data_dir, 'multi_model.csv')
-        # 目录表单表路径
         self.catalogue_path = os.path.join(data_dir, 'single_catalogue.csv')
-        # 目录表多表路径
-        # self.catalogue_path = os.path.join(data_dir, 'multi_catalogue.csv')
-        # 已存在关联关系路径
         self.exist_asso_path = os.path.join(data_dir, '人口库建设过程资料v0.1.xlsx')
         # 前k个候选数据元
         self.top_k = 3
@@ -43,9 +28,6 @@ class Config():
         # ------------------------模型表相关------------------------
         # 模型表单表路径
         self.model_save_path = os.path.join(result_dir, 'model_table\\single\\')
-        # 模型表多表路径
-        # self.model_save_path = os.path.join(result_path, 'model_table\\multi\\')
-        # 模型表字段与数据元的关联关系json文件
         self.model_meta_name = 'model_meta.json'
         # 数据元与模型表字段的关联关系json文件
         self.meta_model_name = 'meta_model.json'

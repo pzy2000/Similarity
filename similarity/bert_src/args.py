@@ -19,8 +19,6 @@ ckpt_name = os.path.join(model_dir, 'albert_model.ckpt')
 output_dir = os.path.join(file_path, 'model/')
 #vocab文件目录
 vocab_file = os.path.join(file_path, 'albert_tiny_489k/vocab.txt')
-# print(vocab_file)
-#数据目录
 data_dir = os.path.join(file_path, 'data/')
 
 num_train_epochs = 10

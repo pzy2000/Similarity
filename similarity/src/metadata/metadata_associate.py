@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
 import os
 
-# import django
 import time
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'demo.settings')
@@ -60,8 +59,6 @@ class MetaData(object):
         self.asso_catalogue_meta = {}  # 目录表信息项与数据元的关联关系{index1:[[catalogue_name1,word1,ins1],meta1],index2:[[catalogue_name2,word2,ins2],meta2]}
         self.asso_catalogue_multimeta = {}  # 目录表信息项与数据元的多关联关系{index1:[[catalogue_name1,word1,ins1],[meta1,meta22,meta35]],index2:[[catalogue_name2,word2,ins2],[meta12,meta20,meta13]]}
         self.exist_asso_dic = {}  # 已存在的关联关系
-        # self.bert_sim = BertSim()
-        # self.bert_sim.set_mode(tf.estimator.ModeKeys.PREDICT)
 
     def load_metadata(self):
         '''
@@ -166,9 +163,6 @@ class MetaData(object):
         '''
         sim = 0
         sim = self.sim_common_str(info, metadata)
-        # if isBert == True:
-        #     if sim <= 0.1:
-        #         sim = self.bert_sim.predict(metadata, info)[0][1]
         return sim
 
     def model_preprocess(self):
@@ -176,7 +170,6 @@ class MetaData(object):
         模型表与数据元关联前的预处理，包括加载数据元，加载新增数据元，加载模型表，加载已存在的关联关系
         :return:
         '''
-        # self.add_metadata()
         self.load_metadata()
         self.load_model()
         self.load_exist_assoc()
@@ -187,7 +180,6 @@ class MetaData(object):
         :return:
         '''
 
-        # self.add_metadata()
         self.load_metadata()
         self.load_catalogue()
         self.load_exist_assoc()
@@ -238,7 +230,6 @@ class MetaData(object):
                     sim_index.append(tmp)
 
             sim_index = sorted(sim_index, key=lambda x: x[0], reverse=True)
-            # print(sim_index[0][1])
             max_sim_metadata = metadata_list[sim_index[0][1]]
 
             # 记录每个数据元对应的表中字段,完成数据元到模型表的映射{meta1:[[ins1,table1,word1],[ins2,table2,word2]]}
@@ -259,20 +250,6 @@ class MetaData(object):
             self.asso_model_multimeta[i] = top_k_metadata_list
 
         # # 将关联关系保存为json文件
-        # with open(meta_model_path, 'w', encoding='utf-8') as f:
-        #     json.dump(self.asso_meta_model, f, ensure_ascii=False, indent=2)
-        #
-        # with open(model_meta_path, 'w', encoding='utf-8') as f:
-        #     json.dump(self.asso_model_meta, f, ensure_ascii=False, indent=2)
-        # # 如果路径仍未默认，则并没有被就修改，按用户设置top_k格式命名
-        # if model_multimeta_path == os.path.join(result_path, 'model_table\\multi\\model_meta_top5_multi.json'):
-        #     model_multimeta_path = os.path.join(result_path, 'model_table\\multi\\model_meta_top'+ str(self.top_k) + '_multi.json')
-        # with open(model_multimeta_path, 'w', encoding='utf-8') as f:
-        #     json.dump(self.asso_model_multimeta, f, ensure_ascii=False, indent=2)
-        #
-        # print('-' * 25 + '模型表与数据元字段自动关联完成' + '-' * 25)
-        #
-        # self.model_save_asso(model_multimeta_path, model_asso_path)
 
     def catalogue_associate(self, metadata, catalogue, isBert=False,
                             meta_catalogue_path=os.path.join(result_dir,'catalogue_table\\multi\\meta_catalogue_multi.json'),
@@ -343,20 +320,6 @@ class MetaData(object):
             self.asso_catalogue_multimeta[i] = top_k_metadata_list
 
         # # 将关联关系保存为json文件
-        # with open(meta_catalogue_path, 'w', encoding='utf-8') as f:
-        #     json.dump(self.asso_meta_catalogue, f, ensure_ascii=False, indent=2)
-        #
-        # with open(catalogue_meta_path, 'w', encoding='utf-8') as f:
-        #     json.dump(self.asso_catalogue_meta, f, ensure_ascii=False, indent=2)
-        # # 如果路径仍未默认，则并没有被就修改，按用户设置top_k格式命名
-        # if catalogue_multimeta_path == os.path.join(result_path, 'catalogue_table\\multi\\catalogue_meta_top5_multi.json'):
-        #     catalogue_multimeta_path = os.path.join(result_path, 'catalogue_table\\multi\\catalogue_meta_top' + str(self.top_k) + '_multi.json')
-        # with open(catalogue_multimeta_path, 'w', encoding='utf-8') as f:
-        #     json.dump(self.asso_catalogue_multimeta, f, ensure_ascii=False, indent=2)
-        #
-        # print('-' * 25 + '目录表数据项与数据元字段自动关联完成' + '-' * 25)
-        #
-        # self.catalogue_save_asso(catalogue_multimeta_path, catalogue_asso_path)
 
     def model(self):
         # 加载数据元、模型表以及已存在的关联关系
@@ -366,14 +329,9 @@ class MetaData(object):
         meta_model_path = self.config.model_save_path + self.config.meta_model_name
         model_multimeta_path = self.config.model_save_path + self.config.model_multimeta_name
         model_asso_path = self.config.model_save_path + self.config.model_asso_name
-        # self.model_associate(self.metadata_df, self.model_df,model_meta_path,
-        #                      meta_model_path,model_multimeta_path,model_asso_path)
 
         self.integrate_sim(self.metadata_df, self.model_df, 2, self.asso_model_multimeta)
 
-        # 数据元与模型表关联关系的评估
-        # self.model_evaluate(model_multimeta_path)
-        # self.model_evaluate_new()
         return self.asso_model_multimeta
 
     def catalogue(self):
@@ -384,21 +342,11 @@ class MetaData(object):
         meta_catalogue_path = self.config.catalogue_save_path + self.config.meta_catalogue_name
         catalogue_multimeta_path = self.config.catalogue_save_path + self.config.catalogue_multimeta_name
         catalogue_asso_path = self.config.catalogue_save_path + self.config.catalogue_asso_name
-        # self.catalogue_associate(self.metadata_df, self.catalogue_df, isBert=False,
-        #                          catalogue_meta_path=catalogue_meta_path,
-        #                          meta_catalogue_path=meta_catalogue_path,
-        #                          catalogue_multimeta_path=catalogue_multimeta_path,
-        #                          catalogue_asso_path=catalogue_asso_path)
 
         self.integrate_sim(self.metadata_df, self.catalogue_df, 1, self.asso_catalogue_multimeta)
 
-        # 数据元与目录表信息项关联关系的评估
-        # metadata.catalogue_evaluate(min_confid=self.config.min_confid, max_confid=self.config.max_confid,
-        #                             json_path=catalogue_multimeta_path)
 
-        # self.catalogue_evaluate_new(json_path=catalogue_multimeta_path)
 
-        # self.catalogue_evaluate_integrate()
         return self.asso_catalogue_multimeta
 
     def build_metadata_map(self, index, item_list,
@@ -561,7 +509,6 @@ class MetaData(object):
         sim_index = _index.numpy().tolist()
         tmp = []
         for k in sim_index:
-            # print(k[0])
             tmp.append(metadata_list[k[0]])
             res_metadata_list.append(metadata_list[k[0]])
         # 构建模型表字段与数据元的映射
@@ -588,17 +535,7 @@ class MetaData(object):
                                     key_index, res_metadata_list, item_multimeta_dic) == True:
                 continue
 
-            # executor.submit(self.string_matching, i, item_list[i], metadata_list,
-            #  key_index, res_metadata_list, item_multimeta_dic)
-            # if len(res_metadata_list) >= self.top_k:
-            #     continue
 
-            # t1 = threading.Thread(target=self.string_matching, args=(i, item_list[i], metadata_list,
-            #                 key_index, res_metadata_list, item_multimeta_dic, ))
-            # t1.start()
-            # t1.join()
-            # if len(res_metadata_list) >= self.top_k:
-            #     continue
 
             # 查看BERT缓存
             if self.bert_matching(i, item_list[i], key_index,
@@ -698,7 +635,6 @@ class MetaData(object):
         :param metadata: 数据元字段
         :return: 返回两字符串的相似度
         '''
-        # similarity = 0
         similarity = SequenceMatcher(None, test_data, metadata).ratio()
 
         return similarity
@@ -710,7 +646,6 @@ class MetaData(object):
 
         with open(json_path, 'r', encoding='utf-8') as f:
             json_data = json.load(f)
-            # {index1:[[ins1,table1,word1],[meta1,meta22,meta35]]}
             for key, value in json_data.items():
                 index = int(key)
                 if (operator.eq(model_list[index], exist_asso_list[index][:3]) is False):
@@ -730,7 +665,6 @@ class MetaData(object):
 
         with open(json_path, 'r', encoding='utf-8') as f:
             json_data = json.load(f)
-            # {index1:[[table1,word1,ins1],[meta1,meta22,meta35]]}
             for key, value in json_data.items():
                 index = int(key)
                 asso_str = str(catalogue_list[index][0]) + '->' + \
@@ -765,8 +699,6 @@ class MetaData(object):
         count = 0
         # 前k个数据元中命中个数
         top_k_count = 0
-        # 加载模型表与数据元关联json文件
-        # {index1:[[ins1,table1,word1],meta1],index2:[[ins2,table2,word2],meta2]}
         with open(json_path, 'r', encoding='utf-8') as f:
             json_data = json.load(f)
 
@@ -798,13 +730,9 @@ class MetaData(object):
     def model_evaluate_new(self):
         exist_asso_list = self.exist_asso_df.values.tolist()
         model_list = self.model_df.values.tolist()
-        # print(self.asso_model_multimeta)
-        # top_1数据元的命中个数
         count = 0
         # 前k个数据元中命中个数
         top_k_count = 0
-        # 加载模型表与数据元关联关系的映射字典
-        # {index1:[[ins1,table1,word1],meta1],index2:[[ins2,table2,word2],meta2]}
         for key, value in self.asso_model_multimeta.items():
             index = int(key)
             # 若模型表中下标内容与现存关联关系表中同位置内容不一致时对下标进行重映射
@@ -839,8 +767,6 @@ class MetaData(object):
         count = 0
         # 前k个数据元中命中个数
         top_k_count = 0
-        # 加载目录表信息项与数据元关联json文件
-        # {index1:[[catalogue_name1,word1,ins1],meta1],index2:[[catalogue_name2,word2,ins2],meta2]}
         with open(json_path, 'r', encoding='utf-8') as f:
             json_data = json.load(f)
 
@@ -900,8 +826,6 @@ class MetaData(object):
         count = 0
         # 前k个数据元中命中个数
         top_k_count = 0
-        # 加载目录表信息项与数据元关联json文件
-        # {index1:[[catalogue_name1,word1,ins1],meta1],index2:[[catalogue_name2,word2,ins2],meta2]}
         with open(json_path, 'r', encoding='utf-8') as f:
             json_data = json.load(f)
 
@@ -949,7 +873,6 @@ class MetaData(object):
         catalogue_exist_asso_df = catalogue_exist_asso_df.iloc[:, [0, 1, 4, 2]]
         catalogue_exist_asso_list = catalogue_exist_asso_df.values.tolist()
 
-        # print(self.asso_catalogue_multimeta)
 
         # 纯目录表信息项
         catalogue_list = self.catalogue_df.values.tolist()
@@ -960,8 +883,6 @@ class MetaData(object):
         count = 0
         # 前k个数据元中命中个数
         top_k_count = 0
-        # 加载目录表信息项与数据元关联json文件
-        # {index1:[[catalogue_name1,word1,ins1],meta1],index2:[[catalogue_name2,word2,ins2],meta2]}
 
         for key, value in self.asso_catalogue_multimeta.items():
             index = int(key)
@@ -1009,8 +930,6 @@ def vector_sim(str1, str2):
     s2 = [word_avg(model, segment2)]
     x2 = torch.Tensor(s2).to(device)
     sim = tensor_module(x1, x2).numpy().tolist()[0][0]
-    # print(tensor_module(x1, x2))
-    # print(tensor_module(x1, x2).numpy().tolist())
     return sim
 
 
@@ -1050,9 +969,6 @@ def init_data_path(request):
     if config.top_k <= 0 or config.top_k > 10:
         return Response({"code": 200, "msg": "候选项超出取值范围[1,10]", "data": ""})
 
-    # metadata = MetaData(config)
-    # metadata.model_preprocess()
-    # metadata.catalogue_preprocess()
     init_flag = True
     return Response({"code": 200, "msg": "文件路径初始化成功", "data": ""})
     # return HttpResponse("文件路径初始化成功")
@@ -1102,7 +1018,6 @@ def single_match(request):
 
 if __name__ == '__main__':
 
-    # print(vector_sim('行政区划', '行政区划名称'))
 
     # 初始化配置
     metadata = MetaData(config)
