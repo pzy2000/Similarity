@@ -14,7 +14,7 @@ import similarity.bert_src.args
 import similarity.bert_src.optimization
 import similarity.bert_src.tokenization
 import similarity.bert_src.modeling
-from similarity.bert_src.run_classifier import InputFeatures, InputExample, DataProcessor, create_model, convert_examples_to_features
+from similarity.bert_src.run_classifier import InputFeatures, InputExample, DataProcessor, convert_examples_to_features
 import pandas as pd
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'

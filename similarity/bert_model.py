@@ -1,6 +1,4 @@
 import collections
-import csv
-from io import StringIO
 from queue import Queue
 from threading import Thread
 import tensorflow as tf
@@ -10,10 +8,7 @@ curPath = os.path.abspath(os.path.dirname(__file__))
 # print(curPath)
 rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath)
-import similarity.bert_src.optimization
-import similarity.bert_src.tokenization
-import similarity.bert_src.modeling
-from similarity.bert_src.run_classifier import InputFeatures, InputExample, DataProcessor, create_model, convert_examples_to_features
+from similarity.bert_src.run_classifier import InputFeatures, InputExample, DataProcessor, convert_examples_to_features
 from similarity import bert_src
 import pandas as pd
 from django.http import JsonResponse

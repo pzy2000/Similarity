@@ -4,18 +4,16 @@ import os
 from demo.settings import DEBUG
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'demo.settings')
-import gensim
 import jieba
 import torch
-import xlrd
 import pandas as pd
 import configparser
 from similarity.tools import root_path
 from rest_framework.response import Response
-from similarity.tools import model_dir, data_dir
+from similarity.tools import data_dir
 from similarity.word2vec_similarity_catalog import find_data, word_avg
 from similarity.word2vec_similarity_catalog import device, model, delete_ndarray, \
-    bert_sim, executor, tensor_module, model_path
+    bert_sim, executor, tensor_module
 from similarity.database_get import db
 
 
