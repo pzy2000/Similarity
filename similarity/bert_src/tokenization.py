@@ -27,12 +27,10 @@ import tensorflow as tf
 
 def validate_case_matches_checkpoint(do_lower_case, init_checkpoint):
   """Checks whether the casing config is consistent with the checkpoint name."""
-
   # The casing has to be passed in by the user and there is no explicit check
   # as to whether it matches the checkpoint. The casing information probably
   # should have been stored in the bert_config.json file, but it's not, so
   # we have to heuristically detect it to validate.
-
   if not init_checkpoint:
     return
 
@@ -95,7 +93,6 @@ def convert_to_unicode(text):
 
 def printable_text(text):
   """Returns text encoded in a way suitable for print or `tf.logging`."""
-
   # These functions want `str` for both Python2 and Python3, but in one case
   # it's a Unicode string and in the other it's a byte string.
   if six.PY3:
@@ -318,7 +315,6 @@ class WordpieceTokenizer(object):
     Returns:
       A list of wordpiece tokens.
     """
-
     text = convert_to_unicode(text)
 
     output_tokens = []

@@ -119,8 +119,6 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
 
   def model_fn(features, labels, mode, params):  # pylint: disable=unused-argument
     """The `model_fn` for TPUEstimator."""
-
-
     input_ids = features["input_ids"]
     input_mask = features["input_mask"]
     segment_ids = features["segment_ids"]
@@ -285,7 +283,6 @@ def get_masked_lm_output(bert_config, input_tensor, output_weights,project_weigh
 
 def get_next_sentence_output(bert_config, input_tensor, labels):
   """Get loss and log probs for the next sentence prediction."""
-
   # Simple binary classification. Note that 0 is "next sentence" and 1 is
   # "random sentence". This weight matrix is not used after pre-training.
   with tf.variable_scope("cls/seq_relationship"):

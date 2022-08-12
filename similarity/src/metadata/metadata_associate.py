@@ -173,7 +173,6 @@ class MetaData(object):
         目录表信息项与数据元关联前的预处理，包括加载数据元，加载新增数据元，加载目录表，加载已存在的关联关系
         :return:
         '''
-
         self.load_metadata()
         self.load_catalogue()
         self.load_exist_assoc()

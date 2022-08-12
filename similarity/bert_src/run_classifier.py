@@ -209,7 +209,6 @@ class DataProcessor(object):
 def convert_single_example(ex_index, example, label_list, max_seq_length,
                            tokenizer):
   """Converts a single `InputExample` into a single `InputFeatures`."""
-
   if isinstance(example, PaddingInputExample):
     return InputFeatures(
         input_ids=[0] * max_seq_length,
@@ -302,7 +301,6 @@ def convert_single_example(ex_index, example, label_list, max_seq_length,
 def file_based_convert_examples_to_features(
     examples, label_list, max_seq_length, tokenizer, output_file):
   """Convert a set of `InputExample`s to a TFRecord file."""
-
   writer = tf.python_io.TFRecordWriter(output_file)
 
   for (ex_index, example) in enumerate(examples):
@@ -330,7 +328,6 @@ def file_based_convert_examples_to_features(
 def file_based_input_fn_builder(input_file, seq_length, is_training,
                                 drop_remainder):
   """Creates an `input_fn` closure to be passed to TPUEstimator."""
-
   name_to_features = {
       "input_ids": tf.FixedLenFeature([seq_length], tf.int64),
       "input_mask": tf.FixedLenFeature([seq_length], tf.int64),
@@ -377,7 +374,6 @@ def file_based_input_fn_builder(input_file, seq_length, is_training,
 
 def _truncate_seq_pair(tokens_a, tokens_b, max_length):
   """Truncates a sequence pair in place to the maximum length."""
-
   # This is a simple heuristic which will always truncate the longer sequence
   # one token at a time. This makes more sense than truncating an equal percent
   # of tokens from each, since if one sequence is very short then each token
@@ -457,8 +453,6 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
 
   def model_fn(features, labels, mode, params):  # pylint: disable=unused-argument
     """The `model_fn` for TPUEstimator."""
-
-
     input_ids = features["input_ids"]
     input_mask = features["input_mask"]
     segment_ids = features["segment_ids"]
@@ -536,7 +530,6 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
 # people who depend on it.
 def input_fn_builder(features, seq_length, is_training, drop_remainder):
   """Creates an `input_fn` closure to be passed to TPUEstimator."""
-
   all_input_ids = []
   all_input_mask = []
   all_segment_ids = []
@@ -678,7 +671,6 @@ class SentencePairClassificationProcessor(DataProcessor):
 def convert_examples_to_features(examples, label_list, max_seq_length,
                                  tokenizer):
   """Convert a set of `InputExample`s to a list of `InputFeatures`."""
-
   features = []
   for (ex_index, example) in enumerate(examples):
 

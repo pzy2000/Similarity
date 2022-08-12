@@ -321,7 +321,6 @@ def get_activation(activation_string):
     ValueError: The `activation_string` does not correspond to a known
       activation.
   """
-
   # We assume that anything that"s not a string is already an activation
   # function, so we just return it.
   if not isinstance(activation_string, six.string_types):
