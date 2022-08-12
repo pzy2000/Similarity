@@ -54,7 +54,6 @@ def __get_filter_data(department_id: str, style: int):
     当style为1时   只推荐本部门的数据
     当style为2时   只推荐其他部门的数据
     """
-
     filter_db_data = db_data
     filter_db_matrix = db_matrix
     filter_db_match_str = db_match_str

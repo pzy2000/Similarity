@@ -529,7 +529,6 @@ class BertSim():
 
     def convert_examples_to_features(self, examples, label_list, max_seq_len, tokenizer):
         """Convert a set of `InputExample`s to a list of `InputFeatures`."""
-
         for (ex_index, example) in enumerate(examples):
             label_map = {}
             for (i, label) in enumerate(label_list):
@@ -625,7 +624,6 @@ class BertSim():
 
     def _truncate_seq_pair(self, tokens_a, tokens_b, max_length):
         """Truncates a sequence pair in place to the maximum length."""
-
         # This is a simple heuristic which will always truncate the longer sequence
         # one token at a time. This makes more sense than truncating an equal percent
         # of tokens from each, since if one sequence is very short then each token
@@ -722,7 +720,6 @@ class BertSim():
 
     def file_based_convert_examples_to_features(self, examples, label_list, max_seq_len, tokenizer, output_file):
         """Convert a set of `InputExample`s to a TFRecord file."""
-
         writer = tf.python_io.TFRecordWriter(output_file)
 
         for (ex_index, example) in enumerate(examples):
@@ -745,7 +742,6 @@ class BertSim():
 
     def file_based_input_fn_builder(self, input_file, seq_length, is_training, drop_remainder):
         """Creates an `input_fn` closure to be passed to TPUEstimator."""
-
         name_to_features = {
             "input_ids": tf.FixedLenFeature([seq_length], tf.int64),
             "input_mask": tf.FixedLenFeature([seq_length], tf.int64),
