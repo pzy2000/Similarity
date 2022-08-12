@@ -1,15 +1,11 @@
 # -*- coding:utf-8 -*-
 import os
 
-import time
-
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'demo.settings')
 
 import warnings
 import jieba
 import pandas as pd
-import tensorflow as tf
-import gensim
 import numpy as np
 import torch
 import random
@@ -17,14 +13,12 @@ from difflib import SequenceMatcher
 import json
 import operator
 from tqdm import tqdm
-from django.http import HttpResponse, HttpRequest
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from similarity.word2vec_similarity_catalog import model, word_avg, tensor_module, bert_sim, executor, device
 from similarity.src.metadata.metadata_config import Config, data_dir, result_dir
-import threading
 
 warnings.filterwarnings("ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'

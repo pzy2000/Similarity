@@ -3,7 +3,6 @@
 import os
 import jieba
 import torch
-import gensim
 import configparser
 import pandas as pd
 from rest_framework.response import Response
@@ -11,8 +10,7 @@ from rest_framework.response import Response
 from demo.settings import DEBUG
 from similarity.word2vec_similarity_catalog import find_data, word_avg, delete_ndarray
 from similarity.word2vec_similarity_catalog import model, device, tensor_module, \
-    executor, bert_sim, exec_catalog_path, catalog_item_tensor_path, \
-    catalog_department_tensor_path
+    executor, bert_sim, exec_catalog_path
 from similarity.tools import model_dir, root_path
 from similarity.database_get import db
 
