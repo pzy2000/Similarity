@@ -9,5 +9,5 @@ PyMySQL==1.0.2
 six==1.16.0
 tensorflow==1.14.0
 textda==0.1.0.6
-torch==1.10.1
+torch==1.10.1+cu113
 tqdm==4.62.3
