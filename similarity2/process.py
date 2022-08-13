@@ -98,6 +98,7 @@ def vector_match(X: torch.Tensor, y: torch.Tensor, weight: List[float], k: int) 
 
     # 对value进行限制
     value = [1 if v > 1 else (0 if v < 0 else v) for v in value]
-    items_value = [v.cpu().numpy().ravel().tolist() for v in sim_value[:, index, :].transpose(0, 1)]
+    items_value = [v.cpu().numpy().ravel().tolist()
+                   for v in sim_value[:, index, :].transpose(0, 1)]
 
     return index, value, items_value
