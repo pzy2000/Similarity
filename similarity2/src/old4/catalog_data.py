@@ -13,7 +13,6 @@ BUSINESS_TYPE = "catalog_data"
 db_data: List[Tuple[Any, Any, Any]] = None
 # 数据库match_str
 db_match_str: List[str] = None
-# 数据库词向量 (n_items, n_samples, n_features)
 db_matrix: torch.Tensor = None
 # 缓存对象
 cache = Cache()
@@ -55,14 +54,13 @@ def __get_filter_data(department_id: str, style: int):
     当style为1时   只推荐本部门的数据
     当style为2时   只推荐其他部门的数据
     """
-
     filter_db_data = db_data
     filter_db_matrix = db_matrix
     filter_db_match_str = db_match_str
     import json
     if department_id and style:
         style = int(style)
-        assert (style == 1 or style == 2), "参数style必须为1或2"
+        assert style in (1, 2), "参数style必须为1或2"
 
         index = [i for i, v in enumerate(db_data) if
                  (json.loads(v[2])['departmentId'] == department_id) ^ (style - 1) # 使用style异或即可
@@ -116,8 +114,6 @@ def multiple_match(request):
                 {"key": request_id, "result": cache.get(f"{match_str}{str(percent)}{k}{department_id}{style}")})
             continue
 
-        # 处理请求match_str
-        # (n_items,1,n_features)
         request_data_matrix = match_str2matrix(match_str)
 
         # 词向量匹配

@@ -1,6 +1,4 @@
-"""
-全局变量有关代码
-"""
+"""全局变量有关代码"""
 import torch
 import gensim
 import os

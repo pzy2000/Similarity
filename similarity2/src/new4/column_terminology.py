@@ -12,7 +12,6 @@ BUSINESS_TYPE = "column_terminology"
 db_data: List[Tuple[Any, Any, Any, str]] = None
 # 数据库match_str
 db_match_str: List[str] = None
-# 数据库词向量 (n_items, n_samples, n_features)
 db_matrix: torch.Tensor = None
 # 缓存对象
 cache = Cache()
@@ -38,7 +37,7 @@ def init_model_vector(request):
     db_match_str = db.filter(business_type=BUSINESS_TYPE).values_list("match_str", flat=True)
     if DEBUG:
         print(f"初始化:\nbusiness_type: {BUSINESS_TYPE}\n数据库信息：{db_data}\n\n")
-        
+
     # 计算数据库词向量
     if len(db_data) != 0:
         db_matrix = match_str2matrix(db_match_str)
@@ -49,10 +48,7 @@ def init_model_vector(request):
 
 
 def __get_filter_data(tenant_id:str):
-    """
-    获取经过筛选后的db_data,db_matrix,db_match_str \n
-    
-    """
+    """获取经过筛选后的db_data,db_matrix,db_match_str \n"""
     filter_db_data = db_data
     filter_db_matrix = db_matrix
     filter_db_match_str = db_match_str
@@ -105,8 +101,6 @@ def multiple_match(request):
             response_data.append({"key": request_id, "result": cache.get(f"{match_str}{str(percent)}{k}{tenant_id}")})
             continue
 
-        # 处理请求match_str
-        # (n_items,1,n_features)
         request_data_matrix = match_str2matrix(match_str)
 
         # 词向量匹配

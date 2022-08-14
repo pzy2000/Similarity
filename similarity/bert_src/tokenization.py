@@ -27,12 +27,10 @@ import tensorflow as tf
 
 def validate_case_matches_checkpoint(do_lower_case, init_checkpoint):
   """Checks whether the casing config is consistent with the checkpoint name."""
-
   # The casing has to be passed in by the user and there is no explicit check
   # as to whether it matches the checkpoint. The casing information probably
   # should have been stored in the bert_config.json file, but it's not, so
   # we have to heuristically detect it to validate.
-
   if not init_checkpoint:
     return
 
@@ -80,42 +78,35 @@ def convert_to_unicode(text):
   if six.PY3:
     if isinstance(text, str):
       return text
-    elif isinstance(text, bytes):
+    if isinstance(text, bytes):
       return text.decode("utf-8", "ignore")
-    else:
-      raise ValueError("Unsupported string type: %s" % (type(text)))
-  elif six.PY2:
+    raise ValueError("Unsupported string type: %s" % (type(text)))
+  if six.PY2:
     if isinstance(text, str):
       return text.decode("utf-8", "ignore")
-    elif isinstance(text, unicode):
+    if isinstance(text, unicode):
       return text
-    else:
-      raise ValueError("Unsupported string type: %s" % (type(text)))
-  else:
-    raise ValueError("Not running on Python2 or Python 3?")
+    raise ValueError("Unsupported string type: %s" % (type(text)))
+  raise ValueError("Not running on Python2 or Python 3?")
 
 
 def printable_text(text):
   """Returns text encoded in a way suitable for print or `tf.logging`."""
-
   # These functions want `str` for both Python2 and Python3, but in one case
   # it's a Unicode string and in the other it's a byte string.
   if six.PY3:
     if isinstance(text, str):
       return text
-    elif isinstance(text, bytes):
+    if isinstance(text, bytes):
       return text.decode("utf-8", "ignore")
-    else:
-      raise ValueError("Unsupported string type: %s" % (type(text)))
-  elif six.PY2:
+    raise ValueError("Unsupported string type: %s" % (type(text)))
+  if six.PY2:
     if isinstance(text, str):
       return text
-    elif isinstance(text, unicode):
+    if isinstance(text, unicode):
       return text.encode("utf-8")
-    else:
-      raise ValueError("Unsupported string type: %s" % (type(text)))
-  else:
-    raise ValueError("Not running on Python2 or Python 3?")
+    raise ValueError("Unsupported string type: %s" % (type(text)))
+  raise ValueError("Not running on Python2 or Python 3?")
 
 
 def load_vocab(vocab_file):
@@ -136,9 +127,7 @@ def load_vocab(vocab_file):
 def convert_by_vocab(vocab, items):
   """Converts a sequence of [tokens|ids] using the vocab."""
   output = []
-  #print("items:",items) #['[CLS]', '日', '##期', '，', '但', '被', '##告', '金', '##东', '##福', '载', '##明', '[MASK]', 'U', '##N', '##K', ']', '保', '##证', '本', '##月', '1', '##4', '[MASK]', '到', '##位', '，', '2', '##0', '##1', '##5', '年', '6', '[MASK]', '1', '##1', '日', '[', 'U', '##N', '##K', ']', '，', '原', '##告', '[MASK]', '认', '##可', '于', '2', '##0', '##1', '##5', '[MASK]', '6', '月', '[MASK]', '[MASK]', '日', '##向', '被', '##告', '主', '##张', '权', '##利', '。', '而', '[MASK]', '[MASK]', '自', '[MASK]', '[MASK]', '[MASK]', '[MASK]', '年', '6', '月', '1', '##1', '日', '[SEP]', '原', '##告', '于', '2', '##0', '##1', '##6', '[MASK]', '6', '[MASK]', '2', '##4', '日', '起', '##诉', '，', '主', '##张', '保', '##证', '责', '##任', '，', '已', '超', '##过', '保', '##证', '期', '##限', '[MASK]', '保', '##证', '人', '依', '##法', '不', '##再', '承', '##担', '保', '##证', '[MASK]', '[MASK]', '[MASK]', '[SEP]']
   for i,item in enumerate(items):
-    #print(i,"item:",item) #  ##期
     output.append(vocab[item])
   return output
 
@@ -160,7 +149,7 @@ def whitespace_tokenize(text):
   return tokens
 
 
-class FullTokenizer(object):
+class FullTokenizer:
   """Runs end-to-end tokenziation."""
 
   def __init__(self, vocab_file, do_lower_case=True):
@@ -184,7 +173,7 @@ class FullTokenizer(object):
     return convert_by_vocab(self.inv_vocab, ids)
 
 
-class BasicTokenizer(object):
+class BasicTokenizer:
   """Runs basic tokenization (punctuation splitting, lower casing, etc.)."""
 
   def __init__(self, do_lower_case=True):
@@ -219,7 +208,8 @@ class BasicTokenizer(object):
     output_tokens = whitespace_tokenize(" ".join(split_tokens))
     return output_tokens
 
-  def _run_strip_accents(self, text):
+  @staticmethod
+  def _run_strip_accents(text):
     """Strips accents from a piece of text."""
     text = unicodedata.normalize("NFD", text)
     output = []
@@ -230,7 +220,8 @@ class BasicTokenizer(object):
       output.append(char)
     return "".join(output)
 
-  def _run_split_on_punc(self, text):
+  @staticmethod
+  def _run_split_on_punc(text):
     """Splits punctuation on a piece of text."""
     chars = list(text)
     i = 0
@@ -263,7 +254,8 @@ class BasicTokenizer(object):
         output.append(char)
     return "".join(output)
 
-  def _is_chinese_char(self, cp):
+  @staticmethod
+  def _is_chinese_char(cp):
     """Checks whether CP is the codepoint of a CJK character."""
     # This defines a "chinese character" as anything in the CJK Unicode block:
     #   https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block)
@@ -285,7 +277,8 @@ class BasicTokenizer(object):
 
     return False
 
-  def _clean_text(self, text):
+  @staticmethod
+  def _clean_text(text):
     """Performs invalid character removal and whitespace cleanup on text."""
     output = []
     for char in text:
@@ -299,7 +292,7 @@ class BasicTokenizer(object):
     return "".join(output)
 
 
-class WordpieceTokenizer(object):
+class WordpieceTokenizer:
   """Runs WordPiece tokenziation."""
 
   def __init__(self, vocab, unk_token="[UNK]", max_input_chars_per_word=200):
@@ -324,7 +317,6 @@ class WordpieceTokenizer(object):
     Returns:
       A list of wordpiece tokens.
     """
-
     text = convert_to_unicode(text)
 
     output_tokens = []
@@ -365,7 +357,7 @@ def _is_whitespace(char):
   """Checks whether `chars` is a whitespace character."""
   # \t, \n, and \r are technically contorl characters but we treat them
   # as whitespace since they are generally considered as such.
-  if char == " " or char == "\t" or char == "\n" or char == "\r":
+  if char in (" ", "\t", "\n", "\r"):
     return True
   cat = unicodedata.category(char)
   if cat == "Zs":
@@ -377,7 +369,7 @@ def _is_control(char):
   """Checks whether `chars` is a control character."""
   # These are technically control characters but we count them as whitespace
   # characters.
-  if char == "\t" or char == "\n" or char == "\r":
+  if char in ("\t", "\n", "\r"):
     return False
   cat = unicodedata.category(char)
   if cat in ("Cc", "Cf"):

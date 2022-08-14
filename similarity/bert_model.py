@@ -1,6 +1,4 @@
 import collections
-import csv
-from io import StringIO
 from queue import Queue
 from threading import Thread
 import tensorflow as tf
@@ -9,12 +7,8 @@ import os
 curPath = os.path.abspath(os.path.dirname(__file__))
 # print(curPath)
 rootPath = os.path.split(curPath)[0]
-# rootPath = os.path.split(rootPath)[0]
 sys.path.append(rootPath)
-import similarity.bert_src.optimization
-import similarity.bert_src.tokenization
-import similarity.bert_src.modeling
-from similarity.bert_src.run_classifier import InputFeatures, InputExample, DataProcessor, create_model, convert_examples_to_features
+from similarity.bert_src.run_classifier import InputFeatures, InputExample, DataProcessor, convert_examples_to_features
 from similarity import bert_src
 import pandas as pd
 from django.http import JsonResponse
@@ -28,10 +22,8 @@ from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
-# os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.WARN)
-# tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
 file_path = os.path.dirname(__file__)
 
@@ -112,7 +104,6 @@ def add_model_data(request):
             f.write(files)
         f.close()
         df = pd.read_csv(os.path.join(file_path, 'data/data.csv'), encoding='utf-8')
-        # df.drop_duplicates(keep='first', inplace=True)  # 去重，只保留第一次出现的样本
         df = df.sample(frac=1.0)  # 全部打乱
         cut_idx = int(round(0.1 * df.shape[0]))
         df_test, df_train = df.iloc[:cut_idx], df.iloc[cut_idx:]
@@ -177,9 +168,8 @@ def get_pretrain_state(request):
         return Response({"code": 200, "msg": "没有预训练", "data": ""})
     if process_status_now == None:
         return Response({"code": 200, "msg": "正在预训练", "data": ""})
-    else:
-        do_pretrain = None
-        return Response({"code": 200, "msg": "完成预训练", "data": ""})
+    do_pretrain = None
+    return Response({"code": 200, "msg": "完成预训练", "data": ""})
 
 # 训练模型
 @csrf_exempt
@@ -228,9 +218,8 @@ def get_train_state(request):
     process_train_now = process_train.is_alive()
     if process_train_now == True:
         return Response({"code": 200, "msg": "正在训练!", "data": ""})
-    else:
-        process_train = None
-        return Response({"code": 200, "msg": "完成训练!", "data": ""})
+    process_train = None
+    return Response({"code": 200, "msg": "完成训练!", "data": ""})
 
 #获取追加训练状态
 @csrf_exempt
@@ -246,9 +235,8 @@ def get_retrain_state(request):
     process_re_train_now = process_re_train.is_alive()
     if process_re_train_now == True:
         return Response({"code": 200, "msg": "正在追加训练!", "data": ""})
-    else:
-        do_retrain = False
-        return Response({"code": 200, "msg": "完成追加训练!", "data": ""})
+    do_retrain = False
+    return Response({"code": 200, "msg": "完成追加训练!", "data": ""})
 
 def train_bert():
     sim = BertSim()
@@ -284,7 +272,6 @@ def train_bert_cmd(batch_size,learningrate,seqlen,epochs):
     if seqlen != None:
         args_max_seq_len=seqlen
     df = pd.read_csv(os.path.join(file_path, 'data/data.csv'), encoding='utf-8')
-    # df.drop_duplicates(keep='first', inplace=True)  # 去重，只保留第一次出现的样本
     df = df.sample(frac=1.0)  # 全部打乱
     cut_idx = int(round(0.1 * df.shape[0]))
     df_test, df_train = df.iloc[:cut_idx], df.iloc[cut_idx:]
@@ -352,7 +339,8 @@ class SimProcessor(DataProcessor):
             test_data.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return test_data
 
-    def get_sentence_examples(self, questions):
+    @staticmethod
+    def get_sentence_examples(questions):
         for index, data in enumerate(questions):
             guid = 'test-%d' % index
             text_a = bert_src.tokenization.convert_to_unicode(str(data[0]))
@@ -374,7 +362,6 @@ class BertSim():
         self.batch_size = batch_size
         self.estimator = None
         self.processor = SimProcessor()    # 加载训练、测试数据class
-        # tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
         tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
     def set_mode(self, mode):
@@ -426,7 +413,8 @@ class BertSim():
 
             return (loss, per_example_loss, logits, probabilities)
 
-    def model_fn_builder(self, bert_config, num_labels, init_checkpoint, learning_rate,
+    @staticmethod
+    def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
                          num_train_steps, num_warmup_steps,
                          use_one_hot_embeddings):
         """Returns `model_fn` closurimport_tfe for TPUEstimator."""
@@ -435,10 +423,6 @@ class BertSim():
             from tensorflow.python.estimator.model_fn import EstimatorSpec
 
             # # tf.compat.v1.logging.info("*** Features ***")
-            # tf.logging.info("*** Features ***")
-            # for name in sorted(features.keys()):
-            #     # tf.compat.v1.logging.info("  name = %s, shape = %s" % (name, features[name].shape))
-            #     tf.logging.info("  name = %s, shape = %s" % (name, features[name].shape))
 
             input_ids = features["input_ids"]
             input_mask = features["input_mask"]
@@ -451,23 +435,14 @@ class BertSim():
                 bert_config, is_training, input_ids, input_mask, segment_ids, label_ids,
                 num_labels, use_one_hot_embeddings)
 
-            # tvars = tf.compat.v1.trainable_variables()
             tvars = tf.compat.v1.trainable_variables()
             initialized_variable_names = {}
 
             if init_checkpoint:
                 (assignment_map, initialized_variable_names) = bert_src.modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
-                # tf.compat.v1.train.init_from_checkpoint(init_checkpoint, assignment_map)
                 tf.compat.v1.train.init_from_checkpoint(init_checkpoint, assignment_map)
 
             # # tf.compat.v1.logging.info("**** Trainable Variables ****")
-            # tf.logging.info("**** Trainable Variables ****")
-            # for var in tvars:
-            #     init_string = ""
-            #     if var.name in initialized_variable_names:
-            #         init_string = ", *INIT_FROM_CKPT*"
-            #     # tf.compat.v1.logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
-            #     tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
 
             if mode == tf.estimator.ModeKeys.TRAIN:
 
@@ -528,7 +503,6 @@ class BertSim():
             num_warmup_steps=num_warmup_steps,
             use_one_hot_embeddings=False)
 
-        # config = tf.compat.v1.ConfigProto()
         config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
         config.gpu_options.per_process_gpu_memory_fraction = args_gpu_memory_fraction
@@ -557,7 +531,6 @@ class BertSim():
 
     def convert_examples_to_features(self, examples, label_list, max_seq_len, tokenizer):
         """Convert a set of `InputExample`s to a list of `InputFeatures`."""
-
         for (ex_index, example) in enumerate(examples):
             label_map = {}
             for (i, label) in enumerate(label_list):
@@ -630,23 +603,6 @@ class BertSim():
             assert len(segment_ids) == max_seq_len
 
             label_id = label_map[example.label]
-            # if ex_index < 5:
-            #     # tf.compat.v1.logging.info("*** Example ***")
-            #     # tf.compat.v1.logging.info("guid: %s" % (example.guid))
-            #     # tf.compat.v1.logging.info("tokens: %s" % " ".join(
-            #     #     [tokenization.printable_text(x) for x in tokens]))
-            #     # tf.compat.v1.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-            #     # tf.compat.v1.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
-            #     # tf.compat.v1.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
-            #     # tf.compat.v1.logging.info("label: %s (id = %d)" % (example.label, label_id))
-            #     tf.logging.info("*** Example ***")
-            #     tf.logging.info("guid: %s" % (example.guid))
-            #     tf.logging.info("tokens: %s" % " ".join(
-            #         [bert_src.tokenization.printable_text(x) for x in tokens]))
-            #     tf.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-            #     tf.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
-            #     tf.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
-            #     tf.logging.info("label: %s (id = %d)" % (example.label, label_id))
 
             feature = InputFeatures(
                 input_ids=input_ids,
@@ -668,9 +624,9 @@ class BertSim():
                 'label_ids': [f.label_id for f in features]
             }
 
-    def _truncate_seq_pair(self, tokens_a, tokens_b, max_length):
+    @staticmethod
+    def _truncate_seq_pair(tokens_a, tokens_b, max_length):
         """Truncates a sequence pair in place to the maximum length."""
-
         # This is a simple heuristic which will always truncate the longer sequence
         # one token at a time. This makes more sense than truncating an equal percent
         # of tokens from each, since if one sequence is very short then each token
@@ -757,23 +713,6 @@ class BertSim():
         assert len(segment_ids) == max_seq_len
 
         label_id = label_map[example.label]
-        # if ex_index < 5:
-        #     # tf.compat.v1.logging.info("*** Example ***")
-        #     # tf.compat.v1.logging.info("guid: %s" % (example.guid))
-        #     # tf.compat.v1.logging.info("tokens: %s" % " ".join(
-        #     #     [tokenization.printable_text(x) for x in tokens]))
-        #     # tf.compat.v1.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-        #     # tf.compat.v1.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
-        #     # tf.compat.v1.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
-        #     # tf.compat.v1.logging.info("label: %s (id = %d)" % (example.label, label_id))
-        #     tf.logging.info("*** Example ***")
-        #     tf.logging.info("guid: %s" % (example.guid))
-        #     tf.logging.info("tokens: %s" % " ".join(
-        #         [bert_src.tokenization.printable_text(x) for x in tokens]))
-        #     tf.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-        #     tf.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
-        #     tf.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
-        #     tf.logging.info("label: %s (id = %d)" % (example.label, label_id))
 
         feature = InputFeatures(
             input_ids=input_ids,
@@ -784,13 +723,9 @@ class BertSim():
 
     def file_based_convert_examples_to_features(self, examples, label_list, max_seq_len, tokenizer, output_file):
         """Convert a set of `InputExample`s to a TFRecord file."""
-
         writer = tf.python_io.TFRecordWriter(output_file)
 
         for (ex_index, example) in enumerate(examples):
-            # if ex_index % 10000 == 0:
-            #     # tf.compat.v1.logging.info("Writing example %d of %d" % (ex_index, len(examples)))
-            #     tf.logging.info("Writing example %d of %d" % (ex_index, len(examples)))
 
             feature = self.convert_single_example(ex_index, example, label_list,
                                                   max_seq_len, tokenizer)
@@ -808,9 +743,10 @@ class BertSim():
             tf_example = tf.train.Example(features=tf.train.Features(feature=features))
             writer.write(tf_example.SerializeToString())
 
-    def file_based_input_fn_builder(self, input_file, seq_length, is_training, drop_remainder):
+    @staticmethod
+    def file_based_input_fn_builder(input_file, seq_length,
+                                    is_training, drop_remainder):
         """Creates an `input_fn` closure to be passed to TPUEstimator."""
-
         name_to_features = {
             "input_ids": tf.FixedLenFeature([seq_length], tf.int64),
             "input_mask": tf.FixedLenFeature([seq_length], tf.int64),
@@ -881,21 +817,11 @@ class BertSim():
         # # tf.compat.v1.logging.info("  Num examples = %d", len(train_examples))
         # # tf.compat.v1.logging.info("  Batch size = %d", args_batch_size)
         # # tf.compat.v1.logging.info("  Num steps = %d", num_train_steps)
-        # tf.logging.info("***** Running training *****")
-        # tf.logging.info("  Num examples = %d", len(train_examples))
-        # tf.logging.info("  Batch size = %d", args_batch_size)
-        # tf.logging.info("  Num steps = %d", num_train_steps)
         train_input_fn = self.file_based_input_fn_builder(input_file=train_file, seq_length=args_max_seq_len,
                                                           is_training=True,
                                                           drop_remainder=True)
 
-        # early_stopping = tf.contrib.estimator.stop_if_no_decrease_hook(
-        #     estimator,
-        #     metric_name='loss',
-        #     max_steps_without_decrease=10,
-        #     min_steps=num_train_steps)
 
-        # estimator.train(input_fn=train_input_fn, hooks=[early_stopping])
         estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
 
     def eval(self):
@@ -910,9 +836,6 @@ class BertSim():
         # # tf.compat.v1.logging.info("***** Running evaluation *****")
         # # tf.compat.v1.logging.info("  Num examples = %d", len(eval_examples))
         # # tf.compat.v1.logging.info("  Batch size = %d", self.batch_size)
-        # tf.logging.info("***** Running evaluation *****")
-        # tf.logging.info("  Num examples = %d", len(eval_examples))
-        # tf.logging.info("  Batch size = %d", self.batch_size)
 
         eval_input_fn = self.file_based_input_fn_builder(
             input_file=eval_file,
@@ -925,11 +848,7 @@ class BertSim():
 
         output_eval_file = os.path.join(args_output_dir, "eval_results.txt")
         with tf.gfile.GFile(output_eval_file, "w") as writer:
-            # tf.compat.v1.logging.info("***** Eval results *****")
-            # tf.logging.info("***** Eval results *****")
             for key in sorted(result.keys()):
-                # tf.compat.v1.logging.info("  %s = %s", key, str(result[key]))
-                # tf.logging.info("  %s = %s", key, str(result[key]))
                 writer.write("%s = %s\n" % (key, str(result[key])))
 
     def predict(self, sentence1, sentence2):

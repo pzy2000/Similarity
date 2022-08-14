@@ -1,22 +1,19 @@
-# coding=utf-8
 
 import os
 
 from demo.settings import DEBUG
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'demo.settings')
-import gensim
 import jieba
 import torch
-import xlrd
 import pandas as pd
 import configparser
 from similarity.tools import root_path
 from rest_framework.response import Response
-from similarity.tools import model_dir, data_dir
+from similarity.tools import data_dir
 from similarity.word2vec_similarity_catalog import find_data, word_avg
 from similarity.word2vec_similarity_catalog import device, model, delete_ndarray, \
-    bert_sim, executor, tensor_module, model_path
+    bert_sim, executor, tensor_module
 from similarity.database_get import db
 
 
@@ -80,8 +77,6 @@ def init_model_vector_data(request):
     # if not os.path.exists(model_data_path):
     #     return Response({"code": 404, "msg": "数据表路径不存在", "data": ""})
     process = 0
-    # 重新加载模型
-    # model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
     process = 0.5
     # 重新缓存向量
     model_data = []
@@ -90,13 +85,11 @@ def init_model_vector_data(request):
     model_data_vector_table_disc = []
     model_data_vector_item = []
     model_data_vector_item_disc = []
-    # prepare_model_data(path=model_data_path)
     prepare_model_data()
     process = 0.75
     model_data_number = len(model_data)
-    for i in range(len(model_data)):
+    for i, data in enumerate(model_data):
         process = 0.75 + i / (model_data_number * 4)
-        data = model_data[i]
         item = data.split(' ')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
@@ -133,23 +126,7 @@ def prepare_model_data():
     global model_data
     global table_name
     # # 打开excel
-    # wb = xlrd.open_workbook(path)
-    # # 按工作簿定位工作表
-    # sh = wb.sheet_by_name('业务层表结构分析')
-    # row_number = sh.nrows
-    # for i in range(1, row_number):
-    #     model_data.append(sh.cell(i, 0).value + ' ' + sh.cell(i, 1).value + ' ' + sh.cell(i, 2).value)
-    # # print(model_data)
 
-    # re = db.get_colum_by_num(data_col, table_name)
-    # for i in re:
-    #     while (None in i):
-    #         i[i.index(None)] = '*'
-    #     model_data.append(' '.join(i))
-    #
-    #
-    # data_df = pd.DataFrame(model_data)
-    # data_df.to_csv(exec_data_path, encoding='utf-8_sig', index=False)
 
     re = db.get_data_by_type_v2(data_col, business_type, table_name)
     for i in re:
@@ -157,8 +134,8 @@ def prepare_model_data():
 
     if DEBUG:
         print('model_data：' + str(len(model_data)))
-        for i in range(len(model_data)):
-            print(model_data[i])
+        for i, item in enumerate(model_data):
+            print(item)
 
 
 def increment_business_model_data(request):
@@ -191,8 +168,8 @@ def increment_business_model_data(request):
         if DEBUG:
             print('增加后：')
             print('model_data：' + str(len(model_data)))
-            for i in range(len(model_data)):
-                print(model_data[i])
+            for i, item in enumerate(model_data):
+                print(item)
 
         item = [x.strip() for x in match_str.split('^')]
 
@@ -245,9 +222,6 @@ def delete_business_model_data(request):
         match_str = single_data['matchStr']
         original_code = single_data['originalCode']
         original_data = single_data['originalData']
-        # 加入缓存中
-        # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
-        #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
         tmp = ' '.join([x.strip() for x in match_str.split('^')])
         tmp += (' ' + original_code + ' ' + original_data)
@@ -264,8 +238,8 @@ def delete_business_model_data(request):
         if DEBUG:
             print('删除后：')
             print('model_data：' + str(len(model_data)))
-            for i in range(len(model_data)):
-                print(model_data[i])
+            for i, item in enumerate(model_data):
+                print(item)
 
         item = [x.strip() for x in match_str.split('^')]
 
@@ -312,18 +286,16 @@ def model2data_recommend(request):
     if len(weight_percent.split(',')) != 5:
         return Response({"code": 404, "msg": "权重配置错误！", "data": ''})
     percent = [float(x) for x in weight_percent.split(',')]
-    # load_data_data()
     if len(model_data) == 0:
         return Response({"code": 404, "msg": "数据为空！", "data": ''})
     # 顺序是部门-模型名称-模型描述-属性名称-属性描述
     source_data = []
-    for i in range(len(full_data)):
-        source_data.append(full_data[i]['matchStr'].replace('^', ' '))
+    for i, item in enumerate(full_data):
+        source_data.append(item['matchStr'].replace('^', ' '))
     result = []
 
-    for i in range(len(source_data)):
+    for i, data in enumerate(source_data):
         res = {}
-        data = source_data[i]
         query_id = full_data[i]['id']
         # 字符串匹配
         str_tmp = string_matching(demand_data=data, k=k)
@@ -333,7 +305,7 @@ def model2data_recommend(request):
             continue
 
         # 查看查询缓存
-        if data in query_data.keys():
+        if data in query_data:
             tmp = query_data.get(data)
             if len(tmp) == 2 * k and weight_data[data] == percent:
                 sim_value = tmp[int(len(tmp) / 2):]
@@ -362,12 +334,12 @@ def model2data_recommend(request):
 
         if DEBUG:
             print('原来的str_tmp')
-            for index in range(len(str_tmp)):
-                print(str_tmp[index])
+            for index, item in enumerate(str_tmp):
+                print(item)
 
             print('原来的tmp：')
-            for index in range(len(tmp)):
-                print(tmp[index] + ' : ' + str(sim_value[index]))
+            for index, item in enumerate(tmp):
+                print(item + ' : ' + str(sim_value[index]))
 
         oringi_len = len(str_tmp)
         str_tmp += tmp
@@ -377,8 +349,8 @@ def model2data_recommend(request):
             print()
             print('增加后的长度：' + str(len(str_tmp)))
             print('增长后的情况：')
-            for index in range(len(str_tmp)):
-                print(str_tmp[index] + ' : ' + str(str_sim_value[index]))
+            for index, item in enumerate(str_tmp):
+                print(item + ' : ' + str(str_sim_value[index]))
 
         for index in range(oringi_len):
             while str_tmp[index] in str_tmp[oringi_len:]:
@@ -395,10 +367,9 @@ def model2data_recommend(request):
         if DEBUG:
             print()
             print('删除后的情况：')
-            for tmp_index in range(len(str_tmp)):
-                print(str_tmp[tmp_index] + ' : ' + str(str_sim_value[tmp_index]))
+            for tmp_index, item in enumerate(str_tmp):
+                print(item + ' : ' + str(str_sim_value[tmp_index]))
 
-        # result.append(save_result(tmp, res, query_id, sim_value))
         result.append(save_result(str_tmp, res, query_id, str_sim_value))
         query_data[data] = tmp + sim_value
         weight_data[data] = percent
@@ -423,8 +394,8 @@ def string_matching(demand_data, k):
     res = []
     if DEBUG:
         print('data_len：' + str(len(model_data)))
-        for i in range(len(model_data)):
-            print(model_data[i])
+        for i, item in enumerate(model_data):
+            print(item)
 
     for data in model_data:
         tmp_match_str = demand_data.split(' ')
@@ -492,9 +463,7 @@ def vector_matching(demand_data, k):
     res_sim_value = []
     for i in sim_index:
         res.append(model_data[i[0]])
-    # print('计算出的匹配值：')
     for i in sim_value:
-        # print(i[0])
         if i[0] > 1:
             i[0] = 1.0
         elif i[0] < 0:
@@ -511,45 +480,6 @@ def load_data_data():
 
 def save_data(demand_data, k):
     return
-    sim_words = {}
-
-    # item1(输入): 部门-模型名称-模型描述-属性名称-属性描述
-    # item2(加入内存的数据格式): 机构名-数据表名-数据表字段名
-    item1 = demand_data.split(' ')
-    for data in model_data:
-        sim = 0
-        item2 = data.split(' ')
-        # 部门名与机构名
-        sim += bert_sim.predict(item1[0], item2[0])[0][1] * percent[0]
-        # 模型表名与数据表名
-        sim += bert_sim.predict(item1[1], item2[1])[0][1] * percent[1]
-        # 模型属性名与数据字段
-        sim += bert_sim.predict(item1[3], item2[3])[0][1] * percent[3]
-
-        sim += bert_sim.predict(item1[2], item2[2])[0][1] * percent[2]
-        sim += bert_sim.predict(item1[4], item2[4])[0][1] * percent[4]
-        if len(sim_words) < k:
-            sim_words[data] = sim
-        else:
-            min_sim = min(sim_words.values())
-            if sim > min_sim:
-                for key in list(sim_words.keys()):
-                    if sim_words.get(key) == min_sim:
-                        # 替换
-                        del sim_words[key]
-                        sim_words[data] = sim
-                        break
-    res = []
-    sim_words = sorted(sim_words.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
-    for sim_word in sim_words:
-        res.append(sim_word[0])
-    for sim_word in sim_words:
-        if sim_word[1] > 1:
-            sim_word[1] = 1.0
-        elif sim_word[1] < 0:
-            sim_word[1] = abs(sim_word[1])
-        res.append(sim_word[1])
-    bert_data[demand_data] = res
 
 
 def save_result(temp, res, query_id, sim_value):
@@ -566,8 +496,7 @@ def save_result(temp, res, query_id, sim_value):
     # return res
 
     single_res = []
-    for i in range(len(temp)):
-        d = temp[i]
+    for i, d in enumerate(temp):
         tmp = d.split(' ')
 
         single_res.append({'str': ' '.join(tmp[:5]),

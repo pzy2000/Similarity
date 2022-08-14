@@ -35,7 +35,7 @@ rootPath = os.path.split(rootPath)[0]
 sys.path.append(rootPath)
 import similarity.bert_src.bert_utils
 
-class BertConfig(object):
+class BertConfig:
   """Configuration for `BertModel`."""
 
   def __init__(self,
@@ -111,7 +111,7 @@ class BertConfig(object):
     return json.dumps(self.to_dict(), indent=2, sort_keys=True) + "\n"
 
 
-class BertModel(object):
+class BertModel:
   """BERT model ("Bidirectional Encoder Representations from Transformers").
 
   Example usage:
@@ -321,7 +321,6 @@ def get_activation(activation_string):
     ValueError: The `activation_string` does not correspond to a known
       activation.
   """
-
   # We assume that anything that"s not a string is already an activation
   # function, so we just return it.
   if not isinstance(activation_string, six.string_types):
@@ -333,14 +332,13 @@ def get_activation(activation_string):
   act = activation_string.lower()
   if act == "linear":
     return None
-  elif act == "relu":
+  if act == "relu":
     return tf.nn.relu
-  elif act == "gelu":
+  if act == "gelu":
     return gelu
-  elif act == "tanh":
+  if act == "tanh":
     return tf.tanh
-  else:
-    raise ValueError("Unsupported activation: %s" % act)
+  raise ValueError("Unsupported activation: %s" % act)
 
 
 def get_assignment_map_from_checkpoint(tvars, init_checkpoint):
@@ -916,7 +914,7 @@ def transformer_model(input_tensor,
     else:
         name_variable_scope="layer_%d" % layer_idx
     # share all parameters across layers. add by brightmart, 2019-09-28. previous it is like this: "layer_%d" % layer_idx
-    with tf.compat.v1.variable_scope(name_variable_scope, reuse=True if (share_parameter_across_layers and layer_idx>0) else False):
+    with tf.compat.v1.variable_scope(name_variable_scope, reuse=bool((share_parameter_across_layers and layer_idx>0))):
 
       layer_input = prev_output
 
@@ -980,9 +978,8 @@ def transformer_model(input_tensor,
       final_output = reshape_from_matrix(layer_output, input_shape)
       final_outputs.append(final_output)
     return final_outputs
-  else:
-    final_output = reshape_from_matrix(prev_output, input_shape)
-    return final_output
+  final_output = reshape_from_matrix(prev_output, input_shape)
+  return final_output
 
 
 def get_shape_list(tensor, expected_rank=None, name=None):
@@ -1233,7 +1230,6 @@ def prelln_transformer_model(input_tensor,
 							kernel_initializer=create_initializer(initializer_range))
 					attention_output = dropout(attention_output, hidden_dropout_prob)
 
-					# attention_output = layer_norm(attention_output + layer_input)
 					attention_output = attention_output + layer_input
 
 			with tf.compat.v1.variable_scope(idx_scope['output'], reuse=tf.AUTO_REUSE):
@@ -1255,7 +1251,6 @@ def prelln_transformer_model(input_tensor,
 						kernel_initializer=create_initializer(initializer_range))
 				layer_output = dropout(layer_output, hidden_dropout_prob)
 
-				# layer_output = layer_norm(layer_output + attention_output)
 				layer_output = layer_output + attention_output
 				prev_output = layer_output
 				all_layer_outputs.append(layer_output)
@@ -1266,6 +1261,5 @@ def prelln_transformer_model(input_tensor,
 			final_output = similarity.bert_src.bert_utils.reshape_from_matrix(layer_output, input_shape)
 			final_outputs.append(final_output)
 		return final_outputs
-	else:
-		final_output = similarity.bert_src.bert_utils.reshape_from_matrix(prev_output, input_shape)
-		return final_output
+	final_output = similarity.bert_src.bert_utils.reshape_from_matrix(prev_output, input_shape)
+	return final_output

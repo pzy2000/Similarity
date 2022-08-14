@@ -1,4 +1,3 @@
-# coding=utf-8
 import argparse
 import multiprocessing
 
@@ -19,11 +18,10 @@ more_sentences_path = './corpus/more_sentences.txt'
 def train_model(i_window, i_min_count, i_dim):
     f = open(origin_corpus_path, encoding='utf-8')
     line = f.readline()
-    # stopwords = [line.strip() for line in open(r'./stopwords/cn_stopwords.txt', 'r', encoding='utf-8')]
     seg_list = []
     print("------------------------训练模型--------------------------")
     while line:
-        if line != '\n' and line != '':
+        if line not in ('\n', ''):
             segment = jieba.lcut(line, cut_all=True, HMM=True)
             for s in segment:
                 for i in range(0, len(s)):
@@ -51,11 +49,10 @@ def retrain_model():
     tmp_model = gensim.models.Word2Vec.load(model_dir + 'word2vec.model')
     f = open(more_sentences_path, encoding='utf-8')
     line = f.readline()
-    # stopwords = [line.strip() for line in open(r'./stopwords/cn_stopwords.txt', 'r', encoding='utf-8')]
     seg_list = []
     print("-----------------------开始追加训练模型------------------------")
     while line:
-        if line != '\n' and line != '':
+        if line not in ('\n', ''):
             segment = jieba.lcut(line, cut_all=True, HMM=True)
             for s in segment:
                 for i in range(0, len(s)):
@@ -72,10 +69,7 @@ def retrain_model():
 
 # 判断是否为中文
 def is_all_chinese(strs):
-    for _char in strs:
-        if not '\u4e00' <= _char <= '\u9fa5':
-            return False
-    return True
+    return all('\u4e00' <= _char <= '\u9fa5' for _char in strs)
 
 
 if __name__ == '__main__':

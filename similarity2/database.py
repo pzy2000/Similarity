@@ -1,8 +1,6 @@
-"""
-数据库读取相关代码
-"""
+"""数据库读取相关代码"""
 from typing import List, Tuple, Any, Dict, Union
-
+import dmPython
 from demo.settings import DEBUG
 from similarity2.globals import CONFIG
 import pymysql
@@ -11,14 +9,16 @@ import pymysql
 host = CONFIG.get("database", "db_host")
 user = CONFIG.get("database", "db_user")
 password = CONFIG.get("database", "db_password")
+dm_password = CONFIG.get("database", "dm_password")
 db_name = CONFIG.get("database", "db_name")
 db_port = int(CONFIG.get("database", "db_port"))
+dm_user = CONFIG.get("database", "dm_user")
+dm_port = int(CONFIG.get("database", "dm_port"))
+db_type = CONFIG.get("database", 'db_type')
 
 
 class Database:
-    """
-    请保证values_list、values_dict方法，最后调用！
-    """
+    """请保证values_list、values_dict方法，最后调用！"""
 
     @classmethod
     def get_common_database(cls):
@@ -37,9 +37,12 @@ class Database:
             print(dict(host=self.host, port=self.port, user=self.user, password=self.password,
                        database=self.database,
                        charset=self.charset))
-        self.connection = pymysql.connect(host=self.host, port=self.port, user=self.user, password=self.password,
-                                          database=self.database,
-                                          charset=self.charset)
+        if db_type == 'sql':
+            self.connection = pymysql.connect(host=self.host, port=self.port, user=self.user, password=self.password,
+                                              database=self.database,
+                                              charset=self.charset)
+        else:
+            self.connection = dmPython.connect(user=dm_user, password=dm_password, server=self.host, port=dm_port)
         self.cursor = None
         self.filter_sql = ""
         self.order_by_sql = ""
@@ -56,9 +59,7 @@ class Database:
         return result
 
     def reset(self):
-        """
-        重置数据库游标和数据
-        """
+        """重置数据库游标和数据"""
         self.cursor.close()
         self.cursor = None
         self.filter_sql = ""

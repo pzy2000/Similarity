@@ -12,7 +12,6 @@ BUSINESS_TYPE = "data_model"
 db_data: List[Tuple[Any, Any, Any, str]] = None
 # 数据库match_str
 db_match_str: List[str] = None
-# 数据库词向量 (n_items, n_samples, n_features)
 db_matrix: torch.Tensor = None
 # 缓存对象
 cache = Cache()
@@ -47,10 +46,7 @@ def init_model_vector(request):
 
 
 def __get_filter_data(tenant_id: str):
-    """
-    获取经过筛选后的db_data,db_matrix,db_match_str \n
-    
-    """
+    """获取经过筛选后的db_data,db_matrix,db_match_str \n"""
     filter_db_data = db_data
     filter_db_matrix = db_matrix
     filter_db_match_str = db_match_str
@@ -103,8 +99,6 @@ def multiple_match(request):
             response_data.append({"key": request_id, "result": cache.get(f"{match_str}{str(percent)}{k}{tenant_id}")})
             continue
 
-        # 处理请求match_str
-        # (n_items,1,n_features)
         request_data_matrix = match_str2matrix(match_str)
 
         # 词向量匹配

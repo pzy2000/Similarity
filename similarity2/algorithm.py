@@ -1,6 +1,4 @@
-"""
-机器学习算法有关代码，和业务逻辑无关
-"""
+"""机器学习算法有关代码，和业务逻辑无关"""
 import numpy as np
 from typing import List
 from similarity2.globals import MODEL, DEVICE
@@ -8,10 +6,9 @@ import torch
 
 
 class CosineSimilarity(torch.nn.Module):
-    def __init__(self):
-        super(CosineSimilarity, self).__init__()
 
-    def forward(self, x1, x2):
+    @staticmethod
+    def forward(x1, x2):
         x2 = x2.t()
         x = x1.mm(x2)
 

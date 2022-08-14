@@ -1,6 +1,4 @@
-"""
-数据处理相关代码，和业务逻辑相关
-"""
+"""数据处理相关代码，和业务逻辑相关"""
 from typing import List, Union, Dict, Any, Tuple
 from similarity2.algorithm import word2vec_avg_matrix, cosine_similarity
 from similarity2.globals import DEVICE
@@ -95,11 +93,12 @@ def vector_match(X: torch.Tensor, y: torch.Tensor, weight: List[float], k: int) 
     value, index = torch.topk(samples_sim_value, k, dim=0, largest=True, sorted=True)
 
     # 转为列表，便于数据处理
-    value = value.numpy().ravel().tolist()
-    index = index.numpy().ravel().tolist()
+    value = value.cpu().numpy().ravel().tolist()
+    index = index.cpu().numpy().ravel().tolist()
 
     # 对value进行限制
     value = [1 if v > 1 else (0 if v < 0 else v) for v in value]
-    items_value = [v.numpy().ravel().tolist() for v in sim_value[:, index, :].transpose(0,1)]
+    items_value = [v.cpu().numpy().ravel().tolist()
+                   for v in sim_value[:, index, :].transpose(0, 1)]
 
     return index, value, items_value

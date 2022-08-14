@@ -1,4 +1,3 @@
-# coding=utf-8
 import os
 
 from concurrent import futures
@@ -22,8 +21,6 @@ from similarity.tools import model_dir, data_dir
 from similarity.bert_src.similarity_count import BertSim
 from .database_get import db
 
-# 默认模型
-# model_dir = os.getcwd() + '/similarity/model/'
 model_path = model_dir + 'current_model.bin'
 
 
@@ -70,8 +67,6 @@ table_name = read_ini.get(keyword, 'table_name')
 business_type = 'catalog_data'
 
 
-# database_original_code = []
-# database_original_data = []
 
 
 class RejectQueue(queue.Queue):
@@ -97,10 +92,9 @@ class ThreadPoolExecutorWithQueueSizeLimit(futures.ThreadPoolExecutor):
 
 
 class CosineSimilarity(torch.nn.Module):
-    def __init__(self):
-        super(CosineSimilarity, self).__init__()
 
-    def forward(self, x1, x2):
+    @staticmethod
+    def forward(x1, x2):
         x2 = x2.t()
         x = x1.mm(x2)
 
@@ -149,8 +143,6 @@ def init_model_vector_catalog(request):
     # if not os.path.exists(catalogue_data_path):
     #     return Response({"code": 404, "msg": "目录表路径不存在", "data": ""})
     process = 0
-    # 重新加载模型
-    # model = gensim.models.KeyedVectors.load_word2vec_format(model_path, binary=True)
     process = 0.5
     # 重新缓存向量
     catalogue_data = []
@@ -159,13 +151,11 @@ def init_model_vector_catalog(request):
     catalogue_data_vector_catalog_disc = []
     catalogue_data_vector_item = []
     catalogue_data_vector_item_disc = []
-    # prepare_catalogue_data(path=catalogue_data_path)
     prepare_catalogue_data()
     process = 0.75
     catalogue_data_number = len(catalogue_data)
-    for i in range(len(catalogue_data)):
+    for i, data in enumerate(catalogue_data):
         process = 0.75 + i / (catalogue_data_number * 4)
-        data = catalogue_data[i]
         item = data.split(' ')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
         s2 = word_avg(model, segment2_1)
@@ -211,19 +201,10 @@ def increment_business_data_catalog(request):
         match_str = single_data['matchStr']
         original_code = single_data['originalCode']
         original_data = single_data['originalData']
-        # 加入缓存中
-        # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
-        #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
-        # item = [x.strip() for x in match_str.split('^')]
-        # item.append(original_code)
-        # item.append(str(original_data).replace(' ', ''))
-        # tmp = ' '.join(item)
         if len(match_str.split('^')) != 5:
             return Response({"code": 200, "msg": "新增数据失败，有效数据字段不等于5", "data": ""})
         tmp = ' '.join([x.strip() for x in match_str.split('^')])
-        # database_original_code.append(original_code)
-        # database_original_data.append(original_data)
 
         tmp += (' ' + original_code + ' ' + original_data)
 
@@ -232,8 +213,8 @@ def increment_business_data_catalog(request):
         if DEBUG:
             print('增加后：')
             print('catalogue_data：' + str(len(catalogue_data)))
-            for i in range(len(catalogue_data)):
-                print(catalogue_data[i])
+            for i, item in enumerate(catalogue_data):
+                print(item)
 
         item = tmp.split(' ')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
@@ -280,9 +261,6 @@ def delete_business_data_catalog(request):
         match_str = single_data['matchStr']
         original_code = single_data['originalCode']
         original_data = single_data['originalData']
-        # 加入缓存中
-        # tmp = original_data['departmentName'] + ' ' + original_data['catalogName'] + ' ' + \
-        #       original_data['infoItemName'] + ' ' + original_data['departmentID'] + ' ' + original_data['catalogID']
 
         tmp = ' '.join([x.strip() for x in match_str.split('^')])
         tmp += (' ' + original_code + ' ' + original_data)
@@ -299,8 +277,8 @@ def delete_business_data_catalog(request):
         if DEBUG:
             print('删除后：')
             print('catalogue_data：' + str(len(catalogue_data)))
-            for i in range(len(catalogue_data)):
-                print(catalogue_data[i])
+            for i, item in enumerate(catalogue_data):
+                print(item)
 
         item = tmp.split(' ')
         segment2_1 = jieba.lcut(item[0], cut_all=True, HMM=True)
@@ -335,8 +313,8 @@ def delete_business_data_catalog(request):
 
 
 def delete_ndarray(with_array_list, array):
-    for i in range(len(with_array_list)):
-        if all(with_array_list[i] == np.array(array)) == True:
+    for i, item in enumerate(with_array_list):
+        if all(item == np.array(array)) == True:
             with_array_list.pop(i)
             break
 
@@ -357,12 +335,11 @@ def catalog_multiple_match(request):
     if len(catalogue_data) == 0:
         return Response({"code": 404, "msg": "数据为空！", "data": ''})
     source_data = []
-    for i in range(len(full_data)):
-        source_data.append(full_data[i]['matchStr'].replace('^', ' '))
+    for i, item in enumerate(full_data):
+        source_data.append(item['matchStr'].replace('^', ' '))
     result = []
-    for i in range(len(source_data)):
+    for i, data in enumerate(source_data):
         res = {}
-        data = source_data[i]
         query_id = full_data[i]['id']
         # 字符串匹配
         str_tmp = string_matching(demand_data=data, k=k)
@@ -370,12 +347,9 @@ def catalog_multiple_match(request):
             sim_value = [1] * len(str_tmp)
             result.append(save_result(str_tmp, res, query_id, sim_value))
             continue
-        # elif len(str_tmp) > 0 and len(str_tmp) < k:
-        #     sim_value = [1] * len(str_tmp)
-        #     result.append(save_result(str_tmp, res, query_id, sim_value))
 
         # 查看查询缓存
-        if data in query_data.keys() and weight_data[data] == percent:
+        if data in query_data and weight_data[data] == percent:
             tmp = query_data.get(data)
             if len(tmp) == 2 * k:
                 sim_value = tmp[int(len(tmp) / 2):]
@@ -404,12 +378,12 @@ def catalog_multiple_match(request):
 
         if DEBUG:
             print('原来的str_tmp')
-            for index in range(len(str_tmp)):
-                print(str_tmp[index])
+            for index, item in enumerate(str_tmp):
+                print(item)
 
             print('原来的tmp：')
-            for index in range(len(tmp)):
-                print(tmp[index] + ' : ' + str(sim_value[index]))
+            for index, item in enumerate(tmp):
+                print(item + ' : ' + str(sim_value[index]))
 
         origin_len = len(str_tmp)
         str_tmp += tmp
@@ -419,8 +393,8 @@ def catalog_multiple_match(request):
             print()
             print('增加后的长度：' + str(len(str_tmp)))
             print('增长后的情况：')
-            for index in range(len(str_tmp)):
-                print(str_tmp[index] + ' : ' + str(str_sim_value[index]))
+            for index, item in enumerate(str_tmp):
+                print(item + ' : ' + str(str_sim_value[index]))
 
         for index in range(origin_len):
             while str_tmp[index] in str_tmp[origin_len:]:
@@ -437,11 +411,9 @@ def catalog_multiple_match(request):
         if DEBUG:
             print()
             print('删除后的情况：')
-            for tmp_index in range(len(str_tmp)):
-                print(str_tmp[tmp_index] + ' : ' + str(str_sim_value[tmp_index]))
-                # print(str_sim_value[tmp_index])
+            for tmp_index, item in enumerate(str_tmp):
+                print(item + ' : ' + str(str_sim_value[tmp_index]))
 
-        # result.append(save_result(tmp, res, query_id, sim_value))
         result.append(save_result(str_tmp, res, query_id, str_sim_value))
         query_data[data] = tmp + sim_value
         weight_data[data] = percent
@@ -477,7 +449,7 @@ def string_matching(demand_data, k):
 
 
 def find_data(demand_data, k):
-    if demand_data in bert_data.keys():
+    if demand_data in bert_data:
         tmp = bert_data.get(demand_data)
         if len(tmp) == 2 * k:
             return tmp
@@ -486,38 +458,6 @@ def find_data(demand_data, k):
 
 def save_data(demand_data, k):
     return
-    sim_words = {}
-    item1 = demand_data.split(' ')
-    for data in catalogue_data:
-        sim = 0
-        item2 = data.split(' ')
-        sim += bert_sim.predict(item1[0], item2[0])[0][1] * percent[0]
-        sim += bert_sim.predict(item1[1], item2[1])[0][1] * percent[1]
-        sim += bert_sim.predict(item1[2], item2[2])[0][1] * percent[2]
-        sim += bert_sim.predict(item1[3], item2[3])[0][1] * percent[3]
-        sim += bert_sim.predict(item1[4], item2[4])[0][1] * percent[4]
-        if len(sim_words) < k:
-            sim_words[data] = sim
-        else:
-            min_sim = min(sim_words.values())
-            if sim > min_sim:
-                for key in list(sim_words.keys()):
-                    if sim_words.get(key) == min_sim:
-                        # 替换
-                        del sim_words[key]
-                        sim_words[data] = sim
-                        break
-    res = []
-    sim_words = sorted(sim_words.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
-    for sim_word in sim_words:
-        res.append(sim_word[0])
-    for sim_word in sim_words:
-        if sim_word[1] > 1:
-            sim_word[1] = 1.0
-        elif sim_word[1] < 0:
-            sim_word[1] = abs(sim_word[1])
-        res.append(sim_word[1])
-    bert_data[demand_data] = res
 
 
 def vector_matching(demand_data, k):
@@ -573,9 +513,7 @@ def vector_matching(demand_data, k):
     res_sim_value = []
     for i in sim_index:
         res.append(catalogue_data[i[0]])
-    # print('计算出的匹配值：')
     for i in sim_value:
-        # print(i[0])
         if i[0] > 1:
             i[0] = 1.0
         elif i[0] < 0:
@@ -596,11 +534,9 @@ def prepare_catalogue_data():
     if DEBUG:
         print(catalogue_data)
         print('catalogue_data：' + str(len(catalogue_data)))
-        for i in range(len(catalogue_data)):
-            print(catalogue_data[i])
+        for i, item in enumerate(catalogue_data):
+            print(item)
 
-    # catalogue_df = pd.DataFrame(catalogue_data)
-    # catalogue_df.to_csv(exec_catalog_path, encoding='utf-8_sig', index=False)
 
 
 def word_avg(word_model, words):  # 对句子中的每个词的词向量简单做平均 作为句子的向量表示
@@ -619,13 +555,8 @@ def word_avg(word_model, words):  # 对句子中的每个词的词向量简单�
 
 def save_result(temp, res, query_id, sim_value):
     single_res = []
-    for i in range(len(temp)):
-        d = temp[i]
+    for i, d in enumerate(temp):
         tmp = d.split(' ')
-        # single_res.append({'originalCode': tmp[4], 'originalData': {'departmentName': tmp[0], 'catalogName': tmp[1],
-        #                                                             'infoItemName': tmp[2],
-        #                                                             'departmentID': tmp[3], 'catalogID': tmp[4]},
-        #                    'similarity': sim_value[i]})
 
         single_res.append({'str': ' '.join(tmp[:5]),
                            'originalCode': tmp[5],
