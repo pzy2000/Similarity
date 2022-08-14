@@ -38,10 +38,12 @@ class Database:
                        database=self.database,
                        charset=self.charset))
         if db_type == 'sql':
+            print('using MYSQL database!')
             self.connection = pymysql.connect(host=self.host, port=self.port, user=self.user, password=self.password,
                                               database=self.database,
                                               charset=self.charset)
         else:
+            print('using BigDream database!')
             self.connection = dmPython.connect(user=dm_user, password=dm_password, server=self.host, port=dm_port)
         self.cursor = None
         self.filter_sql = ""

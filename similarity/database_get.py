@@ -37,10 +37,12 @@ class database:
                              charset=self.charset)
             cursor = db.cursor()
             sql = 'SHOW COLUMNS FROM %s;' % tablename
+            print('using MYSQL database!')
         else:
             db = dmPython.connect(user=dm_user, password=dm_password, server=self.host, port=dm_port)
             cursor = db.cursor()
             sql = 'SELECT COLUMN_NAME from all_tab_columns where Table_Name=%s;' % tablename
+            print('using BigDream database!')
         cursor.execute(sql)
         name = cursor.fetchall()
         selectname = ''
@@ -57,9 +59,11 @@ class database:
 
     def get_colum(self, sql):  # 通过sql获取数据
         if db_type == 'sql':
+            print('using MYSQL database!')
             db = pymysql.connect(host=self.host, user=self.user, password=self.password, database=self.database,
                              charset=self.charset)
         else:
+            print('using BigDream database!')
             db = dmPython.connect(user=dm_user, password=dm_password, server=self.host, port=dm_port)
         cursor = db.cursor()
         cursor.execute(sql)
@@ -69,9 +73,11 @@ class database:
 
     def get_data_by_type(self, type):
         if db_type == 'sql':
+            print('using MYSQL database!')
             db = pymysql.connect(host=self.host, user=self.user, password=self.password, database=self.database,
                              charset=self.charset)
         else:
+            print('using BigDream database!')
             db = dmPython.connect(user=dm_user, password=dm_password, server=self.host, port=dm_port)
         cursor = db.cursor()
         sql = "select match_str,original_code,original_data from ai_original_data where business_type = '%s' " % type
@@ -85,9 +91,11 @@ class database:
 
     def get_data_by_type_v2(self, num, type, tablename):
         if db_type == 'sql':
+            print('using MYSQL database!')
             db = pymysql.connect(host=self.host, user=self.user, password=self.password, database=self.database,
                              charset=self.charset)
         else:
+            print('using BigDream database!')
             db = dmPython.connect(user=dm_user, password=dm_password, server=self.host, port=dm_port)
         cursor = db.cursor()
         sql = 'SHOW COLUMNS FROM %s;' % tablename
