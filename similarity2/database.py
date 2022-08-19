@@ -1,5 +1,7 @@
 """数据库读取相关代码"""
 from typing import List, Tuple, Any, Dict, Union
+
+
 import dmPython
 from demo.settings import DEBUG
 from similarity2.globals import CONFIG
@@ -12,6 +14,7 @@ password = CONFIG.get("database", "db_password")
 dm_password = CONFIG.get("database", "dm_password")
 db_name = CONFIG.get("database", "db_name")
 db_port = int(CONFIG.get("database", "db_port"))
+dm_name = CONFIG.get("database", "dm_name")
 dm_user = CONFIG.get("database", "dm_user")
 dm_port = int(CONFIG.get("database", "dm_port"))
 db_type = CONFIG.get("database", 'db_type')
@@ -24,11 +27,13 @@ class Database:
     def get_common_database(cls):
         return Database("ai_original_data")
 
+
     def __init__(self, tablename):
         self.host = host
         self.user = user
         self.password = password
         self.database = db_name
+        self.dm_name = dm_name
         self.port = db_port
         self.charset = 'utf8'
         self.tablename = tablename
@@ -51,7 +56,7 @@ class Database:
 
     def _execute(self):
         sql = (f" select {self.projection}" if self.projection else "") + \
-              (f" from {self.tablename}" if self.tablename else "") + \
+              (f" from {self.dm_name.upper() + '.' if db_type else ''}{self.tablename}" if self.tablename else "") + \
               (f" where {self.filter_sql}" if self.filter_sql else "") + \
               (f" order by {self.order_by_sql}" if self.order_by_sql else "")
         self.cursor.execute(sql)
