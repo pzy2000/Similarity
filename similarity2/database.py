@@ -1,7 +1,6 @@
 """数据库读取相关代码"""
 from typing import List, Tuple, Any, Dict, Union
 
-
 import dmPython
 from demo.settings import DEBUG
 from similarity2.globals import CONFIG
@@ -26,7 +25,6 @@ class Database:
     @classmethod
     def get_common_database(cls):
         return Database("ai_original_data")
-
 
     def __init__(self, tablename):
         self.host = host
