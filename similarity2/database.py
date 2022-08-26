@@ -40,7 +40,7 @@ class Database:
             print(dict(host=self.host, port=self.port, user=self.user, password=self.password,
                        database=self.database,
                        charset=self.charset))
-        if db_type == 'sql':
+        if db_type == 'sql' or db_type == 'mysql':
             print('using MYSQL database!')
             self.connection = pymysql.connect(host=self.host, port=self.port, user=self.user, password=self.password,
                                               database=self.database,
@@ -54,7 +54,7 @@ class Database:
 
     def _execute(self):
         sql = (f" select {self.projection}" if self.projection else "") + \
-              (f" from {self.dm_name.upper() + '.' if db_type else ''}{self.tablename}" if self.tablename else "") + \
+              (f" from {self.dm_name.upper() + '.' if db_type == 'dm' else ''}{self.tablename}" if self.tablename else "") + \
               (f" where {self.filter_sql}" if self.filter_sql else "") + \
               (f" order by {self.order_by_sql}" if self.order_by_sql else "")
         self.cursor.execute(sql)
@@ -74,7 +74,7 @@ class Database:
     def filter(self, **params):
         """
         :param params: 过滤参数，多个参数以and连接
-        database.filter(business_type="item_catalog").all()\n
+        da  tabase.filter(business_type="item_catalog").all()\n
         等价于 select * from table where business_type='item_catalog'
         """
         self.filter_sql = " and ".join(
