@@ -77,6 +77,7 @@ class Database:
         da  tabase.filter(business_type="item_catalog").all()\n
         等价于 select * from table where business_type='item_catalog'
         """
+        params["del_flag"] = "1" # 筛选未删除数据
         self.filter_sql = " and ".join(
             [
                 f"{a}=\'{b}\'"
