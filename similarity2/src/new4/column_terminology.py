@@ -153,7 +153,10 @@ def increment_data(request):
         # 计算词向量
         vec = match_str2matrix(match_str)
         # 加入词向量集合
-        db_matrix = torch.cat((db_matrix, vec), dim=1)
+        if db_matrix is None:
+            db_matrix = vec
+        else:
+            db_matrix = torch.cat((db_matrix, vec), dim=1)
     # 清除缓存
     cache.clear()
     return Response({"code": 200, "msg": "新增数据成功！", "data": ""})
